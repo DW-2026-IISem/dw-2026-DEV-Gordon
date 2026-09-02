@@ -1,8 +1,8 @@
 # SDD — Norte Creativo
 
 Proyecto 36 · Agencia de campañas
-Desarrollo Web y Base de Datos II · 2026-II · Semana 04
-Autor: Carlos Honorio Zárate Rivadeneira (DEV-Gordon)
+Desarrollo Web y Base de Datos II · 2026-II · Semana 04  
+Autor: Carlos Honorio Zárate Rivadeneira (DEV-Gordon)  
 
 ---
 
