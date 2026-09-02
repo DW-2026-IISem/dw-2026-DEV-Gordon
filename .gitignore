@@ -1,0 +1,9 @@
+﻿.env
+**/.env
+data/
+.Rproj.user/
+.Rhistory
+.RData
+Thumbs.db
+desktop.ini
+DesarrolloWeb-2026.Rproj
