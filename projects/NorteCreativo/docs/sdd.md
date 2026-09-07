@@ -19,6 +19,7 @@ Norte Creativo es una agencia que ejecuta campañas publicitarias para varios cl
 Hoy sin una plataforma, la agencia tiene varios problemas, las piezas se corrigen muchas veces y se pierde el rastro de cual version es la vigente, los comentarios de aprobacion o rechazo del cliente quedan dispersos en correos y chats, no hay forma clara de saber cuanto presupuesto se ha consumido y se corre el riesgo de facturar trabajo que el cliente no aprobo.
 
 Para resolver esto, la plataforma debe versionar cada pieza, registrar quien comenta y quien es el responsable, medir el consumo del presupuesto y convertir en factura unicamente los hitos aprobados, la regla CENTRAL es que ningun entregable rechazado puede cerrar un hito, haciendo que un hito con trabajo rechazado no se pueda facturar.
+
 ---
 
 ## 3. Actores
@@ -37,48 +38,38 @@ Se define que cada hito se cierra solo cuando las tareas estan aprobadas, entonc
 
 ## 4. Entidades del dominio
 
-### 4.1 Entidades de negocio (10)
+### 4.1 Entidades de negocio 
 
-| Entidad | Atributos | Nota |
+Campaña = campania
+
+| # | Entidad | Atributos | Nota |
+|---|---|---|---|
+| 1 | Cliente | id, tipo_documento, numero_documento (UQ), nombre, telefono, email, is_active | sin cambios |
+| 2 | Campania | id, cliente_id (FK), nombre, descripcion, is_active, created_at, updated_at | agregue cliente id porque narrativa dice cliente 1:n campaña pero la tabla no tiene fk|
+| 3 | Presupuesto | id, campania_id (FK), fecha, valor, estado, observaciones | referecia id ahora es campaña id para mas claridad|
+| 4 | Hito | id, campania_id (FK), nombre, descripcion, estado, fecha_cierre, is_active, created_at, updated_at | le agrego campania id para la relacion, e campo estado que podra ser abierto, cerrado o facturado, y una fecha de cierre de dicho hito  |
+| 5 | Tarea | id, hito_id (FK), nombre, descripcion, is_active, created_at, updated_at | agregue la relacion a hito id |
+| 6 | AsignacionTarea | id, tarea_id (FK), user_id (FK), datos_relacion, is_active | principal id ahora es tarea id y relacionado id ahora es user id para mas claridad |
+| 7 | Entregable | id, tarea_id (FK), fecha_inicio, fecha_fin, total, estado, observaciones | referencia id ahora es tarea id para mas claridad |
+| 8 | VersionEntregable | id, entregable_id (FK), numero_version, fecha_inicio, fecha_fin, total, estado, observaciones | referecia id ahora es entregable id, y agregue el numero de version para asi distinguer entre versiones del mismo entregable |
+| 9 | Aprobacion | id, version_entregable_id (FK), estado, aprobador_id (FK a User), comentario, fecha |
+agregue estado que puede ser pendiente, aprobado y rechazado para y una relacion aquien lo aprueba aprobador id |
+| 10 | Factura | id, campania_id (FK), numero (UQ), fecha, subtotal, impuestos, total, estado | agregue la relacion a campaña id |
+| 11 | FacturaHito | id, factura_id (FK), hito_id (FK), valor | Esta es una tabla intermedia para hacer la relacion n:n entre factura e hito |
+
+
+### 4.2 Entidades de Identidad Y RBAC
+
+| # | Entidad | Papel |
 |---|---|---|
-| Cliente | id, tipo_documento, numero_documento (UQ), nombre, telefono, email, is_active | |
-| Campania | id, nombre, descripcion, is_active, created_at, updated_at | falta FK a Cliente |
-| Presupuesto | id, referencia_id (FK), fecha, valor, estado, observaciones | referencia_id apunta a Campania |
-| Hito | id, nombre, descripcion, is_active, created_at, updated_at | falta FK a Campania |
-| Tarea | id, nombre, descripcion, is_active, created_at, updated_at | falta FK a Hito |
-| AsignacionTarea | id, principal_id (FK), relacionado_id (FK), datos_relacion, is_active | principal_id = Tarea, relacionado_id = User |
-| Entregable | id, referencia_id (FK), fecha_inicio, fecha_fin, total, estado, observaciones | referencia_id apunta a Tarea |
-| VersionEntregable | id, referencia_id (FK), fecha_inicio, fecha_fin, total, estado, observaciones | referencia_id apunta a Entregable |
-| Aprobacion | id, nombre, descripcion, is_active, created_at, updated_at | falta FK a VersionEntregable y falta el veredicto |
-| Factura | id, numero (UQ), fecha, subtotal, impuestos, total, estado | falta FK a Campania |
+| 12 | User | usuario del sistema |
+| 13 | Role | rol del sistema (ADMIN, CUENTAS, CREATIVO, CLIENTE_APROBADOR, FINANZAS) |
+| 14 | RoleUser | asociación usuario–rol (un usuario puede tener varios roles) |
+| 15 | Resource | recurso HTTP protegido (path + método) |
+| 16 | ResourceRole | asociación rol–recurso (qué rol puede acceder a qué recurso) |
+| 17 | RefreshToken | token de refresco de sesión |
 
-<!--
-DECIDE AQUÍ. La tabla de la narrativa viene con atributos genéricos de plantilla.
-Escribe abajo los atributos que TÚ vas a implementar, con las FK explícitas y los
-campos que faltan. Dos que sí o sí tienes que resolver:
-
-- Aprobacion necesita un campo de veredicto (APROBADA / RECHAZADA) y quién aprobó.
-  Sin eso la regla de negocio del proyecto no se puede implementar.
-- Factura necesita saber qué hitos cubre. Eso es una tabla intermedia
-  (FacturaHito o similar) que la narrativa no menciona pero sí exige.
-
-Justifica cada cambio en una línea. Esto es exactamente lo que el docente
-espera que un estudiante detecte.
--->
-
-### 4.2 Entidades de identidad y RBAC (6)
-
-| Entidad | Papel |
-|---|---|
-| User | usuario del sistema |
-| Role | rol (ADMIN, CUENTAS, CREATIVO, CLIENTE_APROBADOR, FINANZAS) |
-| RoleUser | asociación usuario–rol |
-| Resource | recurso HTTP protegido (path + method) |
-| ResourceRole | asociación rol–recurso |
-| RefreshToken | token de refresco de sesión |
-
-<!-- Estas seis no están en la tabla de la narrativa, pero la narrativa exige RBAC.
-     Se replican de StoreLab tal cual. -->
+**Total: 17 entidades** 11 de negocio + 6 de identidad.
 
 ---
 
