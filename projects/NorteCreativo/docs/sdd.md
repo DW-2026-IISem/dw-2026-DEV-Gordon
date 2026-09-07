@@ -14,7 +14,15 @@ Autor: Carlos Honorio Zárate Rivadeneira (DEV-Gordon)
 
 ## 2. Problema
 
-Norte creativo es una empresa de campañas que ejecuta campañas para varios clientes con presupuesto, hitos, tareas y entregables sujetos a aprovacion, la plataforma debe versionar piezas, registrar comentarios y responsables, medir consumo presupuestal y convertir hitos aprobados en facturacion, ningun entregable rechazado puede cerrar un hito.
+<!--
+ESCRIBE AQUÍ. Tres o cuatro párrafos, en tus palabras, respondiendo:
+- ¿Qué hace Norte Creativo como negocio?
+- ¿Qué se les está complicando hoy sin una plataforma? (piezas sin versionar,
+  comentarios perdidos, no saben cuánto presupuesto llevan gastado, facturan
+  hitos que en realidad no están aprobados)
+- ¿Qué debe resolver el sistema?
+Termina con la regla dura: ningún entregable rechazado puede cerrar un hito.
+-->
 
 ---
 
@@ -22,7 +30,7 @@ Norte creativo es una empresa de campañas que ejecuta campañas para varios cli
 
 | Rol | Quién es | Qué hace en el sistema |
 |---|---|---|
-| ADMIN | Administrador de la plataforma, interno de la agencia| Gestiona usuarios, roles y permisos, da alta a clientes, no participa en la operacion de campañas|
+| ADMIN | | |
 | CUENTAS | | |
 | CREATIVO | | |
 | CLIENTE_APROBADOR | | |
