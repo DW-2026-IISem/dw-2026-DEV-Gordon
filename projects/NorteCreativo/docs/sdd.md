@@ -14,34 +14,24 @@ Autor: Carlos Honorio Zárate Rivadeneira (DEV-Gordon)
 
 ## 2. Problema
 
-<!--
-ESCRIBE AQUÍ. Tres o cuatro párrafos, en tus palabras, respondiendo:
-- ¿Qué hace Norte Creativo como negocio?
-- ¿Qué se les está complicando hoy sin una plataforma? (piezas sin versionar,
-  comentarios perdidos, no saben cuánto presupuesto llevan gastado, facturan
-  hitos que en realidad no están aprobados)
-- ¿Qué debe resolver el sistema?
-Termina con la regla dura: ningún entregable rechazado puede cerrar un hito.
--->
+Norte Creativo es una agencia que ejecuta campañas publicitarias para varios clientes al mismo tiempo, cada campaña tiene un presupuesto asignado y se divide en hitos y cada hito tiene sus tareas concretas que producen entregables, como piezas graficas, videos y textos
 
+Hoy sin una plataforma, la agencia tiene varios problemas, las piezas se corrigen muchas veces y se pierde el rastro de cual version es la vigente, los comentarios de aprobacion o rechazo del cliente quedan dispersos en correos y chats, no hay forma clara de saber cuanto presupuesto se ha consumido y se corre el riesgo de facturar trabajo que el cliente no aprobo.
+
+Para resolver esto, la plataforma debe versionar cada pieza, registrar quien comenta y quien es el responsable, medir el consumo del presupuesto y convertir en factura unicamente los hitos aprobados, la regla CENTRAL es que ningun entregable rechazado puede cerrar un hito, haciendo que un hito con trabajo rechazado no se pueda facturar.
 ---
 
 ## 3. Actores
 
 | Rol | Quién es | Qué hace en el sistema |
 |---|---|---|
-| ADMIN | | |
-| CUENTAS | | |
-| CREATIVO | | |
-| CLIENTE_APROBADOR | | |
-| FINANZAS | | |
+| ADMIN | Administrador de la plataforma, es interno de la agencia|Gestiona usuarios, roles y permisos, da de alta a clientes, no participa en la operacion de las campañas |
+| CUENTAS |Ejecutivo de  cuenta, interno | Crea las campañas y asigna el presupuesto, divide en hitos y tareas, asigna tareas a los creativos, consulta el consumo presupuestal de las campañas, no aprueban entregables ni facturan |
+| CREATIVO | Diseñador o redactor, interno| Sube entregables y nuevas versiones, pero solo de las tareas que tiene asignadas, no ve presupuestos ni facturas, no crea campañas |
+| CLIENTE_APROBADOR | Contacto del cliente, Externo | Revisa las versiones de los entregables de sus propias campañas, y las aprueba o rechaza, no ve presupuestos, no ve otras campañas, no crea nada |
+| FINANZAS | Area administrativa, interno | Genera facturas a partir de hitos cerrados, compara presupuest contra lo facturado, no toca campañas ni entregables |
 
-<!--
-ESCRIBE AQUÍ. Una línea por rol. Piensa en quién crea campañas, quién sube
-entregables, quién aprueba o rechaza, y quién factura. Los recursos de
-referencia de la narrativa te dan la pista:
-POST /campanias, POST /entregables, POST /aprobaciones, POST /facturas.
--->
+Se define que cada hito se cierra solo cuando las tareas estan aprobadas, entonces cuentas arma, creativo produce, ciente aprueba tareas, cuando todas las tareas se aprueban el sistema cierra el hito y finanzas factura lo que se cerro.
 
 ---
 
