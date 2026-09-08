@@ -166,7 +166,7 @@ facturado.
 | REQ | Requisito | AC | Criterio de aceptación | EVI |
 |---|---|---|---|---|
 | REQ-S04-01 | Problema, actores y requisitos documentados. | AC-S04-01 | Existe docs/sdd.md con problema, actores y requisitos. | EVI-S04-01 |
-| REQ-S04-02 | Modelo de dominio definido y diagramado. | AC-S04-02 | Diagrama con las 16 entidades y sus relaciones. | EVI-S04-02 |
+| REQ-S04-02 | Modelo de dominio definido y diagramado. | AC-S04-02 | Diagrama con las 17 entidades y sus relaciones. | EVI-S04-02 |
 | REQ-S04-03 | Arquitectura por capas definida. | AC-S04-03 | Diagrama presentation/application/domain/infrastructure con responsabilidades. | EVI-S04-03 |
 | REQ-S04-04 | Contratos DTO/API iniciales definidos. | AC-S04-04 | Contratos con ejemplo de request y response. | EVI-S04-04 |
 | REQ-S04-05 | Base del backend NestJS operativa. | AC-S04-05 | El backend arranca, `/health` responde y Swagger carga. | EVI-S04-05 |
