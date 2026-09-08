@@ -176,20 +176,53 @@ facturado.
 
 ## 9. Contratos iniciales (DTO / API)
 
-<!--
-ESCRIBE AQUÍ después de tener la sección 6. Mínimo el contrato de CerrarHito:
+### Contrato principal — Registrar una aprobación (dispara el cierre automático)
 
-POST /api/hitos/:id/cerrar
+Este es el contrato central de la rebanada: al aprobar la última versión
+pendiente de un hito, el sistema cierra el hito en la misma operación.
 
-Request:  (¿lleva body? ¿solo el id en la ruta?)
-Response 200: (¿qué devuelve? estado del hito, hitos facturables)
-Response 409: (entregable rechazado — ¿qué mensaje?)
-Response 404: (hito no existe)
-Response 403: (rol sin permiso)
+```
+POST /api/aprobaciones
+Rol requerido: CLIENTE_APROBADOR
 
-Agrega también los contratos de los cuatro recursos que exige la narrativa:
-POST /campanias, POST /entregables, POST /aprobaciones, POST /facturas.
--->
+Request:
+{
+  "version_entregable_id": 34,
+  "estado": "APROBADA",
+  "comentario": "Aprobado, listo para publicar"
+}
+
+Response 201 Created (aprobación registrada, hito aún abierto):
+{
+  "id": 88,
+  "version_entregable_id": 34,
+  "estado": "APROBADA",
+  "hito_cerrado": false
+}
+
+Response 201 Created (era la última aprobación, el hito se cerró):
+{
+  "id": 88,
+  "version_entregable_id": 34,
+  "estado": "APROBADA",
+  "hito_cerrado": true,
+  "hito_id": 12,
+  "fecha_cierre": "2026-09-07T15:30:00Z"
+}
+
+Response 409 Conflict: la versión pertenece a un hito ya CERRADO
+Response 404: la versión de entregable no existe
+Response 403: el usuario no tiene rol CLIENTE_APROBADOR
+```
+
+### Contratos de los cuatro recursos de la narrativa (versión mínima)
+
+```
+POST /api/campanias     -> crea una campaña            (rol CUENTAS)
+POST /api/entregables   -> sube un entregable          (rol CREATIVO)
+POST /api/aprobaciones  -> aprueba/rechaza una versión (rol CLIENTE_APROBADOR)
+POST /api/facturas      -> factura hitos cerrados      (rol FINANZAS)
+```
 
 ---
 
