@@ -52,10 +52,9 @@ Campaña = campania
 | 6 | AsignacionTarea | id, tarea_id (FK), user_id (FK), datos_relacion, is_active | principal id ahora es tarea id y relacionado id ahora es user id para mas claridad |
 | 7 | Entregable | id, tarea_id (FK), fecha_inicio, fecha_fin, total, estado, observaciones | referencia id ahora es tarea id para mas claridad |
 | 8 | VersionEntregable | id, entregable_id (FK), numero_version, fecha_inicio, fecha_fin, total, estado, observaciones | referecia id ahora es entregable id, y agregue el numero de version para asi distinguer entre versiones del mismo entregable |
-| 9 | Aprobacion | id, version_entregable_id (FK), estado, aprobador_id (FK a User), comentario, fecha |
-agregue estado que puede ser pendiente, aprobado y rechazado para y una relacion aquien lo aprueba aprobador id |
+| 9 | Aprobacion | id, version_entregable_id (FK), estado, aprobador_id (FK a User), comentario, fecha | agregue estado que puede ser pendiente, aprobado y rechazado para y una relacion aquien lo aprueba aprobador id |
 | 10 | Factura | id, campania_id (FK), numero (UQ), fecha, subtotal, impuestos, total, estado | agregue la relacion a campaña id |
-| 11 | FacturaHito | id, factura_id (FK), hito_id (FK), valor | Esta es una tabla intermedia para hacer la relacion n:n entre factura e hito |
+| 11 | FacturaHito | id, factura_id (FK), hito_id (FK), valor | esta es una tabla intermedia para hacer la relacion n:n entre factura e hito |
 
 
 ### 4.2 Entidades de Identidad Y RBAC
@@ -75,49 +74,75 @@ agregue estado que puede ser pendiente, aprobado y rechazado para y una relacion
 
 ## 5. Relaciones
 
-```
-Cliente 1 ──N Campania
-Campania 1 ──N Presupuesto
-Campania 1 ──N Hito
-Campania 1 ──N Factura
-Hito     1 ──N Tarea
-Tarea    1 ──N AsignacionTarea ──1 User
-Tarea    1 ──N Entregable
-Entregable 1 ──N VersionEntregable
-VersionEntregable 1 ──N Aprobacion
-Factura  N ──N Hito   (solo hitos aprobados)
-```
+### Relaciones de negocio
 
-<!--
-REVISA Y AJUSTA. Si cambiaste algo en la sección 4, refléjalo aquí.
-Este bloque es el borrador de tu diagrama (EVI-S04-02).
--->
+| Entidad (1) | Cardinalidad | Entidad (N) | Lectura |
+|---|---|---|---|
+| Cliente | 1 : N | Campania | Un cliente tiene varias campañas |
+| Campania | 1 : N | Presupuesto | Una campaña tiene varios presupuestos |
+| Campania | 1 : N | Hito | Una campaña se divide en varios hitos |
+| Campania | 1 : N | Factura | Una campaña genera varias facturas |
+| Hito | 1 : N | Tarea | Un hito se divide en varias tareas |
+| Tarea | 1 : N | AsignacionTarea | Una tarea se asigna a uno o varios usuarios |
+| User | 1 : N | AsignacionTarea | Un usuario tiene varias tareas asignadas |
+| Tarea | 1 : N | Entregable | Una tarea produce varios entregables |
+| Entregable | 1 : N | VersionEntregable | Un entregable tiene varias versiones |
+| VersionEntregable | 1 : N | Aprobacion | Una versión recibe varias aprobaciones |
+| User | 1 : N | Aprobacion | Un usuario (aprobador) emite varias aprobaciones |
+| Factura | 1 : N | FacturaHito | Una factura cubre varios hitos |
+| Hito | 1 : N | FacturaHito | Un hito puede aparecer en la facturación |
+
+### Relaciones de identidad (RBAC)
+
+| Entidad (1) | Cardinalidad | Entidad (N) | Lectura |
+|---|---|---|---|
+| User | 1 : N | RoleUser | Un usuario tiene varios roles |
+| Role | 1 : N | RoleUser | Un rol lo tienen varios usuarios |
+| Role | 1 : N | ResourceRole | Un rol accede a varios recursos |
+| Resource | 1 : N | ResourceRole | Un recurso lo usan varios roles |
+| User | 1 : N | RefreshToken | Un usuario tiene varios tokens de sesión |
 
 ---
 
 ## 6. Capacidad integrada de la semana
 
-**Nombre:** CerrarHito
+**Nombre:** CerrarHito (cierre automático de hito por aprobación completa)
 
-<!--
-ESCRIBE AQUÍ el flujo paso a paso. Guía de lo que debe pasar:
+Es la rebanada vertical de la semana: una operación que atraviesa casi toda la
+cadena del dominio (Campania → Hito → Tarea → Entregable → VersionEntregable →
+Aprobacion), en lugar de un CRUD aislado de una sola entidad.
 
-1. Llega la petición con el id del hito.
-2. Se valida que el hito exista, esté activo y pertenezca a una campaña activa.
-3. Se recorren todas las tareas del hito.
-4. Por cada tarea, todos sus entregables.
-5. Por cada entregable, su versión más reciente.
-6. Por cada versión, su aprobación.
-7. Si alguna aprobación está en RECHAZADA o no existe → se aborta todo.
-8. Si todas están APROBADAS → el hito pasa a cerrado.
-9. El hito cerrado queda disponible para facturación.
-10. Todo lo anterior en una sola transacción: si algo falla, no queda nada a medias.
+El cierre del hito no lo dispara ningún usuario. Lo dispara el sistema de forma
+automática en el momento en que entra la última aprobación que faltaba.
 
-Escríbelo con tus palabras y numera los pasos. Este texto es lo que después
-le pasas al prompt M2 del manual del docente.
--->
+**Flujo paso a paso:**
 
-**Resultado observable:** <!-- ¿cómo se ve el éxito? ¿y el fallo? -->
+1. El CLIENTE_APROBADOR aprueba una versión de entregable (`POST /api/aprobaciones`).
+2. El sistema registra la aprobación con estado APROBADA.
+3. El sistema identifica a qué hito pertenece ese entregable (Entregable → Tarea → Hito).
+4. El sistema revisa todos los entregables de ese hito y, para cada uno, el estado de su versión más reciente.
+5. Si todavía queda algún entregable sin aprobar → no ocurre nada más; el hito sigue en estado ABIERTO.
+6. Si esta era la última aprobación pendiente (todos los entregables del hito están APROBADOS) → el sistema cierra el hito: estado pasa a CERRADO y se registra fecha_cierre.
+7. El hito cerrado queda disponible para que FINANZAS lo facture.
+8. Todo ocurre dentro de una sola transacción: registrar la aprobación y cerrar el hito son una operación atómica. Si algo falla, no queda nada a medias.
+
+**Caso de rechazo:**
+
+Si el CLIENTE_APROBADOR rechaza una versión (estado RECHAZADA), el hito no se
+cierra y permanece ABIERTO. El entregable rechazado deberá corregirse en una
+nueva versión, que a su vez volverá a pasar por aprobación.
+
+**Caso de hito ya cerrado:**
+
+Un hito CERRADO no se reabre. No se admiten nuevas versiones ni aprobaciones
+sobre los entregables de un hito cerrado. Cualquier cambio posterior solicitado
+por el cliente se gestiona como trabajo nuevo, sin afectar lo ya cerrado y
+facturado.
+
+**Resultado observable:**
+
+- Éxito: al aprobar la última versión pendiente, el hito queda en CERRADO con su fecha_cierre y disponible para facturar.
+- Rechazo: al rechazar una versión, el hito sigue ABIERTO y el entregable queda a la espera de una nueva versión.
 
 ---
 
@@ -126,21 +151,13 @@ le pasas al prompt M2 del manual del docente.
 | ID | Regla | Dónde vive |
 |---|---|---|
 | RN-01 | Ningún entregable rechazado puede cerrar un hito. | Domain |
-| RN-02 | | |
-| RN-03 | | |
-| RN-04 | | |
-
-<!--
-ESCRIBE AQUÍ. RN-01 ya te la da la narrativa. Saca al menos tres más
-de las que tú detectes. Candidatas:
-- El total facturado no puede exceder el presupuesto aprobado de la campaña.
-- Una campaña inactiva no admite hitos nuevos.
-- El número de factura es único.
-- Una versión de entregable no se modifica después de aprobada.
-- Solo CLIENTE_APROBADOR puede emitir aprobaciones.
-
-"Dónde vive" es Domain, Application o Infrastructure. Casi todas van en Domain.
--->
+| RN-02 | Un hito se cierra automáticamente cuando todos sus entregables tienen su versión más reciente APROBADA. | Domain |
+| RN-03 | El total facturado de una campaña no puede exceder su presupuesto aprobado. | Domain |
+| RN-04 | Una versión de entregable no se puede modificar después de ser aprobada. | Domain |
+| RN-05 | Solo un usuario con rol CLIENTE_APROBADOR puede emitir aprobaciones. | Application |
+| RN-06 | Un hito cerrado no admite nuevas versiones ni aprobaciones sobre sus entregables. | Domain |
+| RN-07 | El número de factura debe ser único. | Infrastructure |
+| RN-08 | Una campaña inactiva no admite hitos nuevos. | Domain |
 
 ---
 
