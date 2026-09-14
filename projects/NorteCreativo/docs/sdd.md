@@ -252,7 +252,7 @@ Nota: Presentación y Application dependen de Domain; Infrastructure implementa 
 
 ```
 -- ============================================================
--- Norte Creativo - Esquema de base de datos (SQLite)
+-- Norte Creativo - Esquema de base de datos (SQLite, ysql, sqlserver, oracle y postgress )
 -- Proyecto 36 - Desarrollo Web y Base de Datos II - 2026-II
 -- Autor: Carlos Honorio Zarate Rivadeneira (DEV-Gordon)
 -- 17 entidades: 11 de negocio + 6 de identidad/RBAC
@@ -448,3 +448,4 @@ INSERT INTO roles (nombre, descripcion) VALUES
 ```
 
 ### Diagrama BD
+
