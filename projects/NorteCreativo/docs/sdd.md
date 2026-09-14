@@ -215,7 +215,7 @@ Response 404: la versión de entregable no existe
 Response 403: el usuario no tiene rol CLIENTE_APROBADOR
 ```
 
-### Contratos de los cuatro recursos de la narrativa (versión mínima)
+### Contratos de los cuatro recursos de la narrativa 
 
 ```
 POST /api/campanias     -> crea una campaña            (rol CUENTAS)
@@ -226,18 +226,225 @@ POST /api/facturas      -> factura hitos cerrados      (rol FINANZAS)
 
 ---
 
-## 10. Fuera de alcance de la semana 04
-
-- Frontend (corresponde a la Unidad 03, semana 10).
-- CRUD completo de todas las entidades.
-- Autenticación productiva y RBAC completo.
-- Despliegue y pruebas de carga.
-
----
-
 ## 11. Trazabilidad
-
-`OBJ-S04 → SPEC-S04 → REQ-S04-01..06 → AC-S04-01..06 → Issues #01..#06 → EVI-S04-01..06 → GATE-S04`
 
 Kanban: ver `docs/kanban.md`
 Bitácora de decisiones y uso de IA: ver `docs/proceso.md`
+
+--- 
+
+## 12. Diagramas 
+
+### Seccion por capas
+
+Aquí tienes la imagen convertida a una tabla en Markdown:
+
+| Capa | Descripción | Ejemplos / Componentes |
+|---|---|---|
+| Presentation | Controladores HTTP, DTOs, rutas | AprobacionController, CrearCampaniaDto |
+| Application | Casos de uso, orquestación, puertos | RegistrarAprobacionUseCase, RN-05 |
+| Domain | Entidades y reglas de negocio puras | Hito, Aprobacion, RN-01, RN-02, RN-06 |
+| Infrastructure | Sequelize, repositorios, acceso a BD | HitoRepository, modelos, migraciones |
+
+Nota: Presentación y Application dependen de Domain; Infrastructure implementa los puertos que Domain define. Domain no depende de nadie.
+
+### Codigo SQL
+
+```
+-- ============================================================
+-- Norte Creativo - Esquema de base de datos (SQLite)
+-- Proyecto 36 - Desarrollo Web y Base de Datos II - 2026-II
+-- Autor: Carlos Honorio Zarate Rivadeneira (DEV-Gordon)
+-- 17 entidades: 11 de negocio + 6 de identidad/RBAC
+-- ============================================================
+
+PRAGMA foreign_keys = ON;
+
+-- ==================== IDENTIDAD / RBAC ====================
+
+CREATE TABLE users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre        TEXT    NOT NULL,
+    email         TEXT    NOT NULL UNIQUE,
+    password_hash TEXT    NOT NULL,
+    is_active     INTEGER NOT NULL DEFAULT 1,
+    created_at    TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    updated_at    TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+);
+
+CREATE TABLE roles (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre      TEXT    NOT NULL UNIQUE,  -- ADMIN, CUENTAS, CREATIVO, CLIENTE_APROBADOR, FINANZAS
+    descripcion TEXT,
+    is_active   INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE role_user (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    UNIQUE (user_id, role_id)
+);
+
+CREATE TABLE resources (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    path   TEXT    NOT NULL,   -- ej: /api/campanias
+    method TEXT    NOT NULL,   -- ej: POST
+    UNIQUE (path, method)
+);
+
+CREATE TABLE resource_role (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    role_id     INTEGER NOT NULL,
+    resource_id INTEGER NOT NULL,
+    FOREIGN KEY (role_id)     REFERENCES roles(id)     ON DELETE CASCADE,
+    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    UNIQUE (role_id, resource_id)
+);
+
+CREATE TABLE refresh_tokens (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER NOT NULL,
+    token      TEXT    NOT NULL UNIQUE,
+    expires_at TEXT    NOT NULL,
+    created_at TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ==================== NEGOCIO ====================
+
+CREATE TABLE clientes (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo_documento   TEXT    NOT NULL,
+    numero_documento TEXT    NOT NULL UNIQUE,
+    nombre           TEXT    NOT NULL,
+    telefono         TEXT,
+    email            TEXT,
+    is_active        INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE campanias (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    cliente_id  INTEGER NOT NULL,
+    nombre      TEXT    NOT NULL,
+    descripcion TEXT,
+    is_active   INTEGER NOT NULL DEFAULT 1,
+    created_at  TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    updated_at  TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+);
+
+CREATE TABLE presupuestos (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    campania_id   INTEGER NOT NULL,
+    fecha         TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    valor         REAL    NOT NULL,
+    estado        TEXT    NOT NULL DEFAULT 'BORRADOR',  -- BORRADOR, APROBADO
+    observaciones TEXT,
+    FOREIGN KEY (campania_id) REFERENCES campanias(id)
+);
+
+CREATE TABLE hitos (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    campania_id  INTEGER NOT NULL,
+    nombre       TEXT    NOT NULL,
+    descripcion  TEXT,
+    estado       TEXT    NOT NULL DEFAULT 'ABIERTO',  -- ABIERTO, CERRADO, FACTURADO
+    fecha_cierre TEXT,
+    is_active    INTEGER NOT NULL DEFAULT 1,
+    created_at   TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    updated_at   TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    FOREIGN KEY (campania_id) REFERENCES campanias(id)
+);
+
+CREATE TABLE tareas (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    hito_id     INTEGER NOT NULL,
+    nombre      TEXT    NOT NULL,
+    descripcion TEXT,
+    is_active   INTEGER NOT NULL DEFAULT 1,
+    created_at  TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    updated_at  TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    FOREIGN KEY (hito_id) REFERENCES hitos(id)
+);
+
+CREATE TABLE asignacion_tareas (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    tarea_id       INTEGER NOT NULL,
+    user_id        INTEGER NOT NULL,
+    datos_relacion TEXT,
+    is_active      INTEGER NOT NULL DEFAULT 1,
+    FOREIGN KEY (tarea_id) REFERENCES tareas(id),
+    FOREIGN KEY (user_id)  REFERENCES users(id)
+);
+
+CREATE TABLE entregables (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    tarea_id      INTEGER NOT NULL,
+    fecha_inicio  TEXT,
+    fecha_fin     TEXT,
+    total         REAL,
+    estado        TEXT    NOT NULL DEFAULT 'EN_PROCESO',
+    observaciones TEXT,
+    FOREIGN KEY (tarea_id) REFERENCES tareas(id)
+);
+
+CREATE TABLE version_entregables (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    entregable_id  INTEGER NOT NULL,
+    numero_version INTEGER NOT NULL,
+    fecha_inicio   TEXT,
+    fecha_fin      TEXT,
+    total          REAL,
+    estado         TEXT    NOT NULL DEFAULT 'EN_REVISION',
+    observaciones  TEXT,
+    FOREIGN KEY (entregable_id) REFERENCES entregables(id),
+    UNIQUE (entregable_id, numero_version)
+);
+
+CREATE TABLE aprobaciones (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    version_entregable_id INTEGER NOT NULL,
+    estado                TEXT    NOT NULL DEFAULT 'PENDIENTE',  -- PENDIENTE, APROBADA, RECHAZADA
+    aprobador_id          INTEGER NOT NULL,
+    comentario            TEXT,
+    fecha                 TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    FOREIGN KEY (version_entregable_id) REFERENCES version_entregables(id),
+    FOREIGN KEY (aprobador_id)          REFERENCES users(id)
+);
+
+CREATE TABLE facturas (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    campania_id INTEGER NOT NULL,
+    numero      TEXT    NOT NULL UNIQUE,
+    fecha       TEXT    NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+    subtotal    REAL    NOT NULL DEFAULT 0,
+    impuestos   REAL    NOT NULL DEFAULT 0,
+    total       REAL    NOT NULL DEFAULT 0,
+    estado      TEXT    NOT NULL DEFAULT 'EMITIDA',
+    FOREIGN KEY (campania_id) REFERENCES campanias(id)
+);
+
+CREATE TABLE factura_hitos (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    factura_id INTEGER NOT NULL,
+    hito_id    INTEGER NOT NULL,
+    valor      REAL    NOT NULL,
+    FOREIGN KEY (factura_id) REFERENCES facturas(id),
+    FOREIGN KEY (hito_id)    REFERENCES hitos(id),
+    UNIQUE (factura_id, hito_id)
+);
+
+-- ==================== DATOS SEMILLA (roles) ====================
+
+INSERT INTO roles (nombre, descripcion) VALUES
+    ('ADMIN',             'Administra usuarios, roles y permisos'),
+    ('CUENTAS',           'Crea campanias, presupuestos, hitos y tareas'),
+    ('CREATIVO',          'Sube entregables y versiones de sus tareas'),
+    ('CLIENTE_APROBADOR', 'Aprueba o rechaza versiones de entregables'),
+    ('FINANZAS',          'Genera facturas de hitos cerrados');
+```
+
+### Diagrama BD
