@@ -1918,3 +1918,541 @@ Salida:
 
 ![alt text](images/proceso-1789509900491.png)
 ![alt text](images/proceso-1789509906635.png)
+
+
+## SEG-05 - Feature hitos
+
+Se busca crear la entidad hitos, con fk a campanias ( campañas ) con el cmapo estado ( abierto, cerrado, facturado ).
+
+### 05.1 Capa de dominio
+
+Aqui la entidad hito ya no es inmutable del todo, estado y fechacierre no son readonly porque el hito necesita cambiar de estado durante su ciclo de vida, el constructor deja ABIERTO por defecto y fechacierre inicia en null, lo que nuevo es que la entidad tiene su propio metodo cerrar, ahi vive la regla del negocio, si el hito no esta abierto, lanza hitoyacerradoexception, si esta abierto lo pasa a cerrado y le pone fecha de cierre, es dintos a las features anteriores porque la logica ya no vive solo en el use case, si no dentro de la misma entidad
+
+tambien hay un metodo estabierto que solo pregunta el estado sin modificar nada, los comentarios rn02 y rn06 encima del metodo cerrar, conectan el codigo con las reglas del negocio de la bitacora,  en la interfaz ihitorepository aparece un metodo nuevo que no estaba en clientes ni campanias, actualizarestado, que sirve para persistir el cambio de estado por fuera del create normal, pensado para usarse dentro de una transaccion cuando se cierre un hito, las dos excepciones nuevas son hitoyacerradoexception (rn-06, un hito cerrado no se reabre ni admite nuevas versiones o aprobaciones) y campaniainactivaparahitoexception, rn-08, reutiliza la misma regla que ya vimos en campanias pero ahora aplicada desde el lado de hitos
+
+
+copmandos:
+
+```bash
+cat > src/features/business/hitos/domain/entities/hito.entity.ts <<'EOF_MANUAL'
+import { HitoYaCerradoException } from '../exceptions/hito-ya-cerrado.exception.js';
+
+export type HitoEstado = 'ABIERTO' | 'CERRADO' | 'FACTURADO';
+
+export interface HitoProps {
+  id?: number | null;
+  campaniaId: number;
+  nombre: string;
+  descripcion?: string | null;
+  estado?: HitoEstado;
+  fechaCierre?: Date | null;
+  isActive?: boolean;
+}
+
+export class Hito {
+  readonly id: number | null;
+  readonly campaniaId: number;
+  readonly nombre: string;
+  readonly descripcion: string | null;
+  estado: HitoEstado;
+  fechaCierre: Date | null;
+  readonly isActive: boolean;
+
+  constructor(props: HitoProps) {
+    this.id = props.id ?? null;
+    this.campaniaId = props.campaniaId;
+    this.nombre = props.nombre;
+    this.descripcion = props.descripcion ?? null;
+    this.estado = props.estado ?? 'ABIERTO';
+    this.fechaCierre = props.fechaCierre ?? null;
+    this.isActive = props.isActive ?? true;
+  }
+
+  // RN-02: el hito se cierra automáticamente cuando todos sus entregables
+  // tienen su versión más reciente APROBADA (ver feature aprobaciones).
+  // RN-06: un hito cerrado no admite nuevas versiones ni aprobaciones.
+  cerrar(): void {
+    if (this.estado !== 'ABIERTO') {
+      throw new HitoYaCerradoException(this.id);
+    }
+    this.estado = 'CERRADO';
+    this.fechaCierre = new Date();
+  }
+
+  estaAbierto(): boolean {
+    return this.estado === 'ABIERTO';
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/domain/interfaces/hito.repository.ts <<'EOF_MANUAL'
+import { Hito } from '../entities/hito.entity.js';
+
+export const HITO_REPOSITORY = 'IHitoRepository';
+
+export interface IHitoRepository {
+  create(hito: Hito): Promise<Hito>;
+  findAll(page: number, limit: number): Promise<{ items: Hito[]; total: number }>;
+  findById(id: number): Promise<Hito | null>;
+  count(): Promise<number>;
+  // Persiste el cambio de estado (usado por CerrarHitoUseCase, dentro de una transacción externa)
+  actualizarEstado(id: number, estado: string, fechaCierre: Date | null): Promise<void>;
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/domain/exceptions/hito-not-found.exception.ts <<'EOF_MANUAL'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class HitoNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super(`Hito con id ${id} no encontrado`);
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/domain/exceptions/hito-ya-cerrado.exception.ts <<'EOF_MANUAL'
+import { BusinessRuleException } from '../../../../../common/exceptions/business-rule.exception.js';
+
+export class HitoYaCerradoException extends BusinessRuleException {
+  constructor(hitoId: number | null) {
+    // RN-06: un hito cerrado no se reabre ni admite nuevas versiones/aprobaciones
+    super(`El hito ${hitoId ?? '(desconocido)'} ya está cerrado`);
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/domain/exceptions/campania-inactiva-para-hito.exception.ts <<'EOF_MANUAL'
+import { BusinessRuleException } from '../../../../../common/exceptions/business-rule.exception.js';
+
+export class CampaniaInactivaParaHitoException extends BusinessRuleException {
+  constructor(campaniaId: number) {
+    // RN-08
+    super(`La campaña ${campaniaId} está inactiva; no admite hitos nuevos`);
+  }
+}
+EOF_MANUAL
+```
+salidas:
+![alt text](images/proceso-1789510150190.png)
+![alt text](images/proceso-1789510159576.png)
+
+### 05.2 Capa de aplicacion
+
+el dto pide campaniaid obligatorio y minimo 1, nombre requerido y descripcion opcional, mismo patron de validacion y swagger que las features anteriores, el hitomapper traduce igual, toentity convierte el dto en entidad dejando el estado en ABIERTO, toresponse arma el objeto de salida incluyendo estado, fechacierre e isactive, en createhitousecase se repite el patron de campanias, inyecta los dos repos, el de hito y el de campania, primero busca la campania por el campaniaid recibido, si no existe lanza campanianotfoundexception, y si existe pero no esta activa lanza campaniainactivaparahitoexception de rn08, solo si pasa esas dos validaciones crea el hito, getbyidusecase y listusecase siguen exactamente el mismo patron que ya se vio en clientes y campanias
+
+Comandos:
+```bash
+cat > src/features/business/hitos/application/dto/create-hito.dto.ts <<'EOF_MANUAL'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+
+export class CreateHitoDto {
+  @ApiProperty({ example: 1 })
+  @IsInt({ message: 'campaniaId debe ser entero' })
+  @Min(1, { message: 'campaniaId es requerido' })
+  campaniaId!: number;
+
+  @ApiProperty({ example: 'Piezas para redes sociales' })
+  @IsString()
+  @IsNotEmpty({ message: 'nombre es requerido' })
+  @MaxLength(150)
+  nombre!: string;
+
+  @ApiPropertyOptional({ example: 'Diseño de post e historias para Instagram' })
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/application/mappers/hito.mapper.ts <<'EOF_MANUAL'
+import { Hito } from '../../domain/entities/hito.entity.js';
+import { CreateHitoDto } from '../dto/create-hito.dto.js';
+
+export class HitoMapper {
+  static toEntity(dto: CreateHitoDto): Hito {
+    return new Hito({
+      campaniaId: dto.campaniaId,
+      nombre: dto.nombre,
+      descripcion: dto.descripcion ?? null,
+      estado: 'ABIERTO',
+    });
+  }
+
+  static toResponse(h: Hito) {
+    return {
+      id: h.id,
+      campaniaId: h.campaniaId,
+      nombre: h.nombre,
+      descripcion: h.descripcion,
+      estado: h.estado,
+      fechaCierre: h.fechaCierre,
+      isActive: h.isActive,
+    };
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/application/use-cases/create-hito.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { CAMPANIA_REPOSITORY } from '../../../campanias/domain/interfaces/campania.repository.js';
+import type { ICampaniaRepository } from '../../../campanias/domain/interfaces/campania.repository.js';
+import { CampaniaNotFoundException } from '../../../campanias/domain/exceptions/campania-not-found.exception.js';
+import { CampaniaInactivaParaHitoException } from '../../domain/exceptions/campania-inactiva-para-hito.exception.js';
+import { HITO_REPOSITORY } from '../../domain/interfaces/hito.repository.js';
+import type { IHitoRepository } from '../../domain/interfaces/hito.repository.js';
+import type { Hito } from '../../domain/entities/hito.entity.js';
+import { CreateHitoDto } from '../dto/create-hito.dto.js';
+import { HitoMapper } from '../mappers/hito.mapper.js';
+
+@Injectable()
+export class CreateHitoUseCase {
+  constructor(
+    @Inject(HITO_REPOSITORY) private readonly hitoRepo: IHitoRepository,
+    @Inject(CAMPANIA_REPOSITORY) private readonly campaniaRepo: ICampaniaRepository,
+  ) {}
+
+  async execute(dto: CreateHitoDto): Promise<Hito> {
+    const campania = await this.campaniaRepo.findById(dto.campaniaId);
+    if (!campania) {
+      throw new CampaniaNotFoundException(dto.campaniaId);
+    }
+    if (!campania.isActive) {
+      // RN-08
+      throw new CampaniaInactivaParaHitoException(dto.campaniaId);
+    }
+    return this.hitoRepo.create(HitoMapper.toEntity(dto));
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/application/use-cases/get-hito-by-id.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { HitoNotFoundException } from '../../domain/exceptions/hito-not-found.exception.js';
+import { HITO_REPOSITORY } from '../../domain/interfaces/hito.repository.js';
+import type { IHitoRepository } from '../../domain/interfaces/hito.repository.js';
+import type { Hito } from '../../domain/entities/hito.entity.js';
+
+@Injectable()
+export class GetHitoByIdUseCase {
+  constructor(
+    @Inject(HITO_REPOSITORY) private readonly hitoRepo: IHitoRepository,
+  ) {}
+
+  async execute(id: number): Promise<Hito> {
+    const hito = await this.hitoRepo.findById(id);
+    if (!hito) {
+      throw new HitoNotFoundException(id);
+    }
+    return hito;
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/hitos/application/use-cases/list-hitos.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { HITO_REPOSITORY } from '../../domain/interfaces/hito.repository.js';
+import type { IHitoRepository } from '../../domain/interfaces/hito.repository.js';
+import { HitoMapper } from '../mappers/hito.mapper.js';
+
+@Injectable()
+export class ListHitosUseCase {
+  constructor(
+    @Inject(HITO_REPOSITORY) private readonly hitoRepo: IHitoRepository,
+  ) {}
+
+  async execute(page: number, limit: number) {
+    const { items, total } = await this.hitoRepo.findAll(page, limit);
+    return {
+      items: items.map(HitoMapper.toResponse),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+}
+EOF_MANUAL
+```
+
+Salidas:
+
+![alt text](images/proceso-1789514180919.png)
+![alt text](images/proceso-1789514189533.png)
+![alt text](images/proceso-1789514195469.png)
+
+### 05.3 Capa de infraestructura
+
+el modelo hitomodel usa foreignkey y belongsto hacia campaniamodel igual que campanias lo hacia hacia clientemodel, agrega las columnas estado, default ABIERTO, y fechacierre nullable, hay que registrar hitomodel en all_models junto a los dos anteriores, el repositorio sigue el mismo patron de siempre con todomain, pero aqui aparece el metodo actualizarestado que implementa lo que se definio en la interfaz del dominio, hace un update directo por id sobre estado y fechacierre sin pasar por el create, el seeder busca primero una campania que este activa entre todas las que existen si no encuentra ninguna no siembra nada, y si encuentra siembra el hito demo de forma idempotente igual que los seeders anteriores
+
+comandos
+```bash
+cat > src/features/business/hitos/infrastructure/persistence/models/hito.model.ts <<'EOF_MANUAL'
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { CampaniaModel } from '../../../../campanias/infrastructure/persistence/models/campania.model.js';
+
+@Table({ tableName: 'hitos', timestamps: true })
+export class HitoModel extends Model {
+  @Column({ type: DataType.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true })
+  declare id: number;
+
+  @ForeignKey(() => CampaniaModel)
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare campaniaId: number;
+
+  @BelongsTo(() => CampaniaModel)
+  campania?: CampaniaModel;
+
+  @Column({ type: DataType.STRING(150), allowNull: false })
+  declare nombre: string;
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  declare descripcion: string | null;
+
+  @Column({ type: DataType.STRING(20), allowNull: false, defaultValue: 'ABIERTO' })
+  declare estado: string;
+
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare fechaCierre: Date | null;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  declare isActive: boolean;
+}
+EOF_MANUAL
+```
+
+registramos el modelo hitos en el sequelize
+
+```bash
+import { HitoModel } from '../../../features/business/hitos/infrastructure/persistence/models/hito.model.js';
+
+export const ALL_MODELS: any[] = [
+  ClienteModel,
+  CampaniaModel,
+  HitoModel,
+];
+```
+
+```bash
+cat > src/features/business/hitos/infrastructure/persistence/repositories/hito.repository.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Sequelize } from 'sequelize-typescript';
+import { SEQUELIZE } from '../../../../../../infrastructure/database/sequelize/sequelize.module.js';
+import { Hito } from '../../../domain/entities/hito.entity.js';
+import type { HitoEstado } from '../../../domain/entities/hito.entity.js';
+import { IHitoRepository } from '../../../domain/interfaces/hito.repository.js';
+import { HitoModel } from '../models/hito.model.js';
+
+@Injectable()
+export class HitoRepository implements IHitoRepository {
+  constructor(@Inject(SEQUELIZE) private readonly sequelize: Sequelize) {}
+
+  private get repo() {
+    return this.sequelize.getRepository(HitoModel);
+  }
+
+  async create(hito: Hito): Promise<Hito> {
+    const created = await this.repo.create({
+      campaniaId: hito.campaniaId,
+      nombre: hito.nombre,
+      descripcion: hito.descripcion,
+      estado: hito.estado,
+      fechaCierre: hito.fechaCierre,
+      isActive: hito.isActive,
+    });
+    return this.toDomain(created);
+  }
+
+  async findAll(page: number, limit: number) {
+    const { rows, count } = await this.repo.findAndCountAll({
+      offset: (page - 1) * limit,
+      limit,
+      order: [['id', 'ASC']],
+    });
+    return { items: rows.map((r) => this.toDomain(r)), total: count };
+  }
+
+  async findById(id: number): Promise<Hito | null> {
+    const found = await this.repo.findByPk(id);
+    return found ? this.toDomain(found) : null;
+  }
+
+  async count(): Promise<number> {
+    return this.repo.count();
+  }
+
+  async actualizarEstado(id: number, estado: string, fechaCierre: Date | null): Promise<void> {
+    await this.repo.update({ estado, fechaCierre }, { where: { id } });
+  }
+
+  private toDomain(m: HitoModel): Hito {
+    return new Hito({
+      id: m.id,
+      campaniaId: m.campaniaId,
+      nombre: m.nombre,
+      descripcion: m.descripcion ?? null,
+      estado: (m.estado as HitoEstado) ?? 'ABIERTO',
+      fechaCierre: m.fechaCierre ?? null,
+      isActive: m.isActive,
+    });
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/hitos/infrastructure/persistence/seeders/hito.seeder.ts <<'EOF_MANUAL'
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { CAMPANIA_REPOSITORY } from '../../../../campanias/domain/interfaces/campania.repository.js';
+import type { ICampaniaRepository } from '../../../../campanias/domain/interfaces/campania.repository.js';
+import { Hito } from '../../../domain/entities/hito.entity.js';
+import { HITO_REPOSITORY } from '../../../domain/interfaces/hito.repository.js';
+import type { IHitoRepository } from '../../../domain/interfaces/hito.repository.js';
+
+@Injectable()
+export class HitoSeeder {
+  private readonly logger = new Logger(HitoSeeder.name);
+
+  constructor(
+    @Inject(HITO_REPOSITORY) private readonly hitoRepo: IHitoRepository,
+    @Inject(CAMPANIA_REPOSITORY) private readonly campaniaRepo: ICampaniaRepository,
+  ) {}
+
+  async seed(): Promise<void> {
+    const { items: campanias } = await this.campaniaRepo.findAll(1, 100);
+    const campania = campanias.find((c) => c.isActive);
+    if (!campania || campania.id === null) {
+      this.logger.warn('Seeder hitos: sin campaña activa; no se siembra');
+      return;
+    }
+    const { items: hitos } = await this.hitoRepo.findAll(1, 100);
+    if (hitos.some((h) => h.nombre === 'Piezas para redes sociales')) {
+      this.logger.log('Seeder hitos: ya existía el hito demo (idempotente)');
+      return;
+    }
+    await this.hitoRepo.create(
+      new Hito({
+        campaniaId: campania.id,
+        nombre: 'Piezas para redes sociales',
+        descripcion: 'Diseño de post e historias para Instagram',
+        estado: 'ABIERTO',
+      }),
+    );
+    this.logger.log('Seeder hitos: hito demo creado');
+  }
+}
+EOF_MANUAL
+```
+Salidas:
+![alt text](images/proceso-1789514409010.png)
+![alt text](images/proceso-1789514426594.png)
+![alt text](images/proceso-1789514432576.png)
+![alt text](images/proceso-1789514461166.png)
+
+### 05.4 Capa de presentacion + modulo
+
+hitoscontroller expone las mismas tres rutas rest de siempre, post /hitos, get /hitos, get /hitos/:id, sin logica propia, solo delega a los casos de uso, hitosmodule importa campaniasmodule porque createhitousecase necesita el campania_repository que campaniasmodule exporta, es la misma cadena de dependencia entre modulos que ya se vio entre campanias y clientes, ahora un nivel mas abajo, hitos depende de campanias que depende de clientes
+
+comandos: 
+```bash
+cat > src/features/business/hitos/presentation/http/controllers/hitos.controller.ts <<'EOF_MANUAL'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateHitoDto } from '../../../application/dto/create-hito.dto.js';
+import { HitoMapper } from '../../../application/mappers/hito.mapper.js';
+import { CreateHitoUseCase } from '../../../application/use-cases/create-hito.use-case.js';
+import { GetHitoByIdUseCase } from '../../../application/use-cases/get-hito-by-id.use-case.js';
+import { ListHitosUseCase } from '../../../application/use-cases/list-hitos.use-case.js';
+
+@ApiTags('hitos')
+@Controller('hitos')
+export class HitosController {
+  constructor(
+    private readonly createHito: CreateHitoUseCase,
+    private readonly listHitos: ListHitosUseCase,
+    private readonly getHito: GetHitoByIdUseCase,
+  ) {}
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Crear hito' })
+  async create(@Body() dto: CreateHitoDto) {
+    const hito = await this.createHito.execute(dto);
+    return HitoMapper.toResponse(hito);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar hitos (paginado)' })
+  async list(@Query('page') page = '1', @Query('limit') limit = '10') {
+    return this.listHitos.execute(Number(page), Number(limit));
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener hito por id' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const hito = await this.getHito.execute(id);
+    return HitoMapper.toResponse(hito);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/hitos/hitos.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { CampaniasModule } from '../campanias/campanias.module.js';
+import { CreateHitoUseCase } from './application/use-cases/create-hito.use-case.js';
+import { GetHitoByIdUseCase } from './application/use-cases/get-hito-by-id.use-case.js';
+import { ListHitosUseCase } from './application/use-cases/list-hitos.use-case.js';
+import { HITO_REPOSITORY } from './domain/interfaces/hito.repository.js';
+import { HitoRepository } from './infrastructure/persistence/repositories/hito.repository.js';
+import { HitoSeeder } from './infrastructure/persistence/seeders/hito.seeder.js';
+import { HitosController } from './presentation/http/controllers/hitos.controller.js';
+
+@Module({
+  imports: [CampaniasModule],
+  controllers: [HitosController],
+  providers: [
+    CreateHitoUseCase,
+    ListHitosUseCase,
+    GetHitoByIdUseCase,
+    HitoSeeder,
+    { provide: HITO_REPOSITORY, useClass: HitoRepository },
+  ],
+  exports: [HITO_REPOSITORY, HitoSeeder],
+})
+export class HitosModule {}
+EOF_MANUAL
+```
+
+salidas:
+
+![alt text](images/proceso-1789514521387.png)
+![alt text](images/proceso-1789514526410.png)
+
+
+## Commit #5 - Feature hitos terminado 
+
+![alt text](images/proceso-1789515251241.png)
+![alt text](images/proceso-1789515256431.png)
