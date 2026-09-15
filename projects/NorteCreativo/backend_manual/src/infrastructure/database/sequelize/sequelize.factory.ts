@@ -2,11 +2,14 @@ import { Sequelize } from 'sequelize-typescript';
 import { getDbBlock } from '../../../config/environment/db-env.js';
 import { IEnvConfig } from '../../../config/environment/env.interface.js';
 import { ClienteModel } from '../../../features/business/clientes/infrastructure/persistence/models/cliente.model.js';
+import { CampaniaModel } from '../../../features/business/campanias/infrastructure/persistence/models/campania.model.js';
+
 // Los modelos se van agregando aquí a medida que se crea cada feature
 
 
 export const ALL_MODELS: any[] = [
-  ClienteModel
+  ClienteModel,
+  CampaniaModel
 ];
 
 export function sequelizeFactory(cfg: IEnvConfig): Sequelize {

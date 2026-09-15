@@ -262,7 +262,7 @@ Salida:
 ![alt text](images/proceso-1789440417344.png)
 ![alt text](images/proceso-1789440478709.png)
 
-### Commit #1 - El proyecto arranca aun sin features definidas
+## Commit #1 - El proyecto arranca aun sin features definidas
 
 Esta en el puerto 3000, porque en este punto esta con el main.ts generico
 
@@ -932,7 +932,7 @@ salidas:
 ![alt text](images/proceso-1789442475229.png)
 ![alt text](images/proceso-1789442480399.png)
 
-### Commit #2 - configuración, errores, interceptores y BD listos. La app arranca y conecta.
+## Commit #2 - configuración, errores, interceptores y BD listos. La app arranca y conecta.
 
 Esta en el puerto 3000, porque en este punto esta con el main.ts generico
 
@@ -949,6 +949,9 @@ prueba del validador con env
 ### 03.1 Capa de dominio
 
 Se define el nucleo agnostico de la entidad cliente, aca con sus atributos y su constructor, establece el contrato que dictara como se guarda la informacion y se definen las excepciones exclusivas de este modulo.
+
+es el corazon de la feature y tiene las reglas puras del negocio, es una clase inmutable y todos los atributos son readonly, si no se define el estado, queda en active por defecto, la interfaz iclienterepository dice las operaciones que soporta cualquier repo de los clientes, como crear, buscar todos, buscar por id, buscar por numero de docuemntos y conteo, permite que en la capa de infraestructura se use sequelize sin que el dominio se entere
+
 
 Comando:
 ``` bash
@@ -1030,7 +1033,7 @@ Salidas
 
 ### 03.2 Capa de aplicacion
 
-se implementan aca los dtos para validar que los datos que el usuario da tenga el formato correcto, crea los mappers para traducir los datos a entidades internas.
+se implementan aca los dtos para validar que los datos que el usuario da tenga el formato correcto, crea los mappers para traducir los datos a entidades internas, se usa classvalidaotr para que se rechacen peticiones mal formadas que vengan de la logica de negocio y las decoraciones swagger para que esos campos esten documentados automaticamente
 
 Comandos:
 ``` bash
@@ -1104,6 +1107,7 @@ export class ClienteMapper {
 EOF_MANUAL
 ```
 
+El clientemapper traduce, toentity convierte en dto( lo que llega del usuario ) en una entidad de dominio, y toresponse convierte una entidad en el objeto plano que se devuelve al cliente
 ``` bash
 cat > src/features/business/clientes/application/use-cases/create-cliente.use-case.ts <<'EOF_MANUAL'
 import { Inject, Injectable } from '@nestjs/common';
@@ -1188,6 +1192,8 @@ Salidas:
 ![alt text](images/proceso-1789503449774.png)
 
 ### 03.3 Capa de insfraestructura
+
+CLientemodel es el modelo sequelize-typescript, mapea la entidad de dominio a una tabla sql concreta, con tipos, columnas, longitudes, restricciones como unique: true, se debe registrar en sequelize.factory.ts para que sequelize lo reconozca al levantar la conexion, cliente repositoryu es lo que definimos en la parte de dominio, esta usa el modelo de sequelize para hacer las consultas y siempre convertir el resultado antes de devolverlo.
 
 Comandos
 ``` bash
@@ -1344,6 +1350,8 @@ salidas:
 
 ### 03.4 Capa de presentacion
 
+aqui se expone la feature al usuario via http, clientescontroller define la ruta de rest, Post /Clientes, get /CLientes, get /clientes/:id, y solo se encarga de recibir la peticion, y llevarla al caso de uso correspondiente, y devolver ahi la respuesta mapeada.
+
 comandos:
 ``` bash
 cat > src/features/business/clientes/presentation/http/controllers/clientes.controller.ts <<'EOF_MANUAL'
@@ -1433,3 +1441,480 @@ Salida:
 ## Commit #3 - Feature clientes completada, y soluciones a errores varios en el manejo de la base de datos, un unico compose para manipular los 4 motores, asi como una pequeña documentacion añadida
 
 ![alt text](images/proceso-1789506842831.png)
+
+
+## SEG-04 - Feature Campanias
+
+### 04.1 Capa de dominio
+
+mismo patron que clientes pero aqui la entidad campania tiene una relacion, cada campania le pertenece a un cliente por el clienteid, si no se define isactive queda en true por defecto, icampaniarepository dice las operaciones que soporta el repo, crear, buscar todos, buscar por id y conteo, igual que en clientes esto permite que la infraestructura use sequelize sin que el dominio se entere, en las excepciones aparece algo nuevo, campaniainactivaexception trae un comentario RN-08 que referencia la regla de negocio de la bitacora, asi el codigo queda conectado directamente con la especificacion y le dice a cualquiera que lea el archivo por que existe esa excepcion, una campania inactiva no puede recibir hitos nuevos
+
+comandos:
+```bash
+cat > src/features/business/campanias/domain/entities/campania.entity.ts <<'EOF_MANUAL'
+export interface CampaniaProps {
+  id?: number | null;
+  clienteId: number;
+  nombre: string;
+  descripcion?: string | null;
+  isActive?: boolean;
+}
+
+export class Campania {
+  readonly id: number | null;
+  readonly clienteId: number;
+  readonly nombre: string;
+  readonly descripcion: string | null;
+  readonly isActive: boolean;
+
+  constructor(props: CampaniaProps) {
+    this.id = props.id ?? null;
+    this.clienteId = props.clienteId;
+    this.nombre = props.nombre;
+    this.descripcion = props.descripcion ?? null;
+    this.isActive = props.isActive ?? true;
+  }
+}
+EOF_MANUAL
+```
+``` bash
+cat > src/features/business/campanias/domain/interfaces/campania.repository.ts <<'EOF_MANUAL'
+import { Campania } from '../entities/campania.entity.js';
+
+export const CAMPANIA_REPOSITORY = 'ICampaniaRepository';
+
+export interface ICampaniaRepository {
+  create(campania: Campania): Promise<Campania>;
+  findAll(page: number, limit: number): Promise<{ items: Campania[]; total: number }>;
+  findById(id: number): Promise<Campania | null>;
+  count(): Promise<number>;
+}
+EOF_MANUAL
+```
+``` bash
+cat > src/features/business/campanias/domain/exceptions/campania-not-found.exception.ts <<'EOF_MANUAL'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class CampaniaNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super(`Campaña con id ${id} no encontrada`);
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/campanias/domain/exceptions/campania-inactiva.exception.ts <<'EOF_MANUAL'
+import { BusinessRuleException } from '../../../../../common/exceptions/business-rule.exception.js';
+
+export class CampaniaInactivaException extends BusinessRuleException {
+  constructor(campaniaId: number) {
+    // RN-08: una campaña inactiva no admite hitos nuevos
+    super(`La campaña con id ${campaniaId} está inactiva y no admite hitos nuevos`);
+  }
+}
+EOF_MANUAL
+```
+
+salida:
+
+![alt text](images/proceso-1789508161710.png)
+![alt text](images/proceso-1789508168523.png)
+
+### 04.2 Capa de aplicacion
+
+el dto valida lo mismo que en clientes pero con clienteid obligatorio y minimo 1, nombre requerido y descripcion opcional, decorado con swagger para la documentacion automatica igual que antes
+
+Comandos:
+
+```bash
+cat > src/features/business/campanias/application/dto/create-campania.dto.ts <<'EOF_MANUAL'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+
+export class CreateCampaniaDto {
+  @ApiProperty({ example: 1 })
+  @IsInt({ message: 'clienteId debe ser entero' })
+  @Min(1, { message: 'clienteId es requerido' })
+  clienteId!: number;
+
+  @ApiProperty({ example: 'Carnaval 2026' })
+  @IsString()
+  @IsNotEmpty({ message: 'nombre es requerido' })
+  @MaxLength(150)
+  nombre!: string;
+
+  @ApiPropertyOptional({ example: 'Campaña de carnaval para redes y vallas' })
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
+}
+EOF_MANUAL
+```
+el campaniamapper traduce igual que el de clientes, toentity convierte el dto en entidad de dominio, toresponse convierte la entidad en el objeto plano que se devuelve
+
+```bash
+cat > src/features/business/campanias/application/mappers/campania.mapper.ts <<'EOF_MANUAL'
+import { Campania } from '../../domain/entities/campania.entity.js';
+import { CreateCampaniaDto } from '../dto/create-campania.dto.js';
+
+export class CampaniaMapper {
+  static toEntity(dto: CreateCampaniaDto): Campania {
+    return new Campania({
+      clienteId: dto.clienteId,
+      nombre: dto.nombre,
+      descripcion: dto.descripcion ?? null,
+      isActive: true,
+    });
+  }
+
+  static toResponse(c: Campania) {
+    return {
+      id: c.id,
+      clienteId: c.clienteId,
+      nombre: c.nombre,
+      descripcion: c.descripcion,
+      isActive: c.isActive,
+    };
+  }
+}
+EOF_MANUAL
+```
+aqui esta la diferencia grande frente a clientes, createcampaniausecase inyecta los dos repos, el de campania y el de cliente, antes de crear la campania valida que el clienteid recibido corresponda a un cliente que exista de verdad, si no lanza clientenotfoundexception que es la misma excepcion del otro modulo, reutilizada
+```bash
+cat > src/features/business/campanias/application/use-cases/create-campania.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { CLIENTE_REPOSITORY } from '../../../clientes/domain/interfaces/cliente.repository.js';
+import type { IClienteRepository } from '../../../clientes/domain/interfaces/cliente.repository.js';
+import { ClienteNotFoundException } from '../../../clientes/domain/exceptions/cliente-not-found.exception.js';
+import { CAMPANIA_REPOSITORY } from '../../domain/interfaces/campania.repository.js';
+import type { ICampaniaRepository } from '../../domain/interfaces/campania.repository.js';
+import type { Campania } from '../../domain/entities/campania.entity.js';
+import { CreateCampaniaDto } from '../dto/create-campania.dto.js';
+import { CampaniaMapper } from '../mappers/campania.mapper.js';
+
+@Injectable()
+export class CreateCampaniaUseCase {
+  constructor(
+    @Inject(CAMPANIA_REPOSITORY) private readonly campaniaRepo: ICampaniaRepository,
+    @Inject(CLIENTE_REPOSITORY) private readonly clienteRepo: IClienteRepository,
+  ) {}
+
+  async execute(dto: CreateCampaniaDto): Promise<Campania> {
+    const cliente = await this.clienteRepo.findById(dto.clienteId);
+    if (!cliente) {
+      throw new ClienteNotFoundException(dto.clienteId);
+    }
+    return this.campaniaRepo.create(CampaniaMapper.toEntity(dto));
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/campanias/application/use-cases/get-campania-by-id.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { CampaniaNotFoundException } from '../../domain/exceptions/campania-not-found.exception.js';
+import { CAMPANIA_REPOSITORY } from '../../domain/interfaces/campania.repository.js';
+import type { ICampaniaRepository } from '../../domain/interfaces/campania.repository.js';
+import type { Campania } from '../../domain/entities/campania.entity.js';
+
+@Injectable()
+export class GetCampaniaByIdUseCase {
+  constructor(
+    @Inject(CAMPANIA_REPOSITORY) private readonly campaniaRepo: ICampaniaRepository,
+  ) {}
+
+  async execute(id: number): Promise<Campania> {
+    const campania = await this.campaniaRepo.findById(id);
+    if (!campania) {
+      throw new CampaniaNotFoundException(id);
+    }
+    return campania;
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/campanias/application/use-cases/list-campanias.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { CAMPANIA_REPOSITORY } from '../../domain/interfaces/campania.repository.js';
+import type { ICampaniaRepository } from '../../domain/interfaces/campania.repository.js';
+import { CampaniaMapper } from '../mappers/campania.mapper.js';
+
+@Injectable()
+export class ListCampaniasUseCase {
+  constructor(
+    @Inject(CAMPANIA_REPOSITORY) private readonly campaniaRepo: ICampaniaRepository,
+  ) {}
+
+  async execute(page: number, limit: number) {
+    const { items, total } = await this.campaniaRepo.findAll(page, limit);
+    return {
+      items: items.map(CampaniaMapper.toResponse),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+}
+EOF_MANUAL
+```
+Salidas: 
+
+![alt text](images/proceso-1789508336121.png)
+![alt text](images/proceso-1789508344057.png)
+![alt text](images/proceso-1789508351236.png)
+
+
+### 04.3 Capa de infraestructura
+
+campaniamodel usa foreignkey y belongsto de sequelize-typescript para declarar que clienteid es una llave foranea hacia la tabla de clientes, y que se puede cargar la relacion cuando se necesite, campaniarepository sigue el mismo patron de siempre, convertir el resultado antes de devolverlo, el seeder aqui es un poco mas elaborado que el de clientes, primero busca si ya existe un cliente sembrado porque una campania no puede existir sin cliente, y solo si lo encuentra siembra la campania demo, asi evita una campania huerfana, tambien hay que registrar campaniamodel en all_models junto con CLienteModel
+
+Comandos:
+```bash
+cat > src/features/business/campanias/infrastructure/persistence/models/campania.model.ts <<'EOF_MANUAL'
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { ClienteModel } from '../../../../clientes/infrastructure/persistence/models/cliente.model.js';
+
+@Table({ tableName: 'campanias', timestamps: true })
+export class CampaniaModel extends Model {
+  @Column({ type: DataType.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true })
+  declare id: number;
+
+  @ForeignKey(() => ClienteModel)
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare clienteId: number;
+
+  @BelongsTo(() => ClienteModel)
+  cliente?: ClienteModel;
+
+  @Column({ type: DataType.STRING(150), allowNull: false })
+  declare nombre: string;
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  declare descripcion: string | null;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  declare isActive: boolean;
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/campanias/infrastructure/persistence/repositories/campania.repository.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Sequelize } from 'sequelize-typescript';
+import { SEQUELIZE } from '../../../../../../infrastructure/database/sequelize/sequelize.module.js';
+import { Campania } from '../../../domain/entities/campania.entity.js';
+import { ICampaniaRepository } from '../../../domain/interfaces/campania.repository.js';
+import { CampaniaModel } from '../models/campania.model.js';
+
+@Injectable()
+export class CampaniaRepository implements ICampaniaRepository {
+  constructor(@Inject(SEQUELIZE) private readonly sequelize: Sequelize) {}
+
+  private get repo() {
+    return this.sequelize.getRepository(CampaniaModel);
+  }
+
+  async create(campania: Campania): Promise<Campania> {
+    const created = await this.repo.create({
+      clienteId: campania.clienteId,
+      nombre: campania.nombre,
+      descripcion: campania.descripcion,
+      isActive: campania.isActive,
+    });
+    return this.toDomain(created);
+  }
+
+  async findAll(page: number, limit: number) {
+    const { rows, count } = await this.repo.findAndCountAll({
+      offset: (page - 1) * limit,
+      limit,
+      order: [['id', 'ASC']],
+    });
+    return { items: rows.map((r) => this.toDomain(r)), total: count };
+  }
+
+  async findById(id: number): Promise<Campania | null> {
+    const found = await this.repo.findByPk(id);
+    return found ? this.toDomain(found) : null;
+  }
+
+  async count(): Promise<number> {
+    return this.repo.count();
+  }
+
+  private toDomain(m: CampaniaModel): Campania {
+    return new Campania({
+      id: m.id,
+      clienteId: m.clienteId,
+      nombre: m.nombre,
+      descripcion: m.descripcion ?? null,
+      isActive: m.isActive,
+    });
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/campanias/infrastructure/persistence/seeders/campania.seeder.ts <<'EOF_MANUAL'
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { CLIENTE_REPOSITORY } from '../../../../clientes/domain/interfaces/cliente.repository.js';
+import type { IClienteRepository } from '../../../../clientes/domain/interfaces/cliente.repository.js';
+import { Campania } from '../../../domain/entities/campania.entity.js';
+import { CAMPANIA_REPOSITORY } from '../../../domain/interfaces/campania.repository.js';
+import type { ICampaniaRepository } from '../../../domain/interfaces/campania.repository.js';
+
+@Injectable()
+export class CampaniaSeeder {
+  private readonly logger = new Logger(CampaniaSeeder.name);
+
+  constructor(
+    @Inject(CAMPANIA_REPOSITORY) private readonly campaniaRepo: ICampaniaRepository,
+    @Inject(CLIENTE_REPOSITORY) private readonly clienteRepo: IClienteRepository,
+  ) {}
+
+  async seed(): Promise<void> {
+    const { items: clientes } = await this.clienteRepo.findAll(1, 100);
+    const cliente = clientes[0];
+    if (!cliente || cliente.id === null) {
+      this.logger.warn('Seeder campanias: sin cliente demo; no se siembra');
+      return;
+    }
+    const { items: campanias } = await this.campaniaRepo.findAll(1, 100);
+    if (campanias.some((c) => c.nombre === 'Carnaval 2026')) {
+      this.logger.log('Seeder campanias: ya existía la campaña demo (idempotente)');
+      return;
+    }
+    await this.campaniaRepo.create(
+      new Campania({
+        clienteId: cliente.id,
+        nombre: 'Carnaval 2026',
+        descripcion: 'Campaña de carnaval para redes y vallas',
+        isActive: true,
+      }),
+    );
+    this.logger.log('Seeder campanias: campaña demo creada');
+  }
+}
+EOF_MANUAL
+```
+
+Registrar modelo en sequelize.factory.ts 
+
+```bash
+import { CampaniaModel } from '../../../features/business/campanias/infrastructure/persistence/models/campania.model.js';
+
+export const ALL_MODELS: any[] = [
+  ClienteModel,
+  CampaniaModel,
+];
+```
+
+Salida:
+![alt text](images/proceso-1789508483290.png)
+![alt text](images/proceso-1789508490890.png)
+![alt text](images/proceso-1789508497768.png)
+![alt text](images/proceso-1789508526513.png)
+
+### 04.4 Capa de presentacion + modulo
+
+igual que en clientes, campaniascontroller expone las rutas rest, post /campanias, get /campanias, get /campanias/:id, sin logica propia, solo recibe la peticion y la manda al caso de uso, lo que si cambia es el modulo, campaniasmodule importa clientesmodule porque el caso de uso de crear necesita el cliente_repository que exporto clientesmodule en 03.5, es el reflejo a nivel de modulos de nestjs de la dependencia entre features que ya se vio en el dominio y la aplicacion
+
+comandos:
+```bash
+cat > src/features/business/campanias/presentation/http/controllers/campanias.controller.ts <<'EOF_MANUAL'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateCampaniaDto } from '../../../application/dto/create-campania.dto.js';
+import { CampaniaMapper } from '../../../application/mappers/campania.mapper.js';
+import { CreateCampaniaUseCase } from '../../../application/use-cases/create-campania.use-case.js';
+import { GetCampaniaByIdUseCase } from '../../../application/use-cases/get-campania-by-id.use-case.js';
+import { ListCampaniasUseCase } from '../../../application/use-cases/list-campanias.use-case.js';
+
+@ApiTags('campanias')
+@Controller('campanias')
+export class CampaniasController {
+  constructor(
+    private readonly createCampania: CreateCampaniaUseCase,
+    private readonly listCampanias: ListCampaniasUseCase,
+    private readonly getCampania: GetCampaniaByIdUseCase,
+  ) {}
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Crear campaña' })
+  async create(@Body() dto: CreateCampaniaDto) {
+    const campania = await this.createCampania.execute(dto);
+    return CampaniaMapper.toResponse(campania);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar campañas (paginado)' })
+  async list(@Query('page') page = '1', @Query('limit') limit = '10') {
+    return this.listCampanias.execute(Number(page), Number(limit));
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener campaña por id' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const campania = await this.getCampania.execute(id);
+    return CampaniaMapper.toResponse(campania);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/campanias/campanias.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { ClientesModule } from '../clientes/clientes.module.js';
+import { CreateCampaniaUseCase } from './application/use-cases/create-campania.use-case.js';
+import { GetCampaniaByIdUseCase } from './application/use-cases/get-campania-by-id.use-case.js';
+import { ListCampaniasUseCase } from './application/use-cases/list-campanias.use-case.js';
+import { CAMPANIA_REPOSITORY } from './domain/interfaces/campania.repository.js';
+import { CampaniaRepository } from './infrastructure/persistence/repositories/campania.repository.js';
+import { CampaniaSeeder } from './infrastructure/persistence/seeders/campania.seeder.js';
+import { CampaniasController } from './presentation/http/controllers/campanias.controller.js';
+
+@Module({
+  imports: [ClientesModule],
+  controllers: [CampaniasController],
+  providers: [
+    CreateCampaniaUseCase,
+    ListCampaniasUseCase,
+    GetCampaniaByIdUseCase,
+    CampaniaSeeder,
+    { provide: CAMPANIA_REPOSITORY, useClass: CampaniaRepository },
+  ],
+  exports: [CAMPANIA_REPOSITORY, CampaniaSeeder],
+})
+export class CampaniasModule {}
+EOF_MANUAL
+```
+
+Salida:
+![alt text](images/proceso-1789508722322.png)
+![alt text](images/proceso-1789508730664.png)
+
+## Commit #4 - FEature campanias ( campañas ) con fk a clientes, terminada
+
+![alt text](images/proceso-1789509900491.png)
+![alt text](images/proceso-1789509906635.png)
