@@ -256,3 +256,664 @@ Esta en el puerto 3000, porque en este punto esta con el main.ts generico
 ![alt text](images/proceso-1789440674809.png)
 ![alt text](images/proceso-1789440666164.png)
 ---
+
+## SEG-02 - Entorno Sequelize y common
+
+Segmento: configuracion validada, manejo uniforme de errores, interceptores y conexion a BD
+
+
+### 02.1 Capa de configuracion config/environment
+
+Comando:
+```bash
+cat > src/config/environment/env.interface.ts <<'EOF_MANUAL'
+export type DbDialect = 'mysql' | 'postgres' | 'mssql' | 'oracle';
+
+export interface IDbBlock {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  name: string;
+  connectString?: string;
+}
+
+export interface IEnvConfig {
+  port: number;
+  nodeEnv: string;
+  dbDialect: DbDialect;
+  mysql: IDbBlock;
+  postgres: IDbBlock;
+  mssql: IDbBlock;
+  oracle: IDbBlock;
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/config/environment/env.validation.ts <<'EOF_MANUAL'
+import { plainToInstance } from 'class-transformer';
+import { IsIn, IsNotEmpty, validateSync, ValidateIf } from 'class-validator';
+
+const DIALECTS = ['mysql', 'postgres', 'mssql', 'oracle'];
+
+export class EnvVariables {
+  @IsIn(DIALECTS, {
+    message: 'DB_DIALECT debe ser mysql | postgres | mssql | oracle',
+  })
+  DB_DIALECT!: string;
+
+  @ValidateIf((o) => o.DB_DIALECT === 'mysql')
+  @IsNotEmpty({ message: 'DB_MYSQL_HOST es requerida (DB_DIALECT=mysql)' })
+  DB_MYSQL_HOST?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'mysql')
+  @IsNotEmpty({ message: 'DB_MYSQL_USERNAME es requerida (DB_DIALECT=mysql)' })
+  DB_MYSQL_USERNAME?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'mysql')
+  @IsNotEmpty({ message: 'DB_MYSQL_NAME es requerida (DB_DIALECT=mysql)' })
+  DB_MYSQL_NAME?: string;
+
+  @ValidateIf((o) => o.DB_DIALECT === 'postgres')
+  @IsNotEmpty({ message: 'DB_POSTGRES_HOST es requerida (DB_DIALECT=postgres)' })
+  DB_POSTGRES_HOST?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'postgres')
+  @IsNotEmpty({ message: 'DB_POSTGRES_USERNAME es requerida (DB_DIALECT=postgres)' })
+  DB_POSTGRES_USERNAME?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'postgres')
+  @IsNotEmpty({ message: 'DB_POSTGRES_NAME es requerida (DB_DIALECT=postgres)' })
+  DB_POSTGRES_NAME?: string;
+
+  @ValidateIf((o) => o.DB_DIALECT === 'mssql')
+  @IsNotEmpty({ message: 'DB_MSSQL_HOST es requerida (DB_DIALECT=mssql)' })
+  DB_MSSQL_HOST?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'mssql')
+  @IsNotEmpty({ message: 'DB_MSSQL_USERNAME es requerida (DB_DIALECT=mssql)' })
+  DB_MSSQL_USERNAME?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'mssql')
+  @IsNotEmpty({ message: 'DB_MSSQL_NAME es requerida (DB_DIALECT=mssql)' })
+  DB_MSSQL_NAME?: string;
+
+  @ValidateIf((o) => o.DB_DIALECT === 'oracle')
+  @IsNotEmpty({ message: 'DB_ORACLE_HOST es requerida (DB_DIALECT=oracle)' })
+  DB_ORACLE_HOST?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'oracle')
+  @IsNotEmpty({ message: 'DB_ORACLE_USERNAME es requerida (DB_DIALECT=oracle)' })
+  DB_ORACLE_USERNAME?: string;
+  @ValidateIf((o) => o.DB_DIALECT === 'oracle')
+  @IsNotEmpty({ message: 'DB_ORACLE_NAME es requerida (DB_DIALECT=oracle)' })
+  DB_ORACLE_NAME?: string;
+}
+
+export function validateEnv(raw: Record<string, unknown>): EnvVariables {
+  const config = plainToInstance(EnvVariables, raw);
+  const errors = validateSync(config, { whitelist: false, forbidNonWhitelisted: false });
+  if (errors.length > 0) {
+    const messages = errors
+      .map((e) => Object.values(e.constraints ?? {}).join('; '))
+      .join(' | ');
+    throw new Error(`Error de configuración: ${messages}`);
+  }
+  return config;
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/config/environment/db-env.ts <<'EOF_MANUAL'
+import { IDbBlock, IEnvConfig } from './env.interface.js';
+
+export function getDbBlock(cfg: IEnvConfig): IDbBlock {
+  switch (cfg.dbDialect) {
+    case 'mysql':
+      return cfg.mysql;
+    case 'postgres':
+      return cfg.postgres;
+    case 'mssql':
+      return cfg.mssql;
+    case 'oracle':
+      return cfg.oracle;
+    default:
+      throw new Error(`Dialecto no soportado: ${String(cfg.dbDialect)}`);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+
+cat > src/config/environment/env.config.ts <<'EOF_MANUAL'
+import { config as loadDotenv } from 'dotenv';
+import { IDbBlock, IEnvConfig, DbDialect } from './env.interface.js';
+import { validateEnv } from './env.validation.js';
+
+export const ENV_CONFIG = Symbol('ENV_CONFIG');
+
+function toBlock(prefix: string, raw: Record<string, unknown>, defaultPort: number): IDbBlock {
+  return {
+    host: String(raw[`DB_${prefix}_HOST`] ?? 'localhost'),
+    port: Number(raw[`DB_${prefix}_PORT`] ?? defaultPort),
+    username: String(raw[`DB_${prefix}_USERNAME`] ?? ''),
+    password: String(raw[`DB_${prefix}_PASSWORD`] ?? ''),
+    name: String(raw[`DB_${prefix}_NAME`] ?? ''),
+    connectString: raw[`DB_${prefix}_CONNECT_STRING`]
+      ? String(raw[`DB_${prefix}_CONNECT_STRING`])
+      : undefined,
+  };
+}
+
+export function loadEnvConfig(): IEnvConfig {
+  loadDotenv();
+  const raw = process.env as Record<string, unknown>;
+  validateEnv(raw);
+  const dialect = String(raw.DB_DIALECT) as DbDialect;
+  return {
+    port: Number(raw.PORT ?? 3010),
+    nodeEnv: String(raw.NODE_ENV ?? 'development'),
+    dbDialect: dialect,
+    mysql: toBlock('MYSQL', raw, 3306),
+    postgres: toBlock('POSTGRES', raw, 5432),
+    mssql: toBlock('MSSQL', raw, 1433),
+    oracle: toBlock('ORACLE', raw, 1521),
+  };
+}
+
+export const envConfig = {
+  KEY: ENV_CONFIG,
+};
+EOF_MANUAL
+```
+
+```bash
+cat > src/config/environment/environment.module.ts <<'EOF_MANUAL'
+import { Global, Module } from '@nestjs/common';
+import { envConfig, loadEnvConfig } from './env.config.js';
+
+@Global()
+@Module({
+  providers: [
+    {
+      provide: envConfig.KEY,
+      useFactory: () => loadEnvConfig(),
+    },
+  ],
+  exports: [envConfig.KEY],
+})
+export class EnvironmentModule {}
+EOF_MANUAL
+```
+
+```bash
+cat > src/config/environment/index.ts <<'EOF_MANUAL'
+export * from './env.interface.js';
+export * from './env.validation.js';
+export * from './db-env.js';
+export * from './env.config.js';
+export * from './environment.module.js';
+EOF_MANUAL
+```
+
+Salida:
+![alt text](images/proceso-1789441478324.png)
+![alt text](images/proceso-1789441490552.png)
+![alt text](images/proceso-1789441502508.png)
+![alt text](images/proceso-1789441511350.png)
+![alt text](images/proceso-1789441519681.png)
+
+
+### 02.2 Excepciones common/exceptions
+
+comandos: 
+
+```bash
+cat > src/common/exceptions/application.exception.ts <<'EOF_MANUAL'
+export class ApplicationException extends Error {
+  constructor(
+    public readonly statusCode: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/common/exceptions/business-rule.exception.ts <<'EOF_MANUAL'
+import { ApplicationException } from './application.exception.js';
+
+export class BusinessRuleException extends ApplicationException {
+  constructor(message: string) {
+    super(409, message);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/common/exceptions/domain.exception.ts <<'EOF_MANUAL'
+import { ApplicationException } from './application.exception.js';
+
+export class DomainException extends ApplicationException {
+  constructor(message: string) {
+    super(400, message);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/common/exceptions/entity-not-found.exception.ts <<'EOF_MANUAL'
+import { ApplicationException } from './application.exception.js';
+
+export class EntityNotFoundException extends ApplicationException {
+  constructor(message = 'Entidad no encontrada') {
+    super(404, message);
+  }
+}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789441704674.png)
+
+### 02.3 filtro global de errores
+
+```bash
+cat > src/common/filters/global-exception.filter.ts <<'EOF_MANUAL'
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { ApplicationException } from '../exceptions/application.exception.js';
+
+@Catch()
+export class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger('GlobalExceptionFilter');
+
+  catch(exception: unknown, host: ArgumentsHost): void {
+    const ctx = host.switchToHttp();
+    const res = ctx.getResponse<Response>();
+    const req = ctx.getRequest<Request>();
+
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string | string[] = 'Error interno del servidor';
+
+    if (exception instanceof ApplicationException) {
+      status = exception.statusCode;
+      message = exception.message;
+    } else if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const body = exception.getResponse();
+      if (typeof body === 'string') {
+        message = body;
+      } else if (body && typeof body === 'object') {
+        message = (body as { message?: string | string[] }).message ?? exception.message;
+      }
+    } else if (exception instanceof Error) {
+      message = exception.message;
+    }
+
+    const msg = Array.isArray(message) ? message.join('; ') : message;
+    this.logger.error(`${req.method} ${req.url} → ${status}: ${msg}`);
+
+    res.status(status).json({
+      statusCode: status,
+      message: msg,
+      timestamp: new Date().toISOString(),
+      path: req.url,
+    });
+  }
+}
+EOF_MANUAL
+```
+
+Salida:
+![alt text](images/proceso-1789441834235.png)
+
+### 02.4 interceptores
+
+comandos:
+
+```bash
+cat > src/common/interceptors/response.interceptor.ts <<'EOF_MANUAL'
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import type { Response } from 'express';
+
+@Injectable()
+export class ResponseInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const res = context.switchToHttp().getResponse<Response>();
+    return next.handle().pipe(
+      map((data) => ({
+        statusCode: res.statusCode,
+        message: 'OK',
+        data: data ?? null,
+        timestamp: new Date().toISOString(),
+      })),
+    );
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/common/interceptors/logging.interceptor.ts <<'EOF_MANUAL'
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  Logger,
+  NestInterceptor,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import type { Request } from 'express';
+
+@Injectable()
+export class LoggingInterceptor implements NestInterceptor {
+  private readonly logger = new Logger('HTTP');
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const req = context.switchToHttp().getRequest<Request>();
+    const start = Date.now();
+    return next.handle().pipe(
+      tap(() => {
+        const ms = Date.now() - start;
+        this.logger.log(`${req.method} ${req.url} → ${ms}ms`);
+      }),
+    );
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/common/interceptors/timeout.interceptor.ts <<'EOF_MANUAL'
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+  RequestTimeoutException,
+} from '@nestjs/common';
+import { catchError, Observable, throwError, TimeoutError, timeout } from 'rxjs';
+
+@Injectable()
+export class TimeoutInterceptor implements NestInterceptor {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    return next.handle().pipe(
+      timeout(5000),
+      catchError((err) =>
+        throwError(() =>
+          err instanceof TimeoutError ? new RequestTimeoutException() : err,
+        ),
+      ),
+    );
+  }
+}
+EOF_MANUAL
+```
+
+salida:
+![alt text](images/proceso-1789441986619.png)
+![alt text](images/proceso-1789441994170.png)
+![alt text](images/proceso-1789442001131.png)
+
+### 02.5 Persistencia Sequelize
+
+comandos:
+
+```bash
+cat > src/infrastructure/database/sequelize/sequelize.factory.ts <<'EOF_MANUAL'
+import { Sequelize } from 'sequelize-typescript';
+import { getDbBlock } from '../../../config/environment/db-env.js';
+import { IEnvConfig } from '../../../config/environment/env.interface.js';
+
+// Los modelos se van agregando aquí a medida que se crea cada feature
+// (SEG-03..SEG-09).
+
+export const ALL_MODELS: any[] = [];
+
+export function sequelizeFactory(cfg: IEnvConfig): Sequelize {
+  const block = getDbBlock(cfg);
+  const options: Record<string, unknown> = {
+    dialect: cfg.dbDialect,
+    host: block.host,
+    port: block.port,
+    username: block.username,
+    password: block.password,
+    database: block.name,
+    models: ALL_MODELS,
+    logging: false,
+  };
+  if (cfg.dbDialect === 'oracle' && block.connectString) {
+    options.connectString = block.connectString;
+  }
+  return new Sequelize(options);
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/infrastructure/database/sequelize/sequelize.module.ts <<'EOF_MANUAL'
+import { Global, Logger, Module } from '@nestjs/common';
+import { getDbBlock } from '../../../config/environment/db-env.js';
+import { envConfig } from '../../../config/environment/env.config.js';
+import { IEnvConfig } from '../../../config/environment/env.interface.js';
+import { sequelizeFactory } from './sequelize.factory.js';
+
+export const SEQUELIZE = 'SEQUELIZE';
+
+@Global()
+@Module({
+  providers: [
+    {
+      provide: SEQUELIZE,
+      inject: [envConfig.KEY],
+      useFactory: async (cfg: IEnvConfig) => {
+        const sequelize = sequelizeFactory(cfg);
+        await sequelize.authenticate();
+        await sequelize.sync({ alter: false });
+        const block = getDbBlock(cfg);
+        Logger.log(
+          `Conexión exitosa a la base de datos (${cfg.dbDialect}) ${block.host}:${block.port}/${block.name}`,
+          'Sequelize',
+        );
+        return sequelize;
+      },
+    },
+  ],
+  exports: [SEQUELIZE],
+})
+export class SequelizeModule {}
+EOF_MANUAL
+```
+salida:
+![alt text](images/proceso-1789442110657.png)
+![alt text](images/proceso-1789442117063.png)
+
+### 02.5 Health check y arranque
+
+comandos:
+```bash
+cat > src/health/health.controller.ts <<'EOF_MANUAL'
+import { Controller, Get } from '@nestjs/common';
+
+@Controller('health')
+export class HealthController {
+  @Get()
+  check() {
+    return { status: 'ok' };
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/main.ts <<'EOF_MANUAL'
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module.js';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter.js';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor.js';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
+  app.enableCors({ origin: 'http://localhost:4200', credentials: true });
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalInterceptors(
+    new ResponseInterceptor(),
+    new LoggingInterceptor(),
+    new TimeoutInterceptor(),
+  );
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Norte Creativo — Backend solo Business (manual)')
+    .setDescription('API de negocio: clientes, campanias, hitos, tareas, entregables, version-entregables, aprobaciones.')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document);
+
+  await app.listen(process.env.PORT ?? 3010);
+}
+await bootstrap();
+EOF_MANUAL
+```
+
+```bash
+cat > src/app.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { EnvironmentModule } from './config/environment/environment.module.js';
+import { HealthController } from './health/health.controller.js';
+import { SequelizeModule } from './infrastructure/database/sequelize/sequelize.module.js';
+
+@Module({
+  imports: [EnvironmentModule, SequelizeModule],
+  controllers: [HealthController],
+  providers: [],
+})
+export class AppModule {}
+EOF_MANUAL
+```
+
+salidas:
+
+![alt text](images/proceso-1789442267509.png)
+![alt text](images/proceso-1789442273293.png)
+
+### 02.6 Health check y arranque
+
+comandos: 
+
+```bash
+cat > src/health/health.controller.ts <<'EOF_MANUAL'
+import { Controller, Get } from '@nestjs/common';
+
+@Controller('health')
+export class HealthController {
+  @Get()
+  check() {
+    return { status: 'ok' };
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/main.ts <<'EOF_MANUAL'
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module.js';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter.js';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor.js';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor.js';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
+  app.enableCors({ origin: 'http://localhost:4200', credentials: true });
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  app.useGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalInterceptors(
+    new ResponseInterceptor(),
+    new LoggingInterceptor(),
+    new TimeoutInterceptor(),
+  );
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Norte Creativo — Backend solo Business (manual)')
+    .setDescription('API de negocio: clientes, campanias, hitos, tareas, entregables, version-entregables, aprobaciones.')
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document);
+
+  await app.listen(process.env.PORT ?? 3010);
+}
+await bootstrap();
+EOF_MANUAL
+```
+
+```bash
+cat > src/app.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { EnvironmentModule } from './config/environment/environment.module.js';
+import { HealthController } from './health/health.controller.js';
+import { SequelizeModule } from './infrastructure/database/sequelize/sequelize.module.js';
+
+@Module({
+  imports: [EnvironmentModule, SequelizeModule],
+  controllers: [HealthController],
+  providers: [],
+})
+export class AppModule {}
+EOF_MANUAL
+```
+
+salidas:
+
+![alt text](images/proceso-1789442468744.png)
+![alt text](images/proceso-1789442475229.png)
+![alt text](images/proceso-1789442480399.png)
+
+### Commit #2 - configuración, errores, interceptores y BD listos. La app arranca y conecta.
+
+Esta en el puerto 3000, porque en este punto esta con el main.ts generico
+
+![alt text](images/proceso-1789440674809.png)
+![alt text](images/proceso-1789440666164.png)
+
+---
