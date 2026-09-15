@@ -44,6 +44,8 @@ Salida:
 
 ### 01.3 Convertir a ESM y definir los scripts
 
+Debemos hacer eso para que se use un estandar moderno de modulos llamado ECMASCRIPT MODULES, y asi construir, ejecutar y formatear el codigo con vitest
+
 Comando:
 ```bash
 cat > package.json <<'EOF_MANUAL'
@@ -73,13 +75,16 @@ Salida:
 
 ### 01.4 Instalar dependencias adicionales
 
+Añadimos en este punto las dependecnias vitales que no vienen por defecto en el proyecto base de nestjs, se divide por dependencias de produccion ( swagger, sequelize, drivers, class validator ) y dependencias de desarrollo de herramientas de testing y linters
+
 Comando:
+Produccion ( 1 ) y desarrollo ( 2 )
 ```bash
 npm install @nestjs/swagger \
   sequelize sequelize-typescript mysql2 pg oracledb tedious \
   class-validator class-transformer dotenv
 
-npm install -D @types/supertest \
+npm install -D @types/supertest @types/express \
   vitest @vitest/coverage-v8 vite-tsconfig-paths supertest \
   oxlint source-map-support
 ```
@@ -88,6 +93,8 @@ Salida:
 ![alt text](images/proceso-1789438846763.png)
 
 ### 01.5 Configurar Typescript y tooling
+
+Aqui escribimos nuevas reglas de compiulacion, en el archivo tsconfig.json, para asi asgurar que tengamos un tipado estricto adaptado a lo que pide ESM
 
 Comando:
 ```bash
@@ -148,6 +155,8 @@ cat > .prettierrc <<'EOF_MANUAL'
 EOF_MANUAL
 ```
 
+COnfiguramos un Gitignore
+
 ```bash
 cat > .gitignore <<'EOF_MANUAL'
 node_modules/
@@ -166,6 +175,8 @@ Salida:
 ![alt text](images/proceso-1789439093934.png)
 
 ### 01.6 Script auxiliar y variables de entorno
+
+El script proporcionado por el docente, llamado free-port.js, nos permite matar automaticamente cualquier proceso fantasma que ocupe alguno de nuestros puertos, y crea una plantilla .env.example, que sirgve para generar de forma segura y gestionar las credenciales de la base de datos, puede que durante el desarrollo omita esto y las credenciales sean visibles por temas de hacer pruebas, o recurra a correr todo sobre un sqlite, solo para pruebas tempranas.
 
 comando:
 ```bash
@@ -222,6 +233,8 @@ Salida:
 
 ### 01.7 Estructura de carpetas
 
+Creamos un arbol de directorios basado en lo que pide la Clean Architecture, se separan los dominios, la aplicacion y la infraestructura para todas las entidades del negocio que se planearon.
+
 comando:
 
 ```bash
@@ -263,6 +276,8 @@ Segmento: configuracion validada, manejo uniforme de errores, interceptores y co
 
 
 ### 02.1 Capa de configuracion config/environment
+
+aqui creamos un sistema de vañlidacion que sera estricta, con el fin de que la app falle a drede cuando faltan datos criticos en el .env, tal como el host, ip o contraseñas de base de datos usadas, eso usa class-validator en el env y permite evitar problemas criticos que podrian terminar en procesos fantasmas en nuestros puertos entre otros.
 
 Comando:
 ```bash
@@ -462,6 +477,8 @@ Salida:
 
 ### 02.2 Excepciones common/exceptions
 
+Establece una jerarquia clara de clases de error propias para poder lanzar errores con un significado semantico a las reglas del negocio en lugar, de los tipicos errores tecnicos genericos vistos en documentaciones
+
 comandos: 
 
 ```bash
@@ -518,6 +535,8 @@ salidas:
 ![alt text](images/proceso-1789441704674.png)
 
 ### 02.3 filtro global de errores
+
+Este es un interceptor global que captura cualquier excepcion lanzada por la app y traduce esto en un json que pueda ser usado por el futuro frontend previsto a implementar, tiene el codigo de estado, el mensaje y la fecha del error o excepcion.
 
 ```bash
 cat > src/common/filters/global-exception.filter.ts <<'EOF_MANUAL'
@@ -674,6 +693,8 @@ salida:
 
 ### 02.5 Persistencia Sequelize
 
+Inicializa la fabrica de conexiones de sequalize, la lee desde las variables de entorno y empaqueta todo en un modeulo global de nestjs para asi autenticar la conexion a la BD en el momento que arranca el backend
+
 comandos:
 
 ```bash
@@ -746,6 +767,8 @@ salida:
 ![alt text](images/proceso-1789442117063.png)
 
 ### 02.5 Health check y arranque
+
+Tenemos un endpoint /api/health para asi veirificar el estado del backend, y que el servidor responda correctamente, se configura un archivo main.ts implementando el swagger, cors y los filtros e interceptores globales
 
 comandos:
 ```bash
@@ -904,7 +927,7 @@ EOF_MANUAL
 ```
 
 salidas:
-
+![alt text](images/proceso-1789507011235.png)
 ![alt text](images/proceso-1789442468744.png)
 ![alt text](images/proceso-1789442475229.png)
 ![alt text](images/proceso-1789442480399.png)
@@ -916,4 +939,497 @@ Esta en el puerto 3000, porque en este punto esta con el main.ts generico
 ![alt text](images/proceso-1789440674809.png)
 ![alt text](images/proceso-1789440666164.png)
 
+prueba del validador con env
+![alt text](images/proceso-1789505479598.png)
+
 ---
+
+## SEG-03 - Feature Clientes
+
+### 03.1 Capa de dominio
+
+Se define el nucleo agnostico de la entidad cliente, aca con sus atributos y su constructor, establece el contrato que dictara como se guarda la informacion y se definen las excepciones exclusivas de este modulo.
+
+Comando:
+``` bash
+cat > src/features/business/clientes/domain/entities/cliente.entity.ts <<'EOF_MANUAL'
+export type ClienteEstado = 'active' | 'inactive';
+
+export interface ClienteProps {
+  id?: number | null;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  nombre: string;
+  telefono?: string | null;
+  email?: string | null;
+  estado?: ClienteEstado;
+}
+
+export class Cliente {
+  readonly id: number | null;
+  readonly tipoDocumento: string;
+  readonly numeroDocumento: string;
+  readonly nombre: string;
+  readonly telefono: string | null;
+  readonly email: string | null;
+  readonly estado: ClienteEstado;
+
+  constructor(props: ClienteProps) {
+    this.id = props.id ?? null;
+    this.tipoDocumento = props.tipoDocumento;
+    this.numeroDocumento = props.numeroDocumento;
+    this.nombre = props.nombre;
+    this.telefono = props.telefono ?? null;
+    this.email = props.email ?? null;
+    this.estado = props.estado ?? 'active';
+  }
+}
+EOF_MANUAL
+```
+``` bash
+cat > src/features/business/clientes/domain/interfaces/cliente.repository.ts <<'EOF_MANUAL'
+import { Cliente } from '../entities/cliente.entity.js';
+
+export const CLIENTE_REPOSITORY = 'IClienteRepository';
+
+export interface IClienteRepository {
+  create(cliente: Cliente): Promise<Cliente>;
+  findAll(page: number, limit: number): Promise<{ items: Cliente[]; total: number }>;
+  findById(id: number): Promise<Cliente | null>;
+  findByNumeroDocumento(numeroDocumento: string): Promise<Cliente | null>;
+  count(): Promise<number>;
+}
+EOF_MANUAL
+```
+``` bash
+cat > src/features/business/clientes/domain/exceptions/cliente-not-found.exception.ts <<'EOF_MANUAL'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class ClienteNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super(`Cliente con id ${id} no encontrado`);
+  }
+}
+EOF_MANUAL
+```
+``` bash
+cat > src/features/business/clientes/domain/exceptions/documento-ya-existe.exception.ts <<'EOF_MANUAL'
+import { BusinessRuleException } from '../../../../../common/exceptions/business-rule.exception.js';
+
+export class DocumentoYaExisteException extends BusinessRuleException {
+  constructor(numeroDocumento: string) {
+    super(`Ya existe un cliente con el documento ${numeroDocumento}`);
+  }
+}
+EOF_MANUAL
+```
+
+Salidas
+![alt text](images/proceso-1789503131852.png)
+![alt text](images/proceso-1789503147990.png)
+
+### 03.2 Capa de aplicacion
+
+se implementan aca los dtos para validar que los datos que el usuario da tenga el formato correcto, crea los mappers para traducir los datos a entidades internas.
+
+Comandos:
+``` bash
+cat > src/features/business/clientes/application/dto/create-cliente.dto.ts <<'EOF_MANUAL'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+
+export class CreateClienteDto {
+  @ApiProperty({ example: 'NIT' })
+  @IsString()
+  @IsNotEmpty({ message: 'tipoDocumento es requerido' })
+  @MaxLength(20)
+  tipoDocumento!: string;
+
+  @ApiProperty({ example: '900123456-7' })
+  @IsString()
+  @IsNotEmpty({ message: 'numeroDocumento es requerido' })
+  @MaxLength(30)
+  numeroDocumento!: string;
+
+  @ApiProperty({ example: 'Postobón S.A.' })
+  @IsString()
+  @IsNotEmpty({ message: 'nombre es requerido' })
+  @MaxLength(150)
+  nombre!: string;
+
+  @ApiPropertyOptional({ example: '3001234567' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(30)
+  telefono?: string;
+
+  @ApiPropertyOptional({ example: 'contacto@postobon.com' })
+  @IsOptional()
+  @IsEmail({}, { message: 'email debe ser un correo válido' })
+  @MaxLength(150)
+  email?: string;
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/clientes/application/mappers/cliente.mapper.ts <<'EOF_MANUAL'
+import { Cliente } from '../../domain/entities/cliente.entity.js';
+import { CreateClienteDto } from '../dto/create-cliente.dto.js';
+
+export class ClienteMapper {
+  static toEntity(dto: CreateClienteDto): Cliente {
+    return new Cliente({
+      tipoDocumento: dto.tipoDocumento,
+      numeroDocumento: dto.numeroDocumento,
+      nombre: dto.nombre,
+      telefono: dto.telefono ?? null,
+      email: dto.email ?? null,
+      estado: 'active',
+    });
+  }
+
+  static toResponse(cliente: Cliente) {
+    return {
+      id: cliente.id,
+      tipoDocumento: cliente.tipoDocumento,
+      numeroDocumento: cliente.numeroDocumento,
+      nombre: cliente.nombre,
+      telefono: cliente.telefono,
+      email: cliente.email,
+      estado: cliente.estado,
+    };
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/clientes/application/use-cases/create-cliente.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { DocumentoYaExisteException } from '../../domain/exceptions/documento-ya-existe.exception.js';
+import { CLIENTE_REPOSITORY } from '../../domain/interfaces/cliente.repository.js';
+import type { IClienteRepository } from '../../domain/interfaces/cliente.repository.js';
+import { CreateClienteDto } from '../dto/create-cliente.dto.js';
+import { ClienteMapper } from '../mappers/cliente.mapper.js';
+import type { Cliente } from '../../domain/entities/cliente.entity.js';
+
+@Injectable()
+export class CreateClienteUseCase {
+  constructor(
+    @Inject(CLIENTE_REPOSITORY) private readonly clienteRepository: IClienteRepository,
+  ) {}
+
+  async execute(dto: CreateClienteDto): Promise<Cliente> {
+    const existing = await this.clienteRepository.findByNumeroDocumento(dto.numeroDocumento);
+    if (existing) {
+      throw new DocumentoYaExisteException(dto.numeroDocumento);
+    }
+    return this.clienteRepository.create(ClienteMapper.toEntity(dto));
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/clientes/application/use-cases/get-cliente-by-id.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { ClienteNotFoundException } from '../../domain/exceptions/cliente-not-found.exception.js';
+import { CLIENTE_REPOSITORY } from '../../domain/interfaces/cliente.repository.js';
+import type { IClienteRepository } from '../../domain/interfaces/cliente.repository.js';
+import type { Cliente } from '../../domain/entities/cliente.entity.js';
+
+@Injectable()
+export class GetClienteByIdUseCase {
+  constructor(
+    @Inject(CLIENTE_REPOSITORY) private readonly clienteRepository: IClienteRepository,
+  ) {}
+
+  async execute(id: number): Promise<Cliente> {
+    const cliente = await this.clienteRepository.findById(id);
+    if (!cliente) {
+      throw new ClienteNotFoundException(id);
+    }
+    return cliente;
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/clientes/application/use-cases/list-clientes.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { CLIENTE_REPOSITORY } from '../../domain/interfaces/cliente.repository.js';
+import type { IClienteRepository } from '../../domain/interfaces/cliente.repository.js';
+import { ClienteMapper } from '../mappers/cliente.mapper.js';
+
+@Injectable()
+export class ListClientesUseCase {
+  constructor(
+    @Inject(CLIENTE_REPOSITORY) private readonly clienteRepository: IClienteRepository,
+  ) {}
+
+  async execute(page: number, limit: number) {
+    const { items, total } = await this.clienteRepository.findAll(page, limit);
+    return {
+      items: items.map(ClienteMapper.toResponse),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+}
+EOF_MANUAL
+```
+
+Salidas:
+
+![alt text](images/proceso-1789503398756.png)
+![alt text](images/proceso-1789503408047.png)
+![alt text](images/proceso-1789503426715.png)
+![alt text](images/proceso-1789503449774.png)
+
+### 03.3 Capa de insfraestructura
+
+Comandos
+``` bash
+cat > src/features/business/clientes/infrastructure/persistence/models/cliente.model.ts <<'EOF_MANUAL'
+import { Column, DataType, Model, Table } from 'sequelize-typescript';
+
+@Table({ tableName: 'clientes', timestamps: true })
+export class ClienteModel extends Model {
+  @Column({ type: DataType.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true })
+  declare id: number;
+
+  @Column({ type: DataType.STRING(20), allowNull: false })
+  declare tipoDocumento: string;
+
+  @Column({ type: DataType.STRING(30), allowNull: false, unique: true })
+  declare numeroDocumento: string;
+
+  @Column({ type: DataType.STRING(150), allowNull: false })
+  declare nombre: string;
+
+  @Column({ type: DataType.STRING(30), allowNull: true })
+  declare telefono: string | null;
+
+  @Column({ type: DataType.STRING(150), allowNull: true })
+  declare email: string | null;
+
+  @Column({ type: DataType.STRING(20), allowNull: false, defaultValue: 'active' })
+  declare estado: string;
+}
+EOF_MANUAL
+```
+
+Registrar el modelo en sequelize.factory.ts 
+
+``` bash
+import { ClienteModel } from '../../../features/business/clientes/infrastructure/persistence/models/cliente.model.js';
+
+export const ALL_MODELS: any[] = [
+  ClienteModel,
+];
+```
+
+``` bash
+cat > src/features/business/clientes/infrastructure/persistence/repositories/cliente.repository.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Sequelize } from 'sequelize-typescript';
+import { SEQUELIZE } from '../../../../../../infrastructure/database/sequelize/sequelize.module.js';
+import { Cliente } from '../../../domain/entities/cliente.entity.js';
+import type { ClienteEstado } from '../../../domain/entities/cliente.entity.js';
+import { IClienteRepository } from '../../../domain/interfaces/cliente.repository.js';
+import { ClienteModel } from '../models/cliente.model.js';
+
+@Injectable()
+export class ClienteRepository implements IClienteRepository {
+  constructor(@Inject(SEQUELIZE) private readonly sequelize: Sequelize) {}
+
+  private get repo() {
+    return this.sequelize.getRepository(ClienteModel);
+  }
+
+  async create(cliente: Cliente): Promise<Cliente> {
+    const created = await this.repo.create({
+      tipoDocumento: cliente.tipoDocumento,
+      numeroDocumento: cliente.numeroDocumento,
+      nombre: cliente.nombre,
+      telefono: cliente.telefono,
+      email: cliente.email,
+      estado: cliente.estado,
+    });
+    return this.toDomain(created);
+  }
+
+  async findAll(page: number, limit: number) {
+    const { rows, count } = await this.repo.findAndCountAll({
+      offset: (page - 1) * limit,
+      limit,
+      order: [['id', 'ASC']],
+    });
+    return { items: rows.map((r) => this.toDomain(r)), total: count };
+  }
+
+  async findById(id: number): Promise<Cliente | null> {
+    const found = await this.repo.findByPk(id);
+    return found ? this.toDomain(found) : null;
+  }
+
+  async findByNumeroDocumento(numeroDocumento: string): Promise<Cliente | null> {
+    const found = await this.repo.findOne({ where: { numeroDocumento } });
+    return found ? this.toDomain(found) : null;
+  }
+
+  async count(): Promise<number> {
+    return this.repo.count();
+  }
+
+  private toDomain(m: ClienteModel): Cliente {
+    return new Cliente({
+      id: m.id,
+      tipoDocumento: m.tipoDocumento,
+      numeroDocumento: m.numeroDocumento,
+      nombre: m.nombre,
+      telefono: m.telefono ?? null,
+      email: m.email ?? null,
+      estado: (m.estado as ClienteEstado) ?? 'active',
+    });
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/clientes/infrastructure/persistence/seeders/cliente.seeder.ts <<'EOF_MANUAL'
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Cliente } from '../../../domain/entities/cliente.entity.js';
+import { CLIENTE_REPOSITORY } from '../../../domain/interfaces/cliente.repository.js';
+import type { IClienteRepository } from '../../../domain/interfaces/cliente.repository.js';
+
+@Injectable()
+export class ClienteSeeder {
+  private readonly logger = new Logger(ClienteSeeder.name);
+
+  constructor(
+    @Inject(CLIENTE_REPOSITORY) private readonly clienteRepository: IClienteRepository,
+  ) {}
+
+  async seed(): Promise<void> {
+    const numeroDocumento = '900123456-7';
+    const existing = await this.clienteRepository.findByNumeroDocumento(numeroDocumento);
+    if (existing) {
+      this.logger.log('Seeder clientes: ya existía el cliente demo (idempotente)');
+      return;
+    }
+    await this.clienteRepository.create(
+      new Cliente({
+        tipoDocumento: 'NIT',
+        numeroDocumento,
+        nombre: 'Postobón S.A.',
+        telefono: '3001234567',
+        email: 'contacto@postobon.com',
+        estado: 'active',
+      }),
+    );
+    this.logger.log('Seeder clientes: cliente demo creado');
+  }
+}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789504776434.png)
+![alt text](images/proceso-1789504799943.png)
+![alt text](images/proceso-1789504806625.png)
+![alt text](images/proceso-1789505032087.png)
+
+### 03.4 Capa de presentacion
+
+comandos:
+``` bash
+cat > src/features/business/clientes/presentation/http/controllers/clientes.controller.ts <<'EOF_MANUAL'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateClienteDto } from '../../../application/dto/create-cliente.dto.js';
+import { ClienteMapper } from '../../../application/mappers/cliente.mapper.js';
+import { CreateClienteUseCase } from '../../../application/use-cases/create-cliente.use-case.js';
+import { GetClienteByIdUseCase } from '../../../application/use-cases/get-cliente-by-id.use-case.js';
+import { ListClientesUseCase } from '../../../application/use-cases/list-clientes.use-case.js';
+
+@ApiTags('clientes')
+@Controller('clientes')
+export class ClientesController {
+  constructor(
+    private readonly createCliente: CreateClienteUseCase,
+    private readonly listClientes: ListClientesUseCase,
+    private readonly getCliente: GetClienteByIdUseCase,
+  ) {}
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Crear cliente' })
+  async create(@Body() dto: CreateClienteDto) {
+    const cliente = await this.createCliente.execute(dto);
+    return ClienteMapper.toResponse(cliente);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar clientes (paginado)' })
+  async list(@Query('page') page = '1', @Query('limit') limit = '10') {
+    return this.listClientes.execute(Number(page), Number(limit));
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener cliente por id' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const cliente = await this.getCliente.execute(id);
+    return ClienteMapper.toResponse(cliente);
+  }
+}
+EOF_MANUAL
+```
+Salida:
+![alt text](images/proceso-1789505120854.png)
+
+### 03.5 Modulo de la feature
+
+Comandos:
+``` bash
+cat > src/features/business/clientes/clientes.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { CreateClienteUseCase } from './application/use-cases/create-cliente.use-case.js';
+import { GetClienteByIdUseCase } from './application/use-cases/get-cliente-by-id.use-case.js';
+import { ListClientesUseCase } from './application/use-cases/list-clientes.use-case.js';
+import { CLIENTE_REPOSITORY } from './domain/interfaces/cliente.repository.js';
+import { ClienteRepository } from './infrastructure/persistence/repositories/cliente.repository.js';
+import { ClienteSeeder } from './infrastructure/persistence/seeders/cliente.seeder.js';
+import { ClientesController } from './presentation/http/controllers/clientes.controller.js';
+
+@Module({
+  controllers: [ClientesController],
+  providers: [
+    CreateClienteUseCase,
+    ListClientesUseCase,
+    GetClienteByIdUseCase,
+    ClienteSeeder,
+    { provide: CLIENTE_REPOSITORY, useClass: ClienteRepository },
+  ],
+  exports: [CLIENTE_REPOSITORY, ClienteSeeder],
+})
+export class ClientesModule {}
+EOF_MANUAL
+```
+Salida:
+![alt text](images/proceso-1789505187409.png)
+
+## Commit #3 - Feature clientes completada, y soluciones a errores varios en el manejo de la base de datos, un unico compose para manipular los 4 motores, asi como una pequeña documentacion añadida
+
+![alt text](images/proceso-1789506842831.png)
