@@ -2919,3 +2919,477 @@ Salidas:
 Todo arranca y no hay errores de implementacion de ninguna feature hasta ahora
 
 ![alt text](images/proceso-1789529704534.png)
+
+## SEG-07 - Feature entregables
+
+### 07.1 Capa de dominio
+
+entregable tiene fk a tareaid, aqui aparece un estado nuevo distinto al de hito, entregableestado solo tiene EN_PROCESO y ENTREGADO, por defecto queda en EN_PROCESO, tambien trae fechainicio, fechafin y total, todos nullable porque al momento de crear el entregable todavia no se sabe cuando termina ni cuanto cuesta, a diferencia de hito esta entidad vuelve a ser completamente inmutable, todo con readonly, no tiene metodo cerrar() como hito, el cambio de EN_PROCESO a ENTREGADO probablemente se maneje en otra feature mas adelante (aprobaciones, segun el comentario que aparecia en hito), la interfaz ientregablerepository trae los metodos de siempre mas findbytareaid, siguiendo el mismo patron de findbyhitoid que ya se vio en tareas, solo hay una excepcion, entregablenotfoundexception, no hay reglas de negocio propias todavia en esta capa
+
+comandos:
+```bash
+cat > src/features/business/entregables/domain/entities/entregable.entity.ts <<'EOF_MANUAL'
+export type EntregableEstado = 'EN_PROCESO' | 'ENTREGADO';
+
+export interface EntregableProps {
+  id?: number | null;
+  tareaId: number;
+  fechaInicio?: Date | null;
+  fechaFin?: Date | null;
+  total?: number | null;
+  estado?: EntregableEstado;
+  observaciones?: string | null;
+}
+
+export class Entregable {
+  readonly id: number | null;
+  readonly tareaId: number;
+  readonly fechaInicio: Date | null;
+  readonly fechaFin: Date | null;
+  readonly total: number | null;
+  readonly estado: EntregableEstado;
+  readonly observaciones: string | null;
+
+  constructor(props: EntregableProps) {
+    this.id = props.id ?? null;
+    this.tareaId = props.tareaId;
+    this.fechaInicio = props.fechaInicio ?? null;
+    this.fechaFin = props.fechaFin ?? null;
+    this.total = props.total ?? null;
+    this.estado = props.estado ?? 'EN_PROCESO';
+    this.observaciones = props.observaciones ?? null;
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/domain/interfaces/entregable.repository.ts <<'EOF_MANUAL'
+import { Entregable } from '../entities/entregable.entity.js';
+
+export const ENTREGABLE_REPOSITORY = 'IEntregableRepository';
+
+export interface IEntregableRepository {
+  create(entregable: Entregable): Promise<Entregable>;
+  findAll(page: number, limit: number): Promise<{ items: Entregable[]; total: number }>;
+  findById(id: number): Promise<Entregable | null>;
+  findByTareaId(tareaId: number): Promise<Entregable[]>;
+  count(): Promise<number>;
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/domain/exceptions/entregable-not-found.exception.ts <<'EOF_MANUAL'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class EntregableNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super(`Entregable con id ${id} no encontrado`);
+  }
+}
+EOF_MANUAL
+```
+salidas:
+![alt text](images/proceso-1789530134028.png)
+![alt text](images/proceso-1789530140485.png)
+
+### 07.2 Capa de aplicación
+
+aqui el dto es mas simple que los anteriores, solo pide tareaid obligatorio y observaciones opcional, no pide nombre porque un entregable no tiene nombre propio, se identifica por la tarea a la que pertenece, en el entregablemapper hay algo distinto a los mappers anteriores, toentity no solo copia los datos del dto sino que le agrega fechainicio con new Date(), es decir el momento de creacion del entregable queda registrado automaticamente sin que el usuario lo mande, toresponse arma el objeto de salida completo incluyendo fechainicio, fechafin, total y estado, createentregableusecase sigue el mismo patron de las features anteriores, inyecta entregablerepo y tarearepo, busca la tarea por el tareaid recibido y si no existe lanza tareanotfoundexception, getbyid y list siguen el patron de siempre sin nada nuevo
+
+comandos: 
+```bash
+cat > src/features/business/entregables/application/dto/create-entregable.dto.ts <<'EOF_MANUAL'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+
+export class CreateEntregableDto {
+  @ApiProperty({ example: 1 })
+  @IsInt({ message: 'tareaId debe ser entero' })
+  @Min(1, { message: 'tareaId es requerido' })
+  tareaId!: number;
+
+  @ApiPropertyOptional({ example: 'Primer borrador subido para revisión' })
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/application/mappers/entregable.mapper.ts <<'EOF_MANUAL'
+import { Entregable } from '../../domain/entities/entregable.entity.js';
+import { CreateEntregableDto } from '../dto/create-entregable.dto.js';
+
+export class EntregableMapper {
+  static toEntity(dto: CreateEntregableDto): Entregable {
+    return new Entregable({
+      tareaId: dto.tareaId,
+      fechaInicio: new Date(),
+      observaciones: dto.observaciones ?? null,
+      estado: 'EN_PROCESO',
+    });
+  }
+
+  static toResponse(e: Entregable) {
+    return {
+      id: e.id,
+      tareaId: e.tareaId,
+      fechaInicio: e.fechaInicio,
+      fechaFin: e.fechaFin,
+      total: e.total,
+      estado: e.estado,
+      observaciones: e.observaciones,
+    };
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/application/use-cases/create-entregable.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { TAREA_REPOSITORY } from '../../../tareas/domain/interfaces/tarea.repository.js';
+import type { ITareaRepository } from '../../../tareas/domain/interfaces/tarea.repository.js';
+import { TareaNotFoundException } from '../../../tareas/domain/exceptions/tarea-not-found.exception.js';
+import { ENTREGABLE_REPOSITORY } from '../../domain/interfaces/entregable.repository.js';
+import type { IEntregableRepository } from '../../domain/interfaces/entregable.repository.js';
+import type { Entregable } from '../../domain/entities/entregable.entity.js';
+import { CreateEntregableDto } from '../dto/create-entregable.dto.js';
+import { EntregableMapper } from '../mappers/entregable.mapper.js';
+
+@Injectable()
+export class CreateEntregableUseCase {
+  constructor(
+    @Inject(ENTREGABLE_REPOSITORY) private readonly entregableRepo: IEntregableRepository,
+    @Inject(TAREA_REPOSITORY) private readonly tareaRepo: ITareaRepository,
+  ) {}
+
+  async execute(dto: CreateEntregableDto): Promise<Entregable> {
+    const tarea = await this.tareaRepo.findById(dto.tareaId);
+    if (!tarea) {
+      throw new TareaNotFoundException(dto.tareaId);
+    }
+    return this.entregableRepo.create(EntregableMapper.toEntity(dto));
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/application/use-cases/get-entregable-by-id.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { EntregableNotFoundException } from '../../domain/exceptions/entregable-not-found.exception.js';
+import { ENTREGABLE_REPOSITORY } from '../../domain/interfaces/entregable.repository.js';
+import type { IEntregableRepository } from '../../domain/interfaces/entregable.repository.js';
+import type { Entregable } from '../../domain/entities/entregable.entity.js';
+
+@Injectable()
+export class GetEntregableByIdUseCase {
+  constructor(
+    @Inject(ENTREGABLE_REPOSITORY) private readonly entregableRepo: IEntregableRepository,
+  ) {}
+
+  async execute(id: number): Promise<Entregable> {
+    const entregable = await this.entregableRepo.findById(id);
+    if (!entregable) {
+      throw new EntregableNotFoundException(id);
+    }
+    return entregable;
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/application/use-cases/list-entregables.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { ENTREGABLE_REPOSITORY } from '../../domain/interfaces/entregable.repository.js';
+import type { IEntregableRepository } from '../../domain/interfaces/entregable.repository.js';
+import { EntregableMapper } from '../mappers/entregable.mapper.js';
+
+@Injectable()
+export class ListEntregablesUseCase {
+  constructor(
+    @Inject(ENTREGABLE_REPOSITORY) private readonly entregableRepo: IEntregableRepository,
+  ) {}
+
+  async execute(page: number, limit: number) {
+    const { items, total } = await this.entregableRepo.findAll(page, limit);
+    return {
+      items: items.map(EntregableMapper.toResponse),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+}
+EOF_MANUAL
+```
+salidas:
+![alt text](images/proceso-1789530258395.png)
+![alt text](images/proceso-1789530271515.png)
+![alt text](images/proceso-1789530277917.png)
+
+### 07.3 Capa de infraestructura
+
+entregablemodel usa foreignkey y belongsto hacia tareamodel, mismo patron de fk de toda la cadena anterior, lo nuevo aqui es el tipo de columna para total, decimal(12,2), que es el tipo correcto para manejar dinero sin perder precision como pasaria con un float, hay que registrar entregablemodel en all_models despues de tareamodel, el repositorio sigue el patron de siempre e implementa findbytareaid igual que hito y tarea lo hacian con sus respectivos metodos, hay un detalle en el todomain, como sequelize devuelve el decimal como string, se hace total: m.total ? Number(m.total) : null para convertirlo de vuelta a numero antes de armar la entidad de dominio, el seeder toma la primera tarea que encuentre, revisa con findbytareaid si ya tiene un entregable sembrado, y si no lo tiene crea uno nuevo en EN_PROCESO con observaciones de ejemplo
+
+comandos:
+
+```bash
+cat > src/features/business/entregables/infrastructure/persistence/models/entregable.model.ts <<'EOF_MANUAL'
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { TareaModel } from '../../../../tareas/infrastructure/persistence/models/tarea.model.js';
+
+@Table({ tableName: 'entregables', timestamps: true })
+export class EntregableModel extends Model {
+  @Column({ type: DataType.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true })
+  declare id: number;
+
+  @ForeignKey(() => TareaModel)
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare tareaId: number;
+
+  @BelongsTo(() => TareaModel)
+  tarea?: TareaModel;
+
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare fechaInicio: Date | null;
+
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare fechaFin: Date | null;
+
+  @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
+  declare total: number | null;
+
+  @Column({ type: DataType.STRING(20), allowNull: false, defaultValue: 'EN_PROCESO' })
+  declare estado: string;
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  declare observaciones: string | null;
+}
+EOF_MANUAL
+```
+
+implementamos en el sequelize.factory.ts
+```bash
+import { EntregableModel } from '../../../features/business/entregables/infrastructure/persistence/models/entregable.model.js';
+
+export const ALL_MODELS: any[] = [
+  ClienteModel,
+  CampaniaModel,
+  HitoModel,
+  TareaModel,
+  EntregableModel,
+];
+```
+```bash
+cat > src/features/business/entregables/infrastructure/persistence/repositories/entregable.repository.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Sequelize } from 'sequelize-typescript';
+import { SEQUELIZE } from '../../../../../../infrastructure/database/sequelize/sequelize.module.js';
+import { Entregable } from '../../../domain/entities/entregable.entity.js';
+import type { EntregableEstado } from '../../../domain/entities/entregable.entity.js';
+import { IEntregableRepository } from '../../../domain/interfaces/entregable.repository.js';
+import { EntregableModel } from '../models/entregable.model.js';
+
+@Injectable()
+export class EntregableRepository implements IEntregableRepository {
+  constructor(@Inject(SEQUELIZE) private readonly sequelize: Sequelize) {}
+
+  private get repo() {
+    return this.sequelize.getRepository(EntregableModel);
+  }
+
+  async create(entregable: Entregable): Promise<Entregable> {
+    const created = await this.repo.create({
+      tareaId: entregable.tareaId,
+      fechaInicio: entregable.fechaInicio,
+      fechaFin: entregable.fechaFin,
+      total: entregable.total,
+      estado: entregable.estado,
+      observaciones: entregable.observaciones,
+    });
+    return this.toDomain(created);
+  }
+
+  async findAll(page: number, limit: number) {
+    const { rows, count } = await this.repo.findAndCountAll({
+      offset: (page - 1) * limit,
+      limit,
+      order: [['id', 'ASC']],
+    });
+    return { items: rows.map((r) => this.toDomain(r)), total: count };
+  }
+
+  async findById(id: number): Promise<Entregable | null> {
+    const found = await this.repo.findByPk(id);
+    return found ? this.toDomain(found) : null;
+  }
+
+  async findByTareaId(tareaId: number): Promise<Entregable[]> {
+    const rows = await this.repo.findAll({ where: { tareaId }, order: [['id', 'ASC']] });
+    return rows.map((r) => this.toDomain(r));
+  }
+
+  async count(): Promise<number> {
+    return this.repo.count();
+  }
+
+  private toDomain(m: EntregableModel): Entregable {
+    return new Entregable({
+      id: m.id,
+      tareaId: m.tareaId,
+      fechaInicio: m.fechaInicio ?? null,
+      fechaFin: m.fechaFin ?? null,
+      total: m.total ? Number(m.total) : null,
+      estado: (m.estado as EntregableEstado) ?? 'EN_PROCESO',
+      observaciones: m.observaciones ?? null,
+    });
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/infrastructure/persistence/seeders/entregable.seeder.ts <<'EOF_MANUAL'
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { TAREA_REPOSITORY } from '../../../../tareas/domain/interfaces/tarea.repository.js';
+import type { ITareaRepository } from '../../../../tareas/domain/interfaces/tarea.repository.js';
+import { Entregable } from '../../../domain/entities/entregable.entity.js';
+import { ENTREGABLE_REPOSITORY } from '../../../domain/interfaces/entregable.repository.js';
+import type { IEntregableRepository } from '../../../domain/interfaces/entregable.repository.js';
+
+@Injectable()
+export class EntregableSeeder {
+  private readonly logger = new Logger(EntregableSeeder.name);
+
+  constructor(
+    @Inject(ENTREGABLE_REPOSITORY) private readonly entregableRepo: IEntregableRepository,
+    @Inject(TAREA_REPOSITORY) private readonly tareaRepo: ITareaRepository,
+  ) {}
+
+  async seed(): Promise<void> {
+    const { items: tareas } = await this.tareaRepo.findAll(1, 100);
+    const tarea = tareas[0];
+    if (!tarea || tarea.id === null) {
+      this.logger.warn('Seeder entregables: sin tarea demo; no se siembra');
+      return;
+    }
+    const existentes = await this.entregableRepo.findByTareaId(tarea.id);
+    if (existentes.length > 0) {
+      this.logger.log('Seeder entregables: ya existía el entregable demo (idempotente)');
+      return;
+    }
+    await this.entregableRepo.create(
+      new Entregable({
+        tareaId: tarea.id,
+        fechaInicio: new Date(),
+        observaciones: 'Primer borrador subido para revisión',
+        estado: 'EN_PROCESO',
+      }),
+    );
+    this.logger.log('Seeder entregables: entregable demo creado');
+  }
+}
+EOF_MANUAL
+```
+salidas:
+![alt text](images/proceso-1789530542851.png)
+![alt text](images/proceso-1789530600047.png)
+![alt text](images/proceso-1789530551765.png)
+![alt text](images/proceso-1789530558514.png)
+
+### 07.4 Capa de presentación + módulo
+
+entregablescontroller expone las mismas tres rutas de siempre, post /entregables, get /entregables, get /entregables/:id, sin logica propia, entregablesmodule importa tareasmodule porque createentregableusecase necesita el tarea_repository que tareasmodule exporta, cerrando un nivel mas la cadena de dependencias, entregables depende de tareas, que depende de hitos, que depende de campanias, que depende de clientes, toda la jerarquia completa del dominio reflejada en como se importan los modulos de nestjs
+
+```bash
+cat > src/features/business/entregables/presentation/http/controllers/entregables.controller.ts <<'EOF_MANUAL'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateEntregableDto } from '../../../application/dto/create-entregable.dto.js';
+import { EntregableMapper } from '../../../application/mappers/entregable.mapper.js';
+import { CreateEntregableUseCase } from '../../../application/use-cases/create-entregable.use-case.js';
+import { GetEntregableByIdUseCase } from '../../../application/use-cases/get-entregable-by-id.use-case.js';
+import { ListEntregablesUseCase } from '../../../application/use-cases/list-entregables.use-case.js';
+
+@ApiTags('entregables')
+@Controller('entregables')
+export class EntregablesController {
+  constructor(
+    private readonly createEntregable: CreateEntregableUseCase,
+    private readonly listEntregables: ListEntregablesUseCase,
+    private readonly getEntregable: GetEntregableByIdUseCase,
+  ) {}
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Crear entregable' })
+  async create(@Body() dto: CreateEntregableDto) {
+    const entregable = await this.createEntregable.execute(dto);
+    return EntregableMapper.toResponse(entregable);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar entregables (paginado)' })
+  async list(@Query('page') page = '1', @Query('limit') limit = '10') {
+    return this.listEntregables.execute(Number(page), Number(limit));
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener entregable por id' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const entregable = await this.getEntregable.execute(id);
+    return EntregableMapper.toResponse(entregable);
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/entregables/entregables.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { TareasModule } from '../tareas/tareas.module.js';
+import { CreateEntregableUseCase } from './application/use-cases/create-entregable.use-case.js';
+import { GetEntregableByIdUseCase } from './application/use-cases/get-entregable-by-id.use-case.js';
+import { ListEntregablesUseCase } from './application/use-cases/list-entregables.use-case.js';
+import { ENTREGABLE_REPOSITORY } from './domain/interfaces/entregable.repository.js';
+import { EntregableRepository } from './infrastructure/persistence/repositories/entregable.repository.js';
+import { EntregableSeeder } from './infrastructure/persistence/seeders/entregable.seeder.js';
+import { EntregablesController } from './presentation/http/controllers/entregables.controller.js';
+
+@Module({
+  imports: [TareasModule],
+  controllers: [EntregablesController],
+  providers: [
+    CreateEntregableUseCase,
+    ListEntregablesUseCase,
+    GetEntregableByIdUseCase,
+    EntregableSeeder,
+    { provide: ENTREGABLE_REPOSITORY, useClass: EntregableRepository },
+  ],
+  exports: [ENTREGABLE_REPOSITORY, EntregableSeeder],
+})
+export class EntregablesModule {}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789530795300.png)
+![alt text](images/proceso-1789530800916.png)
+
+## Commit #7 - Feature entregables terminado
+
+![alt text](images/proceso-1789530850610.png)
+![alt text](images/proceso-1789530917457.png)
+
