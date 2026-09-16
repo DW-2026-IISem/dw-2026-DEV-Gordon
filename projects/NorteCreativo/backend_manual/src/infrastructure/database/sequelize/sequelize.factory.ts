@@ -4,6 +4,7 @@ import { IEnvConfig } from '../../../config/environment/env.interface.js';
 import { ClienteModel } from '../../../features/business/clientes/infrastructure/persistence/models/cliente.model.js';
 import { CampaniaModel } from '../../../features/business/campanias/infrastructure/persistence/models/campania.model.js';
 import { HitoModel } from '../../../features/business/hitos/infrastructure/persistence/models/hito.model.js';
+import { TareaModel } from '../../../features/business/tareas/infrastructure/persistence/models/tarea.model.js';
 
 // Los modelos se van agregando aquí a medida que se crea cada feature
 
@@ -11,6 +12,7 @@ export const ALL_MODELS: any[] = [
   ClienteModel,
   CampaniaModel,
   HitoModel,
+  TareaModel,
 ];
 
 export function sequelizeFactory(cfg: IEnvConfig): Sequelize {

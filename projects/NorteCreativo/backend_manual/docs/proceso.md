@@ -2456,3 +2456,466 @@ salidas:
 
 ![alt text](images/proceso-1789515251241.png)
 ![alt text](images/proceso-1789515256431.png)
+
+## SEG-06 - feature tareas
+
+Entidad tarea tiene fk a hito, correspondiente a lo visto en el ssd, se usa un mismo patron que campañas
+
+### 06.1 Capa de dominio
+
+aqui volvemos al patron inmutable de clientes y campanias, tarea entity no tiene metodos propios ni logica de cierre como hito, es solo una entidad con fk a hitoid, nombre, descripcion opcional e isactive que por defecto es true, la interfaz itarearepository trae los metodos de siempre, crear, buscar todos, buscar por id y conteo, pero le agrega uno nuevo que no estaba en las anteriores, findbyhitoid, que sirve para traer todas las tareas de un hito especifico, esto lo vamos a necesitar despues en el seeder y probablemente en reportes o validaciones, aqui solo hay una excepcion, tareanotfoundexception, no hay ninguna regla de negocio propia de tareas todavia como si la tenia hito con su cierre
+
+Comandos:
+```bash
+cat > src/features/business/tareas/domain/entities/tarea.entity.ts <<'EOF_MANUAL'
+export interface TareaProps {
+  id?: number | null;
+  hitoId: number;
+  nombre: string;
+  descripcion?: string | null;
+  isActive?: boolean;
+}
+
+export class Tarea {
+  readonly id: number | null;
+  readonly hitoId: number;
+  readonly nombre: string;
+  readonly descripcion: string | null;
+  readonly isActive: boolean;
+
+  constructor(props: TareaProps) {
+    this.id = props.id ?? null;
+    this.hitoId = props.hitoId;
+    this.nombre = props.nombre;
+    this.descripcion = props.descripcion ?? null;
+    this.isActive = props.isActive ?? true;
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/domain/interfaces/tarea.repository.ts <<'EOF_MANUAL'
+import { Tarea } from '../entities/tarea.entity.js';
+
+export const TAREA_REPOSITORY = 'ITareaRepository';
+
+export interface ITareaRepository {
+  create(tarea: Tarea): Promise<Tarea>;
+  findAll(page: number, limit: number): Promise<{ items: Tarea[]; total: number }>;
+  findById(id: number): Promise<Tarea | null>;
+  findByHitoId(hitoId: number): Promise<Tarea[]>;
+  count(): Promise<number>;
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/domain/exceptions/tarea-not-found.exception.ts <<'EOF_MANUAL'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class TareaNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super(`Tarea con id ${id} no encontrada`);
+  }
+}
+EOF_MANUAL
+```
+
+Salidas:
+![alt text](images/proceso-1789529199746.png)
+![alt text](images/proceso-1789529206451.png)
+
+### 06.2 Capa de aplicación
+
+mismo patron de siempre, el dto pide hitoid obligatorio y minimo 1, nombre requerido y descripcion opcional, con las mismas validaciones y decoradores swagger, el tareamapper traduce igual que los anteriores, toentity arma la entidad con isactive en true, toresponse arma el objeto plano de salida, createtareausecase repite exactamente el patron de createhitousecase pero un nivel mas abajo en la cadena, inyecta tarearepo y hitorepo, busca el hito por el hitoid recibido, si no existe lanza hitonotfoundexception, a diferencia de hitos aqui no se valida un estado tipo isactive antes de crear, solo que el hito exista, getbyid y list siguen el mismo patron de siempre sin nada nuevo
+
+Comandos:
+```bash
+cat > src/features/business/tareas/application/dto/create-tarea.dto.ts <<'EOF_MANUAL'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+
+export class CreateTareaDto {
+  @ApiProperty({ example: 1 })
+  @IsInt({ message: 'hitoId debe ser entero' })
+  @Min(1, { message: 'hitoId es requerido' })
+  hitoId!: number;
+
+  @ApiProperty({ example: 'Diseñar post de Instagram' })
+  @IsString()
+  @IsNotEmpty({ message: 'nombre es requerido' })
+  @MaxLength(150)
+  nombre!: string;
+
+  @ApiPropertyOptional({ example: 'Formato cuadrado, paleta de colores del carnaval' })
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/application/mappers/tarea.mapper.ts <<'EOF_MANUAL'
+import { Tarea } from '../../domain/entities/tarea.entity.js';
+import { CreateTareaDto } from '../dto/create-tarea.dto.js';
+
+export class TareaMapper {
+  static toEntity(dto: CreateTareaDto): Tarea {
+    return new Tarea({
+      hitoId: dto.hitoId,
+      nombre: dto.nombre,
+      descripcion: dto.descripcion ?? null,
+      isActive: true,
+    });
+  }
+
+  static toResponse(t: Tarea) {
+    return {
+      id: t.id,
+      hitoId: t.hitoId,
+      nombre: t.nombre,
+      descripcion: t.descripcion,
+      isActive: t.isActive,
+    };
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/application/use-cases/create-tarea.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { HITO_REPOSITORY } from '../../../hitos/domain/interfaces/hito.repository.js';
+import type { IHitoRepository } from '../../../hitos/domain/interfaces/hito.repository.js';
+import { HitoNotFoundException } from '../../../hitos/domain/exceptions/hito-not-found.exception.js';
+import { TAREA_REPOSITORY } from '../../domain/interfaces/tarea.repository.js';
+import type { ITareaRepository } from '../../domain/interfaces/tarea.repository.js';
+import type { Tarea } from '../../domain/entities/tarea.entity.js';
+import { CreateTareaDto } from '../dto/create-tarea.dto.js';
+import { TareaMapper } from '../mappers/tarea.mapper.js';
+
+@Injectable()
+export class CreateTareaUseCase {
+  constructor(
+    @Inject(TAREA_REPOSITORY) private readonly tareaRepo: ITareaRepository,
+    @Inject(HITO_REPOSITORY) private readonly hitoRepo: IHitoRepository,
+  ) {}
+
+  async execute(dto: CreateTareaDto): Promise<Tarea> {
+    const hito = await this.hitoRepo.findById(dto.hitoId);
+    if (!hito) {
+      throw new HitoNotFoundException(dto.hitoId);
+    }
+    return this.tareaRepo.create(TareaMapper.toEntity(dto));
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/application/use-cases/get-tarea-by-id.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { TareaNotFoundException } from '../../domain/exceptions/tarea-not-found.exception.js';
+import { TAREA_REPOSITORY } from '../../domain/interfaces/tarea.repository.js';
+import type { ITareaRepository } from '../../domain/interfaces/tarea.repository.js';
+import type { Tarea } from '../../domain/entities/tarea.entity.js';
+
+@Injectable()
+export class GetTareaByIdUseCase {
+  constructor(
+    @Inject(TAREA_REPOSITORY) private readonly tareaRepo: ITareaRepository,
+  ) {}
+
+  async execute(id: number): Promise<Tarea> {
+    const tarea = await this.tareaRepo.findById(id);
+    if (!tarea) {
+      throw new TareaNotFoundException(id);
+    }
+    return tarea;
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/application/use-cases/list-tareas.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { TAREA_REPOSITORY } from '../../domain/interfaces/tarea.repository.js';
+import type { ITareaRepository } from '../../domain/interfaces/tarea.repository.js';
+import { TareaMapper } from '../mappers/tarea.mapper.js';
+
+@Injectable()
+export class ListTareasUseCase {
+  constructor(
+    @Inject(TAREA_REPOSITORY) private readonly tareaRepo: ITareaRepository,
+  ) {}
+
+  async execute(page: number, limit: number) {
+    const { items, total } = await this.tareaRepo.findAll(page, limit);
+    return {
+      items: items.map(TareaMapper.toResponse),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+}
+EOF_MANUAL
+```
+Salidas:
+![alt text](images/proceso-1789529307909.png)
+![alt text](images/proceso-1789529315800.png)
+![alt text](images/proceso-1789529427414.png)
+
+### 06.3 Capa de infraestructura
+
+tareamodel usa foreignkey y belongsto hacia hitomodel, exactamente el mismo patron de fk que ya se vio entre campania y cliente, y entre hito y campania, hay que registrar tareamodel en all_models despues de hitomodel, el repositorio sigue igual con su create, findall, findbyid y count, pero implementa tambien findbyhitoid que se definio en la interfaz del dominio, filtrando por where: { hitoId } y ordenando por id, el seeder aqui tiene una particularidad, no busca cualquier hito sino uno que este abierto usando el metodo estaabierto() que se definio en la entidad hito, si no hay ningun hito abierto no siembra nada, y si lo encuentra usa findbyhitoid para revisar si ya existe la tarea demo antes de crearla, manteniendo la idempotencia de siempre
+
+Comandos:
+```bash
+cat > src/features/business/tareas/infrastructure/persistence/models/tarea.model.ts <<'EOF_MANUAL'
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { HitoModel } from '../../../../hitos/infrastructure/persistence/models/hito.model.js';
+
+@Table({ tableName: 'tareas', timestamps: true })
+export class TareaModel extends Model {
+  @Column({ type: DataType.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true })
+  declare id: number;
+
+  @ForeignKey(() => HitoModel)
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare hitoId: number;
+
+  @BelongsTo(() => HitoModel)
+  hito?: HitoModel;
+
+  @Column({ type: DataType.STRING(150), allowNull: false })
+  declare nombre: string;
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  declare descripcion: string | null;
+
+  @Column({ type: DataType.BOOLEAN, allowNull: false, defaultValue: true })
+  declare isActive: boolean;
+}
+EOF_MANUAL
+```
+registramos en el sequlize.factory.ts
+```bash
+import { TareaModel } from '../../../features/business/tareas/infrastructure/persistence/models/tarea.model.js';
+
+export const ALL_MODELS: any[] = [
+  ClienteModel,
+  CampaniaModel,
+  HitoModel,
+  TareaModel,
+];
+```
+
+```bash
+cat > src/features/business/tareas/infrastructure/persistence/repositories/tarea.repository.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Sequelize } from 'sequelize-typescript';
+import { SEQUELIZE } from '../../../../../../infrastructure/database/sequelize/sequelize.module.js';
+import { Tarea } from '../../../domain/entities/tarea.entity.js';
+import { ITareaRepository } from '../../../domain/interfaces/tarea.repository.js';
+import { TareaModel } from '../models/tarea.model.js';
+
+@Injectable()
+export class TareaRepository implements ITareaRepository {
+  constructor(@Inject(SEQUELIZE) private readonly sequelize: Sequelize) {}
+
+  private get repo() {
+    return this.sequelize.getRepository(TareaModel);
+  }
+
+  async create(tarea: Tarea): Promise<Tarea> {
+    const created = await this.repo.create({
+      hitoId: tarea.hitoId,
+      nombre: tarea.nombre,
+      descripcion: tarea.descripcion,
+      isActive: tarea.isActive,
+    });
+    return this.toDomain(created);
+  }
+
+  async findAll(page: number, limit: number) {
+    const { rows, count } = await this.repo.findAndCountAll({
+      offset: (page - 1) * limit,
+      limit,
+      order: [['id', 'ASC']],
+    });
+    return { items: rows.map((r) => this.toDomain(r)), total: count };
+  }
+
+  async findById(id: number): Promise<Tarea | null> {
+    const found = await this.repo.findByPk(id);
+    return found ? this.toDomain(found) : null;
+  }
+
+  async findByHitoId(hitoId: number): Promise<Tarea[]> {
+    const rows = await this.repo.findAll({ where: { hitoId }, order: [['id', 'ASC']] });
+    return rows.map((r) => this.toDomain(r));
+  }
+
+  async count(): Promise<number> {
+    return this.repo.count();
+  }
+
+  private toDomain(m: TareaModel): Tarea {
+    return new Tarea({
+      id: m.id,
+      hitoId: m.hitoId,
+      nombre: m.nombre,
+      descripcion: m.descripcion ?? null,
+      isActive: m.isActive,
+    });
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/infrastructure/persistence/seeders/tarea.seeder.ts <<'EOF_MANUAL'
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { HITO_REPOSITORY } from '../../../../hitos/domain/interfaces/hito.repository.js';
+import type { IHitoRepository } from '../../../../hitos/domain/interfaces/hito.repository.js';
+import { Tarea } from '../../../domain/entities/tarea.entity.js';
+import { TAREA_REPOSITORY } from '../../../domain/interfaces/tarea.repository.js';
+import type { ITareaRepository } from '../../../domain/interfaces/tarea.repository.js';
+
+@Injectable()
+export class TareaSeeder {
+  private readonly logger = new Logger(TareaSeeder.name);
+
+  constructor(
+    @Inject(TAREA_REPOSITORY) private readonly tareaRepo: ITareaRepository,
+    @Inject(HITO_REPOSITORY) private readonly hitoRepo: IHitoRepository,
+  ) {}
+
+  async seed(): Promise<void> {
+    const { items: hitos } = await this.hitoRepo.findAll(1, 100);
+    const hito = hitos.find((h) => h.estaAbierto());
+    if (!hito || hito.id === null) {
+      this.logger.warn('Seeder tareas: sin hito abierto; no se siembra');
+      return;
+    }
+    const tareasDelHito = await this.tareaRepo.findByHitoId(hito.id);
+    if (tareasDelHito.some((t) => t.nombre === 'Diseñar post de Instagram')) {
+      this.logger.log('Seeder tareas: ya existía la tarea demo (idempotente)');
+      return;
+    }
+    await this.tareaRepo.create(
+      new Tarea({
+        hitoId: hito.id,
+        nombre: 'Diseñar post de Instagram',
+        descripcion: 'Formato cuadrado, paleta de colores del carnaval',
+        isActive: true,
+      }),
+    );
+    this.logger.log('Seeder tareas: tarea demo creada');
+  }
+}
+EOF_MANUAL
+```
+
+Salidas:
+![alt text](images/proceso-1789529453699.png)
+![alt text](images/proceso-1789529473763.png)
+![alt text](images/proceso-1789529510254.png)
+![alt text](images/proceso-1789529515475.png)
+
+
+### 06.4 Capa de presentación + módulo
+
+tareascontroller expone las mismas tres rutas de siempre, post /tareas, get /tareas, get /tareas/:id, sin logica propia, tareasmodule importa hitosmodule porque createtareausecase necesita el hito_repository que hitosmodule exporta, siguiendo la misma cadena de dependencias que ya se vio en las features anteriores, ahora tareas depende de hitos que depende de campanias que depende de clientes, formando toda la jerarquia del dominio
+
+Comandos:
+```bash
+cat > src/features/business/tareas/presentation/http/controllers/tareas.controller.ts <<'EOF_MANUAL'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateTareaDto } from '../../../application/dto/create-tarea.dto.js';
+import { TareaMapper } from '../../../application/mappers/tarea.mapper.js';
+import { CreateTareaUseCase } from '../../../application/use-cases/create-tarea.use-case.js';
+import { GetTareaByIdUseCase } from '../../../application/use-cases/get-tarea-by-id.use-case.js';
+import { ListTareasUseCase } from '../../../application/use-cases/list-tareas.use-case.js';
+
+@ApiTags('tareas')
+@Controller('tareas')
+export class TareasController {
+  constructor(
+    private readonly createTarea: CreateTareaUseCase,
+    private readonly listTareas: ListTareasUseCase,
+    private readonly getTarea: GetTareaByIdUseCase,
+  ) {}
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Crear tarea' })
+  async create(@Body() dto: CreateTareaDto) {
+    const tarea = await this.createTarea.execute(dto);
+    return TareaMapper.toResponse(tarea);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar tareas (paginado)' })
+  async list(@Query('page') page = '1', @Query('limit') limit = '10') {
+    return this.listTareas.execute(Number(page), Number(limit));
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener tarea por id' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const tarea = await this.getTarea.execute(id);
+    return TareaMapper.toResponse(tarea);
+  }
+}
+EOF_MANUAL
+```
+```bash
+cat > src/features/business/tareas/tareas.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { HitosModule } from '../hitos/hitos.module.js';
+import { CreateTareaUseCase } from './application/use-cases/create-tarea.use-case.js';
+import { GetTareaByIdUseCase } from './application/use-cases/get-tarea-by-id.use-case.js';
+import { ListTareasUseCase } from './application/use-cases/list-tareas.use-case.js';
+import { TAREA_REPOSITORY } from './domain/interfaces/tarea.repository.js';
+import { TareaRepository } from './infrastructure/persistence/repositories/tarea.repository.js';
+import { TareaSeeder } from './infrastructure/persistence/seeders/tarea.seeder.js';
+import { TareasController } from './presentation/http/controllers/tareas.controller.js';
+
+@Module({
+  imports: [HitosModule],
+  controllers: [TareasController],
+  providers: [
+    CreateTareaUseCase,
+    ListTareasUseCase,
+    GetTareaByIdUseCase,
+    TareaSeeder,
+    { provide: TAREA_REPOSITORY, useClass: TareaRepository },
+  ],
+  exports: [TAREA_REPOSITORY, TareaSeeder],
+})
+export class TareasModule {}
+EOF_MANUAL
+```
+
+Salidas:
+
+![alt text](images/proceso-1789529554955.png)
+![alt text](images/proceso-1789529562007.png)
+
+## Commit #6 - Feature tareas terminada
+Todo arranca y no hay errores de implementacion de ninguna feature hasta ahora
+
+![alt text](images/proceso-1789529704534.png)
