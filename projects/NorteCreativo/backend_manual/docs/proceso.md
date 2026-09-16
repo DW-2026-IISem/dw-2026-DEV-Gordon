@@ -3889,6 +3889,8 @@ Operacion central del proyecto, registrar una aprobacion puede disparar el ccier
 
 ### 09.1 Capa dominio
 
+aprobacion tiene fk a versionentregableid, estado (PENDIENTE, APROBADA, RECHAZADA) obligatorio en el constructor y aprobadorid, fecha si tiene default con new Date(). lo nuevo es cierrehitoevaluator, un domain service porque la regla de cierre necesita mirar varios entregables a la vez, no vive en una sola entidad, debecerrarhito aplica rn-01+rn-02, si el arreglo esta vacio devuelve false, si no verifica con every() que todas las ultimas versiones esten APROBADA. iaprobacionrepository ya no tiene un create simple sino registrarYEvaluarCierre, que devuelve tanto la aprobacion como si cerro el hito. las excepciones son versionnoencontradaexception y hitocerradonoadmiteaprobacionexception rn-06
+
 comandos:
 
 ``` bash
@@ -4001,6 +4003,8 @@ salidas:
 ![alt text](images/proceso-1789534729415.png)
 
 ### 09.2 Capa aplicacion
+
+el dto valida versionentregableid, estado limitado a APROBADA/RECHAZADA con @IsIn, aprobadorid y comentario opcional. el mapper solo tiene toresponse, arma la respuesta incluyendo hitocerrado, hitoid y fechacierre. registraraprobacionusecase es corto porque le delega todo al repositorio via registrarYEvaluarCierre, ahi la orquestacion pesada vive en infraestructura porque necesita ser una sola transaccion
 
 comandos:
 ``` bash
@@ -4127,6 +4131,8 @@ salidas:
 
 
 ### 09.3 Capa de infraestructura
+
+aprobacionmodel es simple, fk a versionentregablemodel mas estado, aprobadorid, comentario y fecha. registrarlo en all_models. lo importante esta en aprobacionrepository, todo corre dentro de this.sequelize.transaction, sube la cadena version→entregable→tarea→hito, y al buscar el hito usa lock: Transaction.LOCK.UPDATE para evitar que dos aprobaciones simultaneas evaluen el cierre con datos desactualizados. valida rn-06, inserta la aprobacion y actualiza el estado en la version. si fue RECHAZADA retorna sin cerrar nada (pero el rechazo si queda guardado). si fue APROBADA junta el estado de la ultima version de cada entregable del hito y se lo pasa a cierrehitoevaluator, si dice que si cierra el hito con fecha actual, todo en la misma transaccion
 
 comandos: 
 
@@ -4360,6 +4366,8 @@ salidas:
 
 ### 09.4 Capa de presentación + módulo
 
+aprobacionescontroller solo tiene post y get by id, sin listado. aprobacionesmodule importa versionentregablesmodule, entregablesmodule, tareasmodule y hitosmodule porque el repositorio necesita moverse por toda esa cadena de modelos de sequelize directamente
+
 comandos:
 
 ``` bash
@@ -4432,4 +4440,282 @@ salidas:
 ## Commit #9 - feature aprobaciones temrinado, entidades listas, ya se puede implementar DEMO funcional
 
 ![alt text](images/proceso-1789535546690.png)
+
+## SEG-10 - integracion, seeders y demo
+
+Conectamos las 7 features, sembramos datos y verificamos el flujo completo de cerrar hito
+
+### 10.1 modulo agregador "business.module.ts"
+
+businessmodule agrupa las 7 features en un solo modulo, importa y exporta todos los modulos de negocio juntos, clientes, campanias, hitos, tareas, entregables, version-entregables, aprobaciones, asi appmodule solo necesita importar businessmodule en vez de los 7 por separado, es un paso de limpieza que no agrega logica nueva, solo organiza lo que ya existia
+
+``` bash
+cat > src/features/business/business.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { AprobacionesModule } from './aprobaciones/aprobaciones.module.js';
+import { CampaniasModule } from './campanias/campanias.module.js';
+import { ClientesModule } from './clientes/clientes.module.js';
+import { EntregablesModule } from './entregables/entregables.module.js';
+import { HitosModule } from './hitos/hitos.module.js';
+import { TareasModule } from './tareas/tareas.module.js';
+import { VersionEntregablesModule } from './version-entregables/version-entregables.module.js';
+
+@Module({
+  imports: [
+    ClientesModule,
+    CampaniasModule,
+    HitosModule,
+    TareasModule,
+    EntregablesModule,
+    VersionEntregablesModule,
+    AprobacionesModule,
+  ],
+  exports: [
+    ClientesModule,
+    CampaniasModule,
+    HitosModule,
+    TareasModule,
+    EntregablesModule,
+    VersionEntregablesModule,
+    AprobacionesModule,
+  ],
+})
+export class BusinessModule {}
+EOF_MANUAL
+```
+salidas:
+![alt text](images/proceso-1789536112798.png)
+
+### 10.2 seeders ( datos para el arranque y el orden de las dependencias )
+
+seedersrunner implementa OnApplicationBootstrap, un hook de nestjs que corre automaticamente cuando la app termina de levantar. inyecta los 6 seeders (no incluye aprobaciones porque esa feature no tiene seeder propio) y los ejecuta uno por uno en orden estricto, clientes primero, despues campanias, hitos, tareas, entregables y version-entregables al final, el orden importa porque cada seeder depende de que el anterior ya haya sembrado datos, por ejemplo el seeder de campanias necesita que ya exista un cliente, si se ejecutaran en otro orden o en paralelo fallarian
+
+comandos:
+``` bash
+cat > src/infrastructure/database/seeders/seeders.runner.ts <<'EOF_MANUAL'
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { CampaniaSeeder } from '../../../features/business/campanias/infrastructure/persistence/seeders/campania.seeder.js';
+import { ClienteSeeder } from '../../../features/business/clientes/infrastructure/persistence/seeders/cliente.seeder.js';
+import { EntregableSeeder } from '../../../features/business/entregables/infrastructure/persistence/seeders/entregable.seeder.js';
+import { HitoSeeder } from '../../../features/business/hitos/infrastructure/persistence/seeders/hito.seeder.js';
+import { TareaSeeder } from '../../../features/business/tareas/infrastructure/persistence/seeders/tarea.seeder.js';
+import { VersionEntregableSeeder } from '../../../features/business/version-entregables/infrastructure/persistence/seeders/version-entregable.seeder.js';
+
+@Injectable()
+export class SeedersRunner implements OnApplicationBootstrap {
+  private readonly logger = new Logger(SeedersRunner.name);
+
+  constructor(
+    private readonly clienteSeeder: ClienteSeeder,
+    private readonly campaniaSeeder: CampaniaSeeder,
+    private readonly hitoSeeder: HitoSeeder,
+    private readonly tareaSeeder: TareaSeeder,
+    private readonly entregableSeeder: EntregableSeeder,
+    private readonly versionEntregableSeeder: VersionEntregableSeeder,
+  ) {}
+
+  async onApplicationBootstrap(): Promise<void> {
+    await this.clienteSeeder.seed();
+    await this.campaniaSeeder.seed();
+    await this.hitoSeeder.seed();
+    await this.tareaSeeder.seed();
+    await this.entregableSeeder.seed();
+    await this.versionEntregableSeeder.seed();
+    this.logger.log(
+      'Seeders business ejecutados en orden: clientes → campanias → hitos → tareas → entregables → version-entregables',
+    );
+  }
+}
+EOF_MANUAL
+```
+
+salidas:
+
+![alt text](images/proceso-1789536137778.png)
+
+### 10.3 app.module.ts final, con businessmodule y seedersrunner
+
+este es el ensamblaje final de toda la app, importa environmentmodule (config), sequelizemodule, que conecta conexion a bd y businessmodule con las 7 features, agrega healthcontroller para el endpoint de salud y registra seedersrunner como provider para que se ejecute al arrancar, con esto toda la cadena de dependencias que se construyo desde seg-03 hasta seg-09 queda conectada en un solo punto de entrada
+comandos:
+
+``` bash
+cat > src/app.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { EnvironmentModule } from './config/environment/environment.module.js';
+import { BusinessModule } from './features/business/business.module.js';
+import { HealthController } from './health/health.controller.js';
+import { SeedersRunner } from './infrastructure/database/seeders/seeders.runner.js';
+import { SequelizeModule } from './infrastructure/database/sequelize/sequelize.module.js';
+
+@Module({
+  imports: [EnvironmentModule, SequelizeModule, BusinessModule],
+  controllers: [HealthController],
+  providers: [SeedersRunner],
+})
+export class AppModule {}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789536160125.png)
+
+
+### 10.4 pruebas con vitest 
+
+se crean dos configs separadas, vitest.config.ts para pruebas unitaria y vitest.config.e2e.ts para pruebas end-to-end, separarlas evita que un test e2e, que levanta la app completa y es mas lento, se mezcle con las pruebas unitarias rapidas. el archivo health.e2e-spec.ts es la primera prueba e2e del proyecto, usa supertest para levantar toda la app con Test.createTestingModule importando el appmodule real, y verifica que GET /api/health devuelva 200 con { status: 'ok' }, esto confirma que toda la cadena de modulos arranca sin errores de principio a fin
+
+comandos:
+```bash
+cat > vitest.config.ts <<'EOF_MANUAL'
+import { defineConfig } from 'vitest/config';
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+  test: {
+    globals: true,
+    root: './',
+    include: ['**/*.spec.ts'],
+  },
+});
+EOF_MANUAL
+```
+
+``` bash
+cat > vitest.config.e2e.ts <<'EOF_MANUAL'
+import { defineConfig } from 'vitest/config';
+import tsconfigPaths from 'vite-tsconfig-paths';
+
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+  test: {
+    globals: true,
+    root: './',
+    include: ['**/*.e2e-spec.ts'],
+  },
+});
+EOF_MANUAL
+```
+
+``` bash
+mkdir -p test
+cat > test/health.e2e-spec.ts <<'EOF_MANUAL'
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { AppModule } from './../src/app.module.js';
+
+describe('Health (e2e)', () => {
+  let app: INestApplication<App>;
+
+  beforeEach(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    await app.init();
+  });
+
+  it('/api/health (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/api/health')
+      .expect(200)
+      .expect({ status: 'ok' });
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+});
+EOF_MANUAL
+```
+
+Salidas:
+
+![alt text](images/proceso-1789536196437.png)
+![alt text](images/proceso-1789536202030.png)
+
+### 10.5 ejecucion y prueba
+
+Salidas:
+
+![alt text](images/proceso-1789537167810.png)
+![alt text](images/proceso-1789537189316.png)
+
+Codigos curl, para probar todo el backend, con valores de prueba
+
+``` bash
+# Health
+curl http://localhost:3010/api/health
+
+# 1. Crear cliente
+curl -X POST http://localhost:3010/api/clientes -H 'Content-Type: application/json' \
+  -d '{"tipoDocumento":"NIT","numeroDocumento":"900123456-7","nombre":"Postobón S.A.","email":"contacto@postobon.com"}'
+
+# 2. Crear campaña (usa el id del cliente creado, ej. 1)
+curl -X POST http://localhost:3010/api/campanias -H 'Content-Type: application/json' \
+  -d '{"clienteId":1,"nombre":"Carnaval 2026","descripcion":"Campaña de carnaval"}'
+
+# 3. Crear hito (usa el id de la campaña, ej. 1)
+curl -X POST http://localhost:3010/api/hitos -H 'Content-Type: application/json' \
+  -d '{"campaniaId":1,"nombre":"Piezas para redes sociales"}'
+
+# 4. Crear tarea (usa el id del hito, ej. 1)
+curl -X POST http://localhost:3010/api/tareas -H 'Content-Type: application/json' \
+  -d '{"hitoId":1,"nombre":"Diseñar post de Instagram"}'
+
+# 5. Crear entregable (usa el id de la tarea, ej. 1)
+curl -X POST http://localhost:3010/api/entregables -H 'Content-Type: application/json' \
+  -d '{"tareaId":1,"observaciones":"Primer borrador"}'
+
+# 6. Crear versión del entregable (usa el id del entregable, ej. 1) — numeroVersion sale automático (1)
+curl -X POST http://localhost:3010/api/version-entregables -H 'Content-Type: application/json' \
+  -d '{"entregableId":1,"observaciones":"Versión 1 lista para revisión"}'
+
+# 7a. DEMO DE RECHAZO — aprobar con estado RECHAZADA: el hito debe seguir ABIERTO
+curl -X POST http://localhost:3010/api/aprobaciones -H 'Content-Type: application/json' \
+  -d '{"versionEntregableId":1,"estado":"RECHAZADA","aprobadorId":1,"comentario":"Cambiar el color de fondo"}'
+# Respuesta esperada: { ..., "hitoCerrado": false, "hitoId": null }
+
+# 7b. Crear una segunda versión corregida (numeroVersion sale automático: 2)
+curl -X POST http://localhost:3010/api/version-entregables -H 'Content-Type: application/json' \
+  -d '{"entregableId":1,"observaciones":"Versión 2, color corregido"}'
+
+# 7c. DEMO DE CIERRE — aprobar la versión 2 (id 2): como es el único
+# entregable del hito y ya queda APROBADO, el hito se cierra automáticamente
+curl -X POST http://localhost:3010/api/aprobaciones -H 'Content-Type: application/json' \
+  -d '{"versionEntregableId":2,"estado":"APROBADA","aprobadorId":1,"comentario":"Aprobado, listo para publicar"}'
+# Respuesta esperada: { ..., "hitoCerrado": true, "hitoId": 1, "fechaCierre": "..." }
+
+# 8. Verificar que el hito quedó CERRADO
+curl http://localhost:3010/api/hitos/1
+# estado: "CERRADO", fechaCierre: no nulo
+
+# 9. DEMO DE RN-06 — intentar aprobar de nuevo sobre el hito ya cerrado debe fallar con 409
+curl -X POST http://localhost:3010/api/aprobaciones -H 'Content-Type: application/json' \
+  -d '{"versionEntregableId":2,"estado":"APROBADA","aprobadorId":1}'
+# Respuesta esperada: 409 — "El hito 1 ya está cerrado y no admite nuevas aprobaciones"
+```
+
+Salidas:
+
+![alt text](images/proceso-1789537444414.png)
+![alt text](images/proceso-1789537455647.png)
+
+Hay un problema, no dieron las salidas esperadas como en el paso 7c, donde hitocerrado debia ser true y salio false con id nulo, paso 8 esperaba estado: "CERRADO" pero el hito sigue abierto, y paso 9 devolvieo estatus 201
+
+## Commit #10 - Negocio completo, pero con problemas pendientes a arreglar
+
+![alt text](images/proceso-1789537877196.png)
+
+Menu de /api/docs de la interfaz dispuesta por swaggerUI con los 20 endpoints
+
+![alt text](images/proceso-1789537969133.png)
+
+Primer cliente creado al usar los pasos en terminal anteriores
+
+![alt text](images/proceso-1789538036286.png)
 
