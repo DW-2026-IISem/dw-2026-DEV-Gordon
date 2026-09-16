@@ -3882,3 +3882,554 @@ salidas:
 Habia un problema con el docker, pues aveces el mysql se caia y dejaba de estar en estado healthy, obligandome a usar los comandos del COMANDOS.md para reiniciarlo y dejara de darme problemas cada vez que arrancaba el proyecto.
 
 ![alt text](images/proceso-1789533705096.png)
+
+## SEG-09 - Feature aprobaciones ( cierre de los hitos de forma automatico )
+
+Operacion central del proyecto, registrar una aprobacion puede disparar el ccierre de hito, es el equivalente a sales en storelab, pero en lugar de descontar stock, cierra un hito.
+
+### 09.1 Capa dominio
+
+comandos:
+
+``` bash
+cat > src/features/business/aprobaciones/domain/entities/aprobacion.entity.ts <<'EOF_MANUAL'
+export type AprobacionEstado = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+
+export interface AprobacionProps {
+  id?: number | null;
+  versionEntregableId: number;
+  estado: AprobacionEstado;
+  aprobadorId: number;
+  comentario?: string | null;
+  fecha?: Date;
+}
+
+export class Aprobacion {
+  readonly id: number | null;
+  readonly versionEntregableId: number;
+  readonly estado: AprobacionEstado;
+  readonly aprobadorId: number;
+  readonly comentario: string | null;
+  readonly fecha: Date;
+
+  constructor(props: AprobacionProps) {
+    this.id = props.id ?? null;
+    this.versionEntregableId = props.versionEntregableId;
+    this.estado = props.estado;
+    this.aprobadorId = props.aprobadorId;
+    this.comentario = props.comentario ?? null;
+    this.fecha = props.fecha ?? new Date();
+  }
+}
+EOF_MANUAL
+```
+
+se crea el servicio cierrehitoevaluador, es el equivalente a salcalculator de storelab pero adaptado a nortecreativo
+
+``` bash
+cat > src/features/business/aprobaciones/domain/services/cierre-hito-evaluator.ts <<'EOF_MANUAL'
+export interface EntregableConEstado {
+  entregableId: number;
+  ultimaVersionEstado: 'EN_REVISION' | 'APROBADA' | 'RECHAZADA' | null;
+}
+
+export class CierreHitoEvaluator {
+  // RN-01 + RN-02: el hito se cierra si y solo si TODOS los entregables
+  // tienen su ultima version en estado APROBADA. Basta un RECHAZADA o
+  // EN_REVISION (o ausente) para que el hito permanezca ABIERTO.
+  debeCerrarHito(entregables: EntregableConEstado[]): boolean {
+    if (entregables.length === 0) {
+      return false;
+    }
+    return entregables.every((e) => e.ultimaVersionEstado === 'APROBADA');
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/aprobaciones/domain/interfaces/aprobacion.repository.ts <<'EOF_MANUAL'
+import { Aprobacion } from '../entities/aprobacion.entity.js';
+
+export const APROBACION_REPOSITORY = 'IAprobacionRepository';
+
+export interface RegistrarAprobacionResultado {
+  aprobacion: Aprobacion;
+  hitoCerrado: boolean;
+  hitoId: number | null;
+  fechaCierre: Date | null;
+}
+
+export interface IAprobacionRepository {
+  // Operación transaccional completa: registra la aprobación y,
+  // si corresponde, cierra el hito — todo en una sola transacción.
+  registrarYEvaluarCierre(aprobacion: Aprobacion): Promise<RegistrarAprobacionResultado>;
+  findById(id: number): Promise<Aprobacion | null>;
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/aprobaciones/domain/exceptions/version-no-encontrada.exception.ts <<'EOF_MANUAL'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class VersionNoEncontradaException extends EntityNotFoundException {
+  constructor(id: number) {
+    super(`Versión de entregable con id ${id} no encontrada`);
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/aprobaciones/domain/exceptions/hito-cerrado-no-admite-aprobacion.exception.ts <<'EOF_MANUAL'
+import { BusinessRuleException } from '../../../../../common/exceptions/business-rule.exception.js';
+
+export class HitoCerradoNoAdmiteAprobacionException extends BusinessRuleException {
+  constructor(hitoId: number) {
+    // RN-06: un hito cerrado no admite nuevas versiones ni aprobaciones
+    super(`El hito ${hitoId} ya está cerrado y no admite nuevas aprobaciones`);
+  }
+}
+EOF_MANUAL
+```
+
+
+salidas:
+![alt text](images/proceso-1789534709189.png)
+![alt text](images/proceso-1789534716160.png)
+![alt text](images/proceso-1789534729415.png)
+
+### 09.2 Capa aplicacion
+
+comandos:
+``` bash
+cat > src/features/business/aprobaciones/application/dto/create-aprobacion.dto.ts <<'EOF_MANUAL'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+
+export class CreateAprobacionDto {
+  @ApiProperty({ example: 1 })
+  @IsInt({ message: 'versionEntregableId debe ser entero' })
+  @Min(1, { message: 'versionEntregableId es requerido' })
+  versionEntregableId!: number;
+
+  @ApiProperty({ example: 'APROBADA', enum: ['APROBADA', 'RECHAZADA'] })
+  @IsIn(['APROBADA', 'RECHAZADA'], { message: 'estado debe ser APROBADA o RECHAZADA' })
+  estado!: 'APROBADA' | 'RECHAZADA';
+
+  @ApiProperty({ example: 1 })
+  @IsInt({ message: 'aprobadorId debe ser entero' })
+  @Min(1, { message: 'aprobadorId es requerido' })
+  aprobadorId!: number;
+
+  @ApiPropertyOptional({ example: 'Aprobado, listo para publicar' })
+  @IsOptional()
+  @IsString()
+  comentario?: string;
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/aprobaciones/application/mappers/aprobacion.mapper.ts <<'EOF_MANUAL'
+import { RegistrarAprobacionResultado } from '../../domain/interfaces/aprobacion.repository.js';
+
+export class AprobacionMapper {
+  static toResponse(resultado: RegistrarAprobacionResultado) {
+    return {
+      id: resultado.aprobacion.id,
+      versionEntregableId: resultado.aprobacion.versionEntregableId,
+      estado: resultado.aprobacion.estado,
+      aprobadorId: resultado.aprobacion.aprobadorId,
+      comentario: resultado.aprobacion.comentario,
+      fecha: resultado.aprobacion.fecha,
+      hitoCerrado: resultado.hitoCerrado,
+      hitoId: resultado.hitoId,
+      fechaCierre: resultado.fechaCierre,
+    };
+  }
+}
+EOF_MANUAL
+```
+
+el caso de uso es equivalente a createsaleusecase de storelab
+
+``` bash
+cat > src/features/business/aprobaciones/application/use-cases/registrar-aprobacion.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Aprobacion } from '../../domain/entities/aprobacion.entity.js';
+import {
+  APROBACION_REPOSITORY,
+  RegistrarAprobacionResultado,
+} from '../../domain/interfaces/aprobacion.repository.js';
+import type { IAprobacionRepository } from '../../domain/interfaces/aprobacion.repository.js';
+import { CreateAprobacionDto } from '../dto/create-aprobacion.dto.js';
+
+@Injectable()
+export class RegistrarAprobacionUseCase {
+  constructor(
+    @Inject(APROBACION_REPOSITORY) private readonly aprobacionRepo: IAprobacionRepository,
+  ) {}
+
+  async execute(dto: CreateAprobacionDto): Promise<RegistrarAprobacionResultado> {
+    // RN-05 (simplificada, sin RBAC real todavía): en esta fase no se valida
+    // el rol del aprobadorId contra la tabla de roles — eso se añade cuando
+    // se implemente RBAC. Aquí solo se registra quién aprobó.
+    const aprobacion = new Aprobacion({
+      versionEntregableId: dto.versionEntregableId,
+      estado: dto.estado,
+      aprobadorId: dto.aprobadorId,
+      comentario: dto.comentario ?? null,
+    });
+
+    // El repositorio hace, en una sola transacción:
+    // 1) valida que la versión exista y su hito no esté cerrado (RN-06)
+    // 2) inserta la aprobación
+    // 3) si es RECHAZADA -> retorna (el hito sigue ABIERTO, RN-01)
+    // 4) si es APROBADA -> evalúa si TODOS los entregables del hito están
+    //    aprobados (RN-02, vía CierreHitoEvaluator) y, si es así, cierra el hito
+    return this.aprobacionRepo.registrarYEvaluarCierre(aprobacion);
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/aprobaciones/application/use-cases/get-aprobacion-by-id.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { VersionNoEncontradaException } from '../../domain/exceptions/version-no-encontrada.exception.js';
+import { APROBACION_REPOSITORY } from '../../domain/interfaces/aprobacion.repository.js';
+import type { IAprobacionRepository } from '../../domain/interfaces/aprobacion.repository.js';
+import type { Aprobacion } from '../../domain/entities/aprobacion.entity.js';
+
+@Injectable()
+export class GetAprobacionByIdUseCase {
+  constructor(
+    @Inject(APROBACION_REPOSITORY) private readonly aprobacionRepo: IAprobacionRepository,
+  ) {}
+
+  async execute(id: number): Promise<Aprobacion> {
+    const aprobacion = await this.aprobacionRepo.findById(id);
+    if (!aprobacion) {
+      throw new VersionNoEncontradaException(id);
+    }
+    return aprobacion;
+  }
+}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789534883131.png)
+![alt text](images/proceso-1789534890646.png)
+![alt text](images/proceso-1789534898424.png)
+
+
+### 09.3 Capa de infraestructura
+
+comandos: 
+
+``` bash
+cat > src/features/business/aprobaciones/infrastructure/persistence/models/aprobacion.model.ts <<'EOF_MANUAL'
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { VersionEntregableModel } from '../../../../version-entregables/infrastructure/persistence/models/version-entregable.model.js';
+
+@Table({ tableName: 'aprobaciones', timestamps: true })
+export class AprobacionModel extends Model {
+  @Column({ type: DataType.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true })
+  declare id: number;
+
+  @ForeignKey(() => VersionEntregableModel)
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare versionEntregableId: number;
+
+  @BelongsTo(() => VersionEntregableModel)
+  versionEntregable?: VersionEntregableModel;
+
+  @Column({ type: DataType.STRING(20), allowNull: false, defaultValue: 'PENDIENTE' })
+  declare estado: string;
+
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare aprobadorId: number;
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  declare comentario: string | null;
+
+  @Column({ type: DataType.DATE, allowNull: false, defaultValue: DataType.NOW })
+  declare fecha: Date;
+}
+EOF_MANUAL
+```
+
+implementacion en sequelize.factory.ts
+``` bash
+import { AprobacionModel } from '../../../features/business/aprobaciones/infrastructure/persistence/models/aprobacion.model.js';
+
+export const ALL_MODELS: any[] = [
+  ClienteModel,
+  CampaniaModel,
+  HitoModel,
+  TareaModel,
+  EntregableModel,
+  VersionEntregableModel,
+  AprobacionModel,
+];
+```
+
+Este es el repositorio transaccional, es el archivo mas importante, aqui se implementa el flujo exacto de la seccion 6 del sdd.
+
+![alt text](images/proceso-1789535105939.png)
+
+``` bash
+cat > src/features/business/aprobaciones/infrastructure/persistence/repositories/aprobacion.repository.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { SEQUELIZE } from '../../../../../../infrastructure/database/sequelize/sequelize.module.js';
+import { EntregableModel } from '../../../../entregables/infrastructure/persistence/models/entregable.model.js';
+import { HitoModel } from '../../../../hitos/infrastructure/persistence/models/hito.model.js';
+import { TareaModel } from '../../../../tareas/infrastructure/persistence/models/tarea.model.js';
+import { VersionEntregableModel } from '../../../../version-entregables/infrastructure/persistence/models/version-entregable.model.js';
+import { Aprobacion } from '../../../domain/entities/aprobacion.entity.js';
+import type { AprobacionEstado } from '../../../domain/entities/aprobacion.entity.js';
+import { CierreHitoEvaluator } from '../../../domain/services/cierre-hito-evaluator.js';
+import type { EntregableConEstado } from '../../../domain/services/cierre-hito-evaluator.js';
+import { HitoCerradoNoAdmiteAprobacionException } from '../../../domain/exceptions/hito-cerrado-no-admite-aprobacion.exception.js';
+import { VersionNoEncontradaException } from '../../../domain/exceptions/version-no-encontrada.exception.js';
+import {
+  IAprobacionRepository,
+  RegistrarAprobacionResultado,
+} from '../../../domain/interfaces/aprobacion.repository.js';
+import { AprobacionModel } from '../models/aprobacion.model.js';
+
+@Injectable()
+export class AprobacionRepository implements IAprobacionRepository {
+  private readonly evaluator = new CierreHitoEvaluator();
+
+  constructor(@Inject(SEQUELIZE) private readonly sequelize: Sequelize) {}
+
+  async registrarYEvaluarCierre(aprobacion: Aprobacion): Promise<RegistrarAprobacionResultado> {
+    return this.sequelize.transaction(async (t) => {
+      const aprobacionRepo = this.sequelize.getRepository(AprobacionModel);
+      const versionRepo = this.sequelize.getRepository(VersionEntregableModel);
+      const entregableRepo = this.sequelize.getRepository(EntregableModel);
+      const tareaRepo = this.sequelize.getRepository(TareaModel);
+      const hitoRepo = this.sequelize.getRepository(HitoModel);
+
+      // Paso 3 del SDD: identificar a qué hito pertenece la versión aprobada
+      // (Version -> Entregable -> Tarea -> Hito), bloqueando el hito para
+      // evitar condiciones de carrera si dos aprobaciones llegan casi juntas.
+      const version = await versionRepo.findByPk(aprobacion.versionEntregableId, {
+        transaction: t,
+      });
+      if (!version) {
+        throw new VersionNoEncontradaException(aprobacion.versionEntregableId);
+      }
+      const entregable = await entregableRepo.findByPk(version.entregableId, { transaction: t });
+      const tarea = await tareaRepo.findByPk(entregable!.tareaId, { transaction: t });
+      const hito = await hitoRepo.findByPk(tarea!.hitoId, {
+        transaction: t,
+        lock: Transaction.LOCK.UPDATE,
+      });
+
+      // RN-06: un hito cerrado no admite nuevas versiones ni aprobaciones.
+      if (hito!.estado !== 'ABIERTO') {
+        throw new HitoCerradoNoAdmiteAprobacionException(hito!.id);
+      }
+
+      // Paso 2 del SDD: registrar la aprobación (APROBADA o RECHAZADA).
+      const createdAprobacion = await aprobacionRepo.create(
+        {
+          versionEntregableId: aprobacion.versionEntregableId,
+          estado: aprobacion.estado,
+          aprobadorId: aprobacion.aprobadorId,
+          comentario: aprobacion.comentario,
+          fecha: aprobacion.fecha,
+        },
+        { transaction: t },
+      );
+
+      // También se refleja el veredicto en la versión (para que
+      // findUltimaVersion / consultas posteriores lo vean directo).
+      await version.update({ estado: aprobacion.estado }, { transaction: t });
+
+      const dominioAprobacion = new Aprobacion({
+        id: createdAprobacion.id,
+        versionEntregableId: createdAprobacion.versionEntregableId,
+        estado: createdAprobacion.estado as AprobacionEstado,
+        aprobadorId: createdAprobacion.aprobadorId,
+        comentario: createdAprobacion.comentario,
+        fecha: createdAprobacion.fecha,
+      });
+
+      // RN-01: si fue RECHAZADA, el hito NO se cierra. Se aborta aquí
+      // (dentro de la misma transacción, que igual se confirma porque el
+      // registro del rechazo sí debe persistir).
+      if (aprobacion.estado === 'RECHAZADA') {
+        return {
+          aprobacion: dominioAprobacion,
+          hitoCerrado: false,
+          hitoId: null,
+          fechaCierre: null,
+        };
+      }
+
+      // Paso 4 del SDD: revisar TODOS los entregables del hito y el estado
+      // de la última versión de cada uno.
+      const tareasDelHito = await tareaRepo.findAll({
+        where: { hitoId: hito!.id },
+        transaction: t,
+      });
+      const entregablesDelHito = await entregableRepo.findAll({
+        where: { tareaId: tareasDelHito.map((tt) => tt.id) },
+        transaction: t,
+      });
+
+      const estados: EntregableConEstado[] = [];
+      for (const e of entregablesDelHito) {
+        const ultima = await versionRepo.findOne({
+          where: { entregableId: e.id },
+          order: [['numeroVersion', 'DESC']],
+          transaction: t,
+        });
+        estados.push({
+          entregableId: e.id,
+          ultimaVersionEstado: (ultima?.estado as any) ?? null,
+        });
+      }
+
+      // Paso 5/6 del SDD (vía CierreHitoEvaluator = RN-02):
+      // si TODOS están APROBADOS, se cierra el hito en esta misma transacción.
+      const debeCerrar = this.evaluator.debeCerrarHito(estados);
+
+      if (!debeCerrar) {
+        return {
+          aprobacion: dominioAprobacion,
+          hitoCerrado: false,
+          hitoId: null,
+          fechaCierre: null,
+        };
+      }
+
+      const fechaCierre = new Date();
+      await hito!.update(
+        { estado: 'CERRADO', fechaCierre },
+        { transaction: t },
+      );
+
+      return {
+        aprobacion: dominioAprobacion,
+        hitoCerrado: true,
+        hitoId: hito!.id,
+        fechaCierre,
+      };
+    });
+  }
+
+  async findById(id: number): Promise<Aprobacion | null> {
+    const repo = this.sequelize.getRepository(AprobacionModel);
+    const found = await repo.findByPk(id);
+    if (!found) {
+      return null;
+    }
+    return new Aprobacion({
+      id: found.id,
+      versionEntregableId: found.versionEntregableId,
+      estado: found.estado as AprobacionEstado,
+      aprobadorId: found.aprobadorId,
+      comentario: found.comentario,
+      fecha: found.fecha,
+    });
+  }
+}
+EOF_MANUAL
+```
+se hace todo o nada en la transaccion, similar a lo que hace sales en steore lab, bloquea el hito, inserta aprobacion, evalua si cierra y si algo falla en cualquier paso, se revierte todo
+
+salidas:
+![alt text](images/proceso-1789535244072.png)
+![alt text](images/proceso-1789535263867.png)
+
+### 09.4 Capa de presentación + módulo
+
+comandos:
+
+``` bash
+cat > src/features/business/aprobaciones/presentation/http/controllers/aprobaciones.controller.ts <<'EOF_MANUAL'
+import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateAprobacionDto } from '../../../application/dto/create-aprobacion.dto.js';
+import { AprobacionMapper } from '../../../application/mappers/aprobacion.mapper.js';
+import { GetAprobacionByIdUseCase } from '../../../application/use-cases/get-aprobacion-by-id.use-case.js';
+import { RegistrarAprobacionUseCase } from '../../../application/use-cases/registrar-aprobacion.use-case.js';
+
+@ApiTags('aprobaciones')
+@Controller('aprobaciones')
+export class AprobacionesController {
+  constructor(
+    private readonly registrarAprobacion: RegistrarAprobacionUseCase,
+    private readonly getAprobacion: GetAprobacionByIdUseCase,
+  ) {}
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Registrar aprobación o rechazo (cierra el hito automáticamente si es la última pendiente)',
+  })
+  async create(@Body() dto: CreateAprobacionDto) {
+    const resultado = await this.registrarAprobacion.execute(dto);
+    return AprobacionMapper.toResponse(resultado);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener aprobación por id' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.getAprobacion.execute(id);
+  }
+}
+EOF_MANUAL
+```
+
+``` bash
+cat > src/features/business/aprobaciones/aprobaciones.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { EntregablesModule } from '../entregables/entregables.module.js';
+import { HitosModule } from '../hitos/hitos.module.js';
+import { TareasModule } from '../tareas/tareas.module.js';
+import { VersionEntregablesModule } from '../version-entregables/version-entregables.module.js';
+import { GetAprobacionByIdUseCase } from './application/use-cases/get-aprobacion-by-id.use-case.js';
+import { RegistrarAprobacionUseCase } from './application/use-cases/registrar-aprobacion.use-case.js';
+import { APROBACION_REPOSITORY } from './domain/interfaces/aprobacion.repository.js';
+import { AprobacionRepository } from './infrastructure/persistence/repositories/aprobacion.repository.js';
+import { AprobacionesController } from './presentation/http/controllers/aprobaciones.controller.js';
+
+@Module({
+  imports: [VersionEntregablesModule, EntregablesModule, TareasModule, HitosModule],
+  controllers: [AprobacionesController],
+  providers: [
+    RegistrarAprobacionUseCase,
+    GetAprobacionByIdUseCase,
+    { provide: APROBACION_REPOSITORY, useClass: AprobacionRepository },
+  ],
+  exports: [APROBACION_REPOSITORY],
+})
+export class AprobacionesModule {}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789535424576.png)
+![alt text](images/proceso-1789535432254.png)
+
+## Commit #9 - feature aprobaciones temrinado, entidades listas, ya se puede implementar DEMO funcional
+
+![alt text](images/proceso-1789535546690.png)
+
