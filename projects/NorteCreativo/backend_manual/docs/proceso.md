@@ -4719,3 +4719,6 @@ Primer cliente creado al usar los pasos en terminal anteriores
 
 ![alt text](images/proceso-1789538036286.png)
 
+Diagrama de la bases de datos funcionando ( con rbac esto va ser un mierdero )
+
+![alt text](images/proceso-1789538565457.png)
