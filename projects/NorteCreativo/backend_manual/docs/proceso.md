@@ -3393,3 +3393,492 @@ salidas:
 ![alt text](images/proceso-1789530850610.png)
 ![alt text](images/proceso-1789530917457.png)
 
+## SEG-08 - Feature version-entregables
+
+entidad versionentregable, con fk a entregable con numero de version, para asi distinguir entre v1 v2 v3
+
+### 08.1 capa dominio
+
+versionentregable tiene fk a entregableid mas un numeroversion, que es lo que permite distinguir v1, v2, v3 del mismo entregable, aqui aparece un estado nuevo, versionestado, con tres valores, EN_REVISION, APROBADA y RECHAZADA, por defecto queda en EN_REVISION, a diferencia de entregable esta entidad no es completamente inmutable, estado no tiene readonly porque necesita poder cambiar cuando se aprueba o rechaza la version, igual que paso con hito, la interfaz iversionentregablerepository trae los metodos de siempre mas dos nuevos, findbyentregableid para traer todas las versiones de un entregable, y findultimaversion que trae solo la version con el numero mas alto, el comentario dice que esta la va a usar cerrarhito
+
+asi que esto confirma la conexion con la regla RN-02 que ya habiamos visto en hito, el hito se cierra cuando todas sus versiones mas recientes estan aprobadas, tambien esta countbyentregableid que sirve para calcular el siguiente numeroversion al crear una nueva, en las excepciones aparece versionaprobadainmutableexception con el comentario RN-04, una version ya aprobada no se puede modificar, esta regla todavia no se aplica en ningun use case de este segmento pero ya queda declarada en el dominio para cuando se implemente la feature de aprobaciones
+
+
+comandos:
+
+```bash
+cat > src/features/business/version-entregables/domain/entities/version-entregable.entity.ts <<'EOF_MANUAL'
+export type VersionEstado = 'EN_REVISION' | 'APROBADA' | 'RECHAZADA';
+
+export interface VersionEntregableProps {
+  id?: number | null;
+  entregableId: number;
+  numeroVersion: number;
+  fechaInicio?: Date | null;
+  fechaFin?: Date | null;
+  total?: number | null;
+  estado?: VersionEstado;
+  observaciones?: string | null;
+}
+
+export class VersionEntregable {
+  readonly id: number | null;
+  readonly entregableId: number;
+  readonly numeroVersion: number;
+  readonly fechaInicio: Date | null;
+  readonly fechaFin: Date | null;
+  readonly total: number | null;
+  estado: VersionEstado;
+  readonly observaciones: string | null;
+
+  constructor(props: VersionEntregableProps) {
+    this.id = props.id ?? null;
+    this.entregableId = props.entregableId;
+    this.numeroVersion = props.numeroVersion;
+    this.fechaInicio = props.fechaInicio ?? null;
+    this.fechaFin = props.fechaFin ?? null;
+    this.total = props.total ?? null;
+    this.estado = props.estado ?? 'EN_REVISION';
+    this.observaciones = props.observaciones ?? null;
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/domain/interfaces/version-entregable.repository.ts <<'EOF_MANUAL'
+import { VersionEntregable } from '../entities/version-entregable.entity.js';
+
+export const VERSION_ENTREGABLE_REPOSITORY = 'IVersionEntregableRepository';
+
+export interface IVersionEntregableRepository {
+  create(version: VersionEntregable): Promise<VersionEntregable>;
+  findById(id: number): Promise<VersionEntregable | null>;
+  findByEntregableId(entregableId: number): Promise<VersionEntregable[]>;
+  // Última versión (mayor numeroVersion) de un entregable — la usa CerrarHito
+  findUltimaVersion(entregableId: number): Promise<VersionEntregable | null>;
+  countByEntregableId(entregableId: number): Promise<number>;
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/domain/exceptions/version-not-found.exception.ts <<'EOF_MANUAL'
+import { EntityNotFoundException } from '../../../../../common/exceptions/entity-not-found.exception.js';
+
+export class VersionNotFoundException extends EntityNotFoundException {
+  constructor(id: number) {
+    super(`Versión de entregable con id ${id} no encontrada`);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/domain/exceptions/version-aprobada-inmutable.exception.ts <<'EOF_MANUAL'
+import { BusinessRuleException } from '../../../../../common/exceptions/business-rule.exception.js';
+
+export class VersionAprobadaInmutableException extends BusinessRuleException {
+  constructor(versionId: number) {
+    // RN-04: una versión aprobada no se puede modificar
+    super(`La versión ${versionId} ya está APROBADA y no se puede modificar`);
+  }
+}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789532955442.png)
+![alt text](images/proceso-1789532961986.png)
+
+### 08.2 capa aplicacion
+
+el dto es igual de simple que el de entregable, solo pide entregableid obligatorio y observaciones opcional, no pide numeroversion porque ese campo se calcula automaticamente, no lo manda el usuario, en el mapper hay algo distinto a todos los anteriores, versionentregablemapper solo tiene toresponse, no tiene toentity, porque construir la entidad no es una simple traduccion de dto sino que necesita logica adicional como el numero de version calculado, por eso esa logica vive directamente en el usecase en vez del mapper, createversionentregableusecase es el mas elaborado de todo este segmento, inyecta versionrepo y entregablerepo, primero valida que el entregable exista, si no lanza entregablenotfoundexception, despues usa countbyentregableid para contar cuantas versiones tiene ya ese entregable y le suma 1, asi arma el numeroversion automaticamente
+
+esto es lo que asegura que la primera version de un entregable sea siempre 1, la segunda 2, y asi sucesivamente sin que el usuario tenga que calcularlo el mismo, getversionbyidusecase sigue el patron normal, en este segmento no hay use case de listado, solo create y getbyid
+
+comandos:
+```bash
+cat > src/features/business/version-entregables/application/dto/create-version-entregable.dto.ts <<'EOF_MANUAL'
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+
+export class CreateVersionEntregableDto {
+  @ApiProperty({ example: 1 })
+  @IsInt({ message: 'entregableId debe ser entero' })
+  @Min(1, { message: 'entregableId es requerido' })
+  entregableId!: number;
+
+  @ApiPropertyOptional({ example: 'Versión corregida según comentarios del cliente' })
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/application/mappers/version-entregable.mapper.ts <<'EOF_MANUAL'
+import { VersionEntregable } from '../../domain/entities/version-entregable.entity.js';
+
+export class VersionEntregableMapper {
+  static toResponse(v: VersionEntregable) {
+    return {
+      id: v.id,
+      entregableId: v.entregableId,
+      numeroVersion: v.numeroVersion,
+      fechaInicio: v.fechaInicio,
+      fechaFin: v.fechaFin,
+      total: v.total,
+      estado: v.estado,
+      observaciones: v.observaciones,
+    };
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/application/use-cases/create-version-entregable.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { ENTREGABLE_REPOSITORY } from '../../../entregables/domain/interfaces/entregable.repository.js';
+import type { IEntregableRepository } from '../../../entregables/domain/interfaces/entregable.repository.js';
+import { EntregableNotFoundException } from '../../../entregables/domain/exceptions/entregable-not-found.exception.js';
+import { VersionEntregable } from '../../domain/entities/version-entregable.entity.js';
+import { VERSION_ENTREGABLE_REPOSITORY } from '../../domain/interfaces/version-entregable.repository.js';
+import type { IVersionEntregableRepository } from '../../domain/interfaces/version-entregable.repository.js';
+import { CreateVersionEntregableDto } from '../dto/create-version-entregable.dto.js';
+
+@Injectable()
+export class CreateVersionEntregableUseCase {
+  constructor(
+    @Inject(VERSION_ENTREGABLE_REPOSITORY)
+    private readonly versionRepo: IVersionEntregableRepository,
+    @Inject(ENTREGABLE_REPOSITORY) private readonly entregableRepo: IEntregableRepository,
+  ) {}
+
+  async execute(dto: CreateVersionEntregableDto): Promise<VersionEntregable> {
+    const entregable = await this.entregableRepo.findById(dto.entregableId);
+    if (!entregable) {
+      throw new EntregableNotFoundException(dto.entregableId);
+    }
+    const totalVersiones = await this.versionRepo.countByEntregableId(dto.entregableId);
+    const version = new VersionEntregable({
+      entregableId: dto.entregableId,
+      numeroVersion: totalVersiones + 1,
+      fechaInicio: new Date(),
+      observaciones: dto.observaciones ?? null,
+      estado: 'EN_REVISION',
+    });
+    return this.versionRepo.create(version);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/application/use-cases/get-version-by-id.use-case.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { VersionNotFoundException } from '../../domain/exceptions/version-not-found.exception.js';
+import { VERSION_ENTREGABLE_REPOSITORY } from '../../domain/interfaces/version-entregable.repository.js';
+import type { IVersionEntregableRepository } from '../../domain/interfaces/version-entregable.repository.js';
+import type { VersionEntregable } from '../../domain/entities/version-entregable.entity.js';
+
+@Injectable()
+export class GetVersionByIdUseCase {
+  constructor(
+    @Inject(VERSION_ENTREGABLE_REPOSITORY)
+    private readonly versionRepo: IVersionEntregableRepository,
+  ) {}
+
+  async execute(id: number): Promise<VersionEntregable> {
+    const version = await this.versionRepo.findById(id);
+    if (!version) {
+      throw new VersionNotFoundException(id);
+    }
+    return version;
+  }
+}
+EOF_MANUAL
+```
+salidas:
+
+![alt text](images/proceso-1789533018391.png)
+![alt text](images/proceso-1789533025828.png)
+![alt text](images/proceso-1789533032007.png)
+
+### 08.3 capa infraestructura
+
+versionentregablemodel usa foreignkey y belongsto hacia entregablemodel, mismo patron de fk de siempre, agrega la columna numeroversion como entero no nulo, ademas de fechainicio, fechafin, total (decimal 12,2 igual que en entregable) y estado con default EN_REVISION, hay que registrar el modelo en all_models despues de entregablemodel, el repositorio implementa los dos metodos nuevos que se definieron en el dominio, findbyentregableid ordena por numeroversion ascendente, y findultimaversion usa findOne con order numeroversion DESC para traer solo la mas reciente
+
+el todomain hace la misma conversion de decimal a numero que ya se vio en entregable, el seeder toma el primer entregable que encuentre, revisa con findbyentregableid si ya tiene alguna version sembrada, y si no la tiene crea la version 1 en EN_REVISION
+
+comandos:
+```bash
+cat > src/features/business/version-entregables/infrastructure/persistence/models/version-entregable.model.ts <<'EOF_MANUAL'
+import {
+  BelongsTo,
+  Column,
+  DataType,
+  ForeignKey,
+  Model,
+  Table,
+} from 'sequelize-typescript';
+import { EntregableModel } from '../../../../entregables/infrastructure/persistence/models/entregable.model.js';
+
+@Table({ tableName: 'version_entregables', timestamps: true })
+export class VersionEntregableModel extends Model {
+  @Column({ type: DataType.INTEGER.UNSIGNED, autoIncrement: true, primaryKey: true })
+  declare id: number;
+
+  @ForeignKey(() => EntregableModel)
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare entregableId: number;
+
+  @BelongsTo(() => EntregableModel)
+  entregable?: EntregableModel;
+
+  @Column({ type: DataType.INTEGER.UNSIGNED, allowNull: false })
+  declare numeroVersion: number;
+
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare fechaInicio: Date | null;
+
+  @Column({ type: DataType.DATE, allowNull: true })
+  declare fechaFin: Date | null;
+
+  @Column({ type: DataType.DECIMAL(12, 2), allowNull: true })
+  declare total: number | null;
+
+  @Column({ type: DataType.STRING(20), allowNull: false, defaultValue: 'EN_REVISION' })
+  declare estado: string;
+
+  @Column({ type: DataType.TEXT, allowNull: true })
+  declare observaciones: string | null;
+}
+EOF_MANUAL
+```
+
+```bash
+import { VersionEntregableModel } from '../../../features/business/version-entregables/infrastructure/persistence/models/version-entregable.model.js';
+
+export const ALL_MODELS: any[] = [
+  ClienteModel,
+  CampaniaModel,
+  HitoModel,
+  TareaModel,
+  EntregableModel,
+  VersionEntregableModel,
+];
+```
+
+```bash
+cat > src/features/business/version-entregables/infrastructure/persistence/repositories/version-entregable.repository.ts <<'EOF_MANUAL'
+import { Inject, Injectable } from '@nestjs/common';
+import { Sequelize } from 'sequelize-typescript';
+import { SEQUELIZE } from '../../../../../../infrastructure/database/sequelize/sequelize.module.js';
+import { VersionEntregable } from '../../../domain/entities/version-entregable.entity.js';
+import type { VersionEstado } from '../../../domain/entities/version-entregable.entity.js';
+import { IVersionEntregableRepository } from '../../../domain/interfaces/version-entregable.repository.js';
+import { VersionEntregableModel } from '../models/version-entregable.model.js';
+
+@Injectable()
+export class VersionEntregableRepository implements IVersionEntregableRepository {
+  constructor(@Inject(SEQUELIZE) private readonly sequelize: Sequelize) {}
+
+  private get repo() {
+    return this.sequelize.getRepository(VersionEntregableModel);
+  }
+
+  async create(version: VersionEntregable): Promise<VersionEntregable> {
+    const created = await this.repo.create({
+      entregableId: version.entregableId,
+      numeroVersion: version.numeroVersion,
+      fechaInicio: version.fechaInicio,
+      fechaFin: version.fechaFin,
+      total: version.total,
+      estado: version.estado,
+      observaciones: version.observaciones,
+    });
+    return this.toDomain(created);
+  }
+
+  async findById(id: number): Promise<VersionEntregable | null> {
+    const found = await this.repo.findByPk(id);
+    return found ? this.toDomain(found) : null;
+  }
+
+  async findByEntregableId(entregableId: number): Promise<VersionEntregable[]> {
+    const rows = await this.repo.findAll({
+      where: { entregableId },
+      order: [['numeroVersion', 'ASC']],
+    });
+    return rows.map((r) => this.toDomain(r));
+  }
+
+  async findUltimaVersion(entregableId: number): Promise<VersionEntregable | null> {
+    const found = await this.repo.findOne({
+      where: { entregableId },
+      order: [['numeroVersion', 'DESC']],
+    });
+    return found ? this.toDomain(found) : null;
+  }
+
+  async countByEntregableId(entregableId: number): Promise<number> {
+    return this.repo.count({ where: { entregableId } });
+  }
+
+  private toDomain(m: VersionEntregableModel): VersionEntregable {
+    return new VersionEntregable({
+      id: m.id,
+      entregableId: m.entregableId,
+      numeroVersion: m.numeroVersion,
+      fechaInicio: m.fechaInicio ?? null,
+      fechaFin: m.fechaFin ?? null,
+      total: m.total ? Number(m.total) : null,
+      estado: (m.estado as VersionEstado) ?? 'EN_REVISION',
+      observaciones: m.observaciones ?? null,
+    });
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/infrastructure/persistence/seeders/version-entregable.seeder.ts <<'EOF_MANUAL'
+import { Inject, Injectable, Logger } from "@nestjs/common";
+import { ENTREGABLE_REPOSITORY } from '../../../../entregables/domain/interfaces/entregable.repository.js';
+import type { IEntregableRepository } from '../../../../entregables/domain/interfaces/entregable.repository.js';
+import { VersionEntregable } from '../../../domain/entities/version-entregable.entity.js';
+import { VERSION_ENTREGABLE_REPOSITORY } from '../../../domain/interfaces/version-entregable.repository.js';
+import type { IVersionEntregableRepository } from '../../../domain/interfaces/version-entregable.repository.js';
+
+@Injectable()
+export class VersionEntregableSeeder {
+  private readonly logger = new Logger(VersionEntregableSeeder.name);
+
+  constructor(
+    @Inject(VERSION_ENTREGABLE_REPOSITORY)
+    private readonly versionRepo: IVersionEntregableRepository,
+    @Inject(ENTREGABLE_REPOSITORY) private readonly entregableRepo: IEntregableRepository,
+  ) {}
+
+  async seed(): Promise<void> {
+    const { items: entregables } = await this.entregableRepo.findAll(1, 100);
+    const entregable = entregables[0];
+    if (!entregable || entregable.id === null) {
+      this.logger.warn('Seeder version-entregables: sin entregable demo; no se siembra');
+      return;
+    }
+    const existentes = await this.versionRepo.findByEntregableId(entregable.id);
+    if (existentes.length > 0) {
+      this.logger.log('Seeder version-entregables: ya existía la versión demo (idempotente)');
+      return;
+    }
+    await this.versionRepo.create(
+      new VersionEntregable({
+        entregableId: entregable.id,
+        numeroVersion: 1,
+        fechaInicio: new Date(),
+        observaciones: 'Primera versión para revisión del cliente',
+        estado: 'EN_REVISION',
+      }),
+    );
+    this.logger.log('Seeder version-entregables: versión demo creada');
+  }
+}
+EOF_MANUAL
+```
+
+salidas:
+
+![alt text](images/proceso-1789533173089.png)
+![alt text](images/proceso-1789533195071.png)
+![alt text](images/proceso-1789533222829.png)
+![alt text](images/proceso-1789533229740.png)
+
+### 08.4 capa presentacion + modulo
+
+aqui hay un cambio respecto a las features anteriores, versionentregablescontroller solo expone dos rutas, post /version-entregables y get /version-entregables/:id, no tiene get de listado paginado como las demas features, porque no hay listversionentregablesusecase implementado en este segmento 
+
+tiene sentido porque las versiones normalmente se consultan en el contexto de un entregable especifico y no como listado general, versionentregablesmodule importa entregablesmodule porque createversionentregableusecase necesita el entregable_repository que entregablesmodule exporta, siguiendo la misma cadena de dependencias de toda la jerarquia, version-entregables depende de entregables, que depende de tareas, que depende de hitos, que depende de campanias, que depende de clientes
+
+comandos:
+```bash
+cat > src/features/business/version-entregables/presentation/http/controllers/version-entregables.controller.ts <<'EOF_MANUAL'
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateVersionEntregableDto } from '../../../application/dto/create-version-entregable.dto.js';
+import { VersionEntregableMapper } from '../../../application/mappers/version-entregable.mapper.js';
+import { CreateVersionEntregableUseCase } from '../../../application/use-cases/create-version-entregable.use-case.js';
+import { GetVersionByIdUseCase } from '../../../application/use-cases/get-version-by-id.use-case.js';
+
+@ApiTags('version-entregables')
+@Controller('version-entregables')
+export class VersionEntregablesController {
+  constructor(
+    private readonly createVersion: CreateVersionEntregableUseCase,
+    private readonly getVersion: GetVersionByIdUseCase,
+  ) {}
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Crear nueva versión de un entregable (numeroVersion automático)' })
+  async create(@Body() dto: CreateVersionEntregableDto) {
+    const version = await this.createVersion.execute(dto);
+    return VersionEntregableMapper.toResponse(version);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener versión por id' })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    const version = await this.getVersion.execute(id);
+    return VersionEntregableMapper.toResponse(version);
+  }
+}
+EOF_MANUAL
+```
+
+```bash
+cat > src/features/business/version-entregables/version-entregables.module.ts <<'EOF_MANUAL'
+import { Module } from '@nestjs/common';
+import { EntregablesModule } from '../entregables/entregables.module.js';
+import { CreateVersionEntregableUseCase } from './application/use-cases/create-version-entregable.use-case.js';
+import { GetVersionByIdUseCase } from './application/use-cases/get-version-by-id.use-case.js';
+import { VERSION_ENTREGABLE_REPOSITORY } from './domain/interfaces/version-entregable.repository.js';
+import { VersionEntregableRepository } from './infrastructure/persistence/repositories/version-entregable.repository.js';
+import { VersionEntregableSeeder } from './infrastructure/persistence/seeders/version-entregable.seeder.js';
+import { VersionEntregablesController } from './presentation/http/controllers/version-entregables.controller.js';
+
+@Module({
+  imports: [EntregablesModule],
+  controllers: [VersionEntregablesController],
+  providers: [
+    CreateVersionEntregableUseCase,
+    GetVersionByIdUseCase,
+    VersionEntregableSeeder,
+    { provide: VERSION_ENTREGABLE_REPOSITORY, useClass: VersionEntregableRepository },
+  ],
+  exports: [VERSION_ENTREGABLE_REPOSITORY, VersionEntregableSeeder],
+})
+export class VersionEntregablesModule {}
+EOF_MANUAL
+```
+
+salidas:
+![alt text](images/proceso-1789533335458.png)
+![alt text](images/proceso-1789533340900.png)
+
+## Commit #8 - Feature version-entregables + fixes en rutas
+
+Habia un problema con el docker, pues aveces el mysql se caia y dejaba de estar en estado healthy, obligandome a usar los comandos del COMANDOS.md para reiniciarlo y dejara de darme problemas cada vez que arrancaba el proyecto.
+
+![alt text](images/proceso-1789533705096.png)

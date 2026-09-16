@@ -6,6 +6,7 @@ import { CampaniaModel } from '../../../features/business/campanias/infrastructu
 import { HitoModel } from '../../../features/business/hitos/infrastructure/persistence/models/hito.model.js';
 import { TareaModel } from '../../../features/business/tareas/infrastructure/persistence/models/tarea.model.js';
 import { EntregableModel } from '../../../features/business/entregables/infrastructure/persistence/models/entregable.model.js';
+import { VersionEntregableModel } from '../../../features/business/version-entregables/infrastructure/persistence/models/version-entregable.model.js';
 
 // Los modelos se van agregando aquí a medida que se crea cada feature
 
@@ -15,6 +16,7 @@ export const ALL_MODELS: any[] = [
   HitoModel,
   TareaModel,
   EntregableModel,
+  VersionEntregableModel,
 ];
 
 export function sequelizeFactory(cfg: IEnvConfig): Sequelize {
