@@ -92,10 +92,106 @@ OBJ: Al finalizar, la app validará su .env al arrancar y se conectará a la bas
 ### AC
 
 **AC (Dado → Cuando → Entonces; deciden el Gate):**
-- [ ] **AC-1** Dado un `.env` con `DB_DIALECT=mysql`, bloque `DB_MYSQL_*` completo y la BD `norte_creativo` existente; cuando **el desarrollador** ejecuta `npm run start:dev`; entonces el log muestra la conexión a la BD como exitosa y la app queda escuchando en `3011`.
-- [ ] **AC-2** Dado una **copia** del `.env` a la que se le quitó una variable crítica del bloque activo (`DB_MYSQL_HOST`, `DB_MYSQL_USERNAME` o `DB_MYSQL_NAME`); cuando se arranca la app con esa copia; entonces el boot **falla antes de conectar** (sin `ECONNREFUSED`) con un mensaje `Error de configuración: …` que nombra la variable faltante; y al restaurar el `.env` original vuelve a arrancar.
-- [ ] **AC-3** Dado el código fuente; cuando se busca `sync(`; entonces la única llamada es `sync({ alter: false })` y no existe `force: true` en ningún archivo.
-- [ ] **AC-4** Dado el repositorio; cuando se revisa `git status` y `.env.example`; entonces `.env` **no** aparece para commit y `.env.example` contiene `DB_DIALECT` y los cuatro bloques completos.
+- [x] **AC-1** Dado un `.env` con `DB_DIALECT=mysql`, bloque `DB_MYSQL_*` completo y la BD `norte_creativo` existente; cuando **el desarrollador** ejecuta `npm run start:dev`; entonces el log muestra la conexión a la BD como exitosa y la app queda escuchando en `3011`.
+- [x] **AC-2** Dado una **copia** del `.env` a la que se le quitó una variable crítica del bloque activo (`DB_MYSQL_HOST`, `DB_MYSQL_USERNAME` o `DB_MYSQL_NAME`); cuando se arranca la app con esa copia; entonces el boot **falla antes de conectar** (sin `ECONNREFUSED`) con un mensaje `Error de configuración: …` que nombra la variable faltante; y al restaurar el `.env` original vuelve a arrancar.
+- [x] **AC-3** Dado el código fuente; cuando se busca `sync(`; entonces la única llamada es `sync({ alter: false })` y no existe `force: true` en ningún archivo.
+- [x] **AC-4** Dado el repositorio; cuando se revisa `git status` y `.env.example`; entonces `.env` **no** aparece para commit y `.env.example` contiene `DB_DIALECT` y los cuatro bloques completos.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-02, no del backend entero.
+
+Implementa los AC de docs/trazabilidad/ISS-02.md.
+
+Entorno: src/config/environment con validacion al arrancar (class-validator sobre process.env) que exige SOLO las
+variables del bloque del DB_DIALECT activo y falla con un mensaje "Error de configuracion: ..." que nombra la variable faltante.
+Sequelize: src/infrastructure/database/sequelize/sequelize.factory.ts multi-dialecto (mysql | postgres | mssql | oracle)
+con ALL_MODELS = [] y sequelize.sync({ alter: false }); sequelize.module.ts global cuyo useFactory inyecta el namespace
+tipado envConfig.KEY (NO ConfigService) para que la validacion ocurra ANTES de intentar conectar.
+Common: src/common/exceptions (ApplicationException con statusCode; EntityNotFoundException 404, DomainException 400,
+BusinessRuleException 409), src/common/filters/global-exception.filter.ts que lee ese statusCode,
+src/common/interceptors/{logging,timeout,response}.interceptor.ts. ResponseInterceptor envuelve toda respuesta exitosa en
+{ statusCode, message, data, timestamp }. Todo registrado en main.ts.
+Escribe .env.example Y actualiza el .env local con el contrato:
+DB_DIALECT + bloques DB_MYSQL_*, DB_POSTGRES_*, DB_MSSQL_*, DB_ORACLE_*. NO uses DB_HOST / DB_USERNAME genericos.
+La base de datos se llama norte_creativo_ia. Instala los drivers: mysql2, pg, tedious, oracledb.
+
+Prohibido: force: true, alter: true, modelos de negocio (Cliente, Campania, Hito, Tarea, Entregable, VersionEntregable,
+Aprobacion), Auth, Users, JWT Token, RBAC. NO adelantes ISS-03.
+NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+para este iss, ya se trabaja con la base de datos, asi que creamos una base de datos separada del backend_manual, la base de datos se llamara norte_creativo_ia, esto tambien se menciona el prompt
+
+
+
+``` mysql
+CREATE DATABASE IF NOT EXISTS norte_creativo_ia CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+exit;
+```
+![alt text](images/proceso-1789686352304.png)
+
+pegamos el prompt modificado
+
+![alt text](images/proceso-1789686552718.png)
+
+
+Salida:
+
+![alt text](images/proceso-1789687310427.png)
+![alt text](images/proceso-1789687382071.png)
+
+verificamos arranque
+
+![alt text](images/proceso-1789687518784.png)
+
+verificamos existencia de la nueva tabla norte_creativo_ia y la conexion
+
+![alt text](images/proceso-1789687553823.png)
+![alt text](images/proceso-1789687643159.png)
+
+verificamos que se aplica el AC 2 donde el arranque debe de fallar por falta de variable
+
+``` text
+cp .env .env.bak
+sed -i '/^DB_MYSQL_HOST=/d' .env
+npm run start:dev
+```
+
+![alt text](images/proceso-1789687803389.png)
+
+restauramos y arrancamos de nuevo
+
+``` text
+mv .env.bak .env
+npm run start:dev
+```
+
+![alt text](images/proceso-1789687829745.png)
+
+verificamos ahora el ac3 y ac4
+
+![alt text](images/proceso-1789687930214.png)
+
+cero rastro de "force: true"
+
+Ahora vemos el ac 4
+
+``` text 
+git status --short
+```
+
+![alt text](images/proceso-1789687996485.png)
+
+env no aparece en ningun lado 
+
+terminado y procedemos a diligenciar los ISS y el kamban
+
 
 ## ISS - 03
 

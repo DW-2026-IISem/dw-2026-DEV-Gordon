@@ -1,15 +1,13 @@
-> **Workspace:** `backend_IA` (Norte Creativo) · **Pista:** solo Business (7 issues) · **Guion:** `docs/Guion_IA_Desarrollo_Software.md` · **SDD del proyecto:** `docs/sdd.md`
+> **Workspace:** `backend_IA` (Norte Creativo) · **Pista:** solo Business (7 issues) · **Guion:** `docs/proceso.md` · **SDD del proyecto:** `docs/sdd.md`
 
 # ISS-01 — Esqueleto NestJS CA arrancable
 
-**Naturaleza:** práctico (desarrollo de software backend)
-**Issue GitHub:** `#__` (número que asigna GitHub al crear el Issue; anótalo aquí y en el cuerpo del Issue)
+**Naturaleza:** práctico 
+**Issue GitHub:** `#1` 
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
-**Revisor humano:**
-**Dependencias:** ninguna (primer issue del proyecto)
-**Commit esperado:** `feat(iss-01): esqueleto NestJS CA arrancable` con `Refs #__`
-
-> El estado del issue **vive en el tablero Kanban (GitHub Projects)**, no en este archivo. Cada sección indica en qué estado se diligencia; hasta entonces se deja como está.
+**Revisor humano:*Carlos H. Zárate*
+**Dependencias:** ninguna
+**Commit esperado:** `feat(iss-01): esqueleto NestJS CA arrancable` con `Refs #1`
 
 ---
 
@@ -47,13 +45,12 @@
 
 ---
 
-## 2. Revisión de AC — autoriza **En curso** 
+## 2. Revisión de AC
 
 | Fecha | Revisor | Actuación | AC revisados | Evidencia consultada | Hallazgo | Decisión |
 |-------|---------|-----------|--------------|----------------------|----------|----------|
 |07/19  | Carlos Z |  Verificador y revisor  | OBJ, SPEC, REQ, AC | este archivo   |          | pendiente |
 
-Decisión posible: `AC aprobados — puede En curso` · `Ajustar AC` (indicar cuál y por qué).
 
 ---
 
@@ -84,11 +81,9 @@ NO toques docs/.
 Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
 ```
 
-**Ajustes o correcciones que hiciste a lo generado:** (pendiente)
-
 ---
 
-## 4. EVI — se diligencia en **Verificación** 
+## 4. EVI 
 
 | Fecha | Tipo | AC que demuestra | Enlace o ruta | Cómo reproducir |
 |-------|------|------------------|---------------|-----------------|
@@ -96,8 +91,8 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | respuesta HTTP | AC-3 | carloszarate@DESKTOP-B0F0J93:/mnt/c/Users/Carlos-Zarate$ curl -ihttp://localhost:3011/api/health HTTP/1.1 200 OK | `curl -i http://localhost:3011/api/health` |
 |       | árbol | AC-1, AC-4 | app.controller.spec.ts  app.module.ts   common  features   main.ts app.controller.ts app.service.ts  config  infrastructure | `ls src src/features` |
 
-**Commit (hash):** pendiente — `feat(iss-01): esqueleto NestJS CA arrancable` · `Refs #__` · hecho `git push`
-**Autoevaluación de AC:** pendiente (AC-1: sí · AC-2: sí · AC-3: sí · AC-4: sí)
+**Commit (hash):** Completo — `feat(iss-01): esqueleto NestJS CA arrancable` · `Refs #2` · hecho `git push`
+**Autoevaluación de AC:** Completo (AC-1: sí · AC-2: sí · AC-3: sí · AC-4: sí)
 
 ---
 
@@ -126,7 +121,7 @@ Cada una son transfersales, sirven para todo el proyecto, menos feature que es a
 
 ## 6. Gate 
 
-**Estado:** aprobado (`aprobado` · `aprobado con observación` · `devuelto` · `cancelado`)
+**Estado:** aprobado 
 
 **Conclusión:** el proyecto arranca, puede pasarse al iss02
 

@@ -3,9 +3,10 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { HealthModule } from './common/health/health.module.js';
 import { BusinessModule } from './features/business/business.module.js';
+import { SequelizeDatabaseModule } from './infrastructure/database/sequelize/sequelize.module.js';
 
 @Module({
-  imports: [HealthModule, BusinessModule],
+  imports: [SequelizeDatabaseModule, HealthModule, BusinessModule],
   controllers: [AppController],
   providers: [AppService],
 })
