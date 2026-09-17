@@ -121,7 +121,7 @@ Feature/buisiness/ aqui va el negocio, todas las entidades y features viven aqui
 
 Cada una son transfersales, sirven para todo el proyecto, menos feature que es algo espesifico.
 
-
+ 
 ---
 
 ## 6. Gate 
