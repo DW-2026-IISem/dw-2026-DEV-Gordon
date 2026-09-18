@@ -1,12 +1,16 @@
 import { Sequelize, type Dialect, type ModelStatic, type Model } from 'sequelize';
-import type { EnvironmentVariables } from '../../../config/environment/environment.js';
+import { envConfig, type EnvironmentVariables } from '../../../config/environment/environment.js';
 
 /**
- * Registro central de modelos. Vacío en ISS-02 (aún no hay features de
- * negocio); cada feature siguiente añade aquí su(s) modelo(s) para que
- * `sequelize.sync()` los reconozca.
+ * Registro central de modelos. Cada `*.model.ts` de una feature llama a
+ * `registerModel(...)` justo después de su propio `Model.init(...)` para
+ * quedar aquí y que `sequelize.sync()` los reconozca.
  */
 export const ALL_MODELS: ModelStatic<Model>[] = [];
+
+export function registerModel(model: ModelStatic<Model>): void {
+  ALL_MODELS.push(model);
+}
 
 export function getActiveDatabaseName(env: EnvironmentVariables): string {
   switch (env.DB_DIALECT) {
@@ -75,3 +79,11 @@ export function createSequelizeInstance(env: EnvironmentVariables): Sequelize {
     }
   }
 }
+
+/**
+ * Instancia única del proceso. Se crea al importar este módulo (envConfig ya
+ * viene validado), para que los `*.model.ts` de las features puedan hacer
+ * `Model.init(schema, { sequelize })` a nivel de módulo sin depender del
+ * ciclo de vida de Nest.
+ */
+export const sequelize: Sequelize = createSequelizeInstance(envConfig);

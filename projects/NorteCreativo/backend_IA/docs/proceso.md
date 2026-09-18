@@ -99,7 +99,7 @@ OBJ: Al finalizar, la app validará su .env al arrancar y se conectará a la bas
 
 ### Procedimiento
 
-1. pegamos el prompt 
+pegamos el prompt 
 
 ``` text
 Naturaleza: PRACTICO. Eres asistente SOLO de ISS-02, no del backend entero.
@@ -203,12 +203,87 @@ OBJ: Al finalizar, cualquier consumidor HTTP podrá registrar y consultar client
 
 
 **AC (Dado → Cuando → Entonces; deciden el Gate):**
-- [ ] **AC-1** Dado la app arrancada y la tabla `clientes` vacía; cuando corre el seeder al arrancar; entonces `GET /api/clientes` responde `200` con al menos 1 cliente en `data.items` (`data.meta.total` ≥ 1), y **arrancar de nuevo no duplica** filas.
-- [ ] **AC-2** Dado un payload válido `{ "tipoDocumento": "NIT", "numeroDocumento": "...", "nombre": "...", "email": "..." }`; cuando `POST /api/clientes`; entonces responde `201` con el cliente creado en `data` (con `id`) y la fila existe en la tabla.
-- [ ] **AC-3** Dado un payload sin `nombre` (o con un campo no permitido); cuando `POST /api/clientes`; entonces responde `400` y el conteo de filas **no cambia**.
-- [ ] **AC-4** Dado un `numeroDocumento` ya registrado; cuando `POST /api/clientes` con ese documento; entonces responde `409` y no crea fila.
-- [ ] **AC-5** Dado un `id` inexistente; cuando `GET /api/clientes/999999`; entonces responde `404`.
-- [ ] **AC-6** Dado `domain/entities/cliente.entity.ts`; cuando se inspecciona; entonces es TypeScript puro: sin decoradores de Sequelize, sin `extends Model`, sin imports de NestJS.
+- [x] **AC-1** Dado la app arrancada y la tabla `clientes` vacía; cuando corre el seeder al arrancar; entonces `GET /api/clientes` responde `200` con al menos 1 cliente en `data.items` (`data.meta.total` ≥ 1), y **arrancar de nuevo no duplica** filas.
+- [x] **AC-2** Dado un payload válido `{ "tipoDocumento": "NIT", "numeroDocumento": "...", "nombre": "...", "email": "..." }`; cuando `POST /api/clientes`; entonces responde `201` con el cliente creado en `data` (con `id`) y la fila existe en la tabla.
+- [x] **AC-3** Dado un payload sin `nombre` (o con un campo no permitido); cuando `POST /api/clientes`; entonces responde `400` y el conteo de filas **no cambia**.
+- [x] **AC-4** Dado un `numeroDocumento` ya registrado; cuando `POST /api/clientes` con ese documento; entonces responde `409` y no crea fila.
+- [x] **AC-5** Dado un `id` inexistente; cuando `GET /api/clientes/999999`; entonces responde `404`.
+- [x] **AC-6** Dado `domain/entities/cliente.entity.ts`; cuando se inspecciona; entonces es TypeScript puro: sin decoradores de Sequelize, sin `extends Model`, sin imports de NestJS.
+
+### Procedimiento
+
+pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-03, no del backend entero.
+
+Implementa los AC de docs/trazabilidad/ISS-03.md.
+
+Feature src/features/business/clientes con las cuatro capas. Entidad Cliente PURA (sin Sequelize ni NestJS):
+id, tipoDocumento, numeroDocumento, nombre, telefono?, email?, estado.
+IClienteRepository en domain/interfaces; ClienteRepository (Sequelize) y ClienteModel (tabla clientes) en infrastructure;
+registra ClienteModel en ALL_MODELS. Use-cases CreateCliente, ListClientes, GetClienteById.
+CreateClienteDto: tipoDocumento, numeroDocumento y nombre requeridos; email opcional con formato; telefono opcional.
+Controller: GET /api/clientes, GET /api/clientes/:id, POST /api/clientes. Swagger.
+Errores: DTO invalido -> 400 (ValidationPipe); id inexistente -> 404; numeroDocumento duplicado -> 409 (excepcion de dominio mapeada por el filtro).
+Seeder idempotente (findOrCreate por numeroDocumento) con al menos un cliente demo (ej. Postobon S.A., NIT), ejecutado al arrancar.
+ClientesModule en BusinessModule.
+
+Prohibido: Auth, Users, JWT Token, guards, RBAC; entidad que extienda Model; force: true. NO adelantes ISS-04 (campanias).
+NO toques docs/.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos curl exactos y SQL de conteo); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1789689830010.png)
+![alt text](images/proceso-1789689836652.png)
+![alt text](images/proceso-1789689841867.png)
+
+Creo la entidad cliente en su totalidad, pero el campo tipodocumento es restringido a un enum, se baso en la localidad mia para ello, colombia, es posible que se cambie mas adelante por decision del mismo agente.
+
+ahora verificamos arranque
+
+![alt text](images/proceso-1789689966112.png)
+
+la tabla clientes fue creada en su totalidad
+
+![alt text](images/proceso-1789689987700.png)
+
+El agente hizo un cambio y es que organizo sequelize como un singleton nuevo, esto es algo del iss2 y no del 3 asi que decido comprobar que no exista ningun problema y modifico el env para ver si el error establecido de "error de configuracion" sigue siendo el mismo 
+
+![alt text](images/proceso-1789690129189.png)
+
+Ahora verificamos los ac
+
+AC1: el proyecto arranca, la tabla clientes es vacia y getclient responde 200, con un unico cliente de prueba
+
+![alt text](images/proceso-1789690336915.png)
+![alt text](images/proceso-1789690351396.png)
+
+AC2: probamos ahora un payload con un cliente llamado pepe y responde 201 exitoso.
+
+![alt text](images/proceso-1789690513939.png)
+
+Ac3: payload con un parametros invalidos responde error 400
+
+![alt text](images/proceso-1789690616063.png)
+
+ac4: responde 409 cuando se hace un payload con un cliente que tiene el mismo numero de documento que otro
+
+![alt text](images/proceso-1789690681913.png)
+
+ac5: no se encuentra cliente con id 9999999, error 404
+
+![alt text](images/proceso-1789690768352.png)
+
+ac6: limpio
+
+![alt text](images/proceso-1789690724524.png)
+
+se realiza el commit y se sigue a iss04
+
 
 ## ISS - 04
 
