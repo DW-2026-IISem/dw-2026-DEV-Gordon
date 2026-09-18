@@ -3,7 +3,7 @@ import { CampaniaModel } from '../../../campanias/infrastructure/models/campania
 import { CAMPANIA_DEMO_NOMBRE } from '../../../campanias/infrastructure/seeders/campania.seeder.js';
 import { HitoModel } from '../models/hito.model.js';
 
-const HITO_DEMO_NOMBRE = 'Diseño de piezas para redes';
+export const HITO_DEMO_NOMBRE = 'Diseño de piezas para redes';
 
 @Injectable()
 export class HitoSeeder implements OnApplicationBootstrap {

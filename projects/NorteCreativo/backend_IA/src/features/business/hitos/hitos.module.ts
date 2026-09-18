@@ -18,5 +18,6 @@ import { HitosController } from './presentation/controllers/hitos.controller.js'
     HitoSeeder,
     { provide: HITO_REPOSITORY, useClass: HitoRepository },
   ],
+  exports: [HITO_REPOSITORY],
 })
 export class HitosModule {}

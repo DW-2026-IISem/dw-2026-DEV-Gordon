@@ -1,20 +1,17 @@
-> **Workspace:** `backend_IA` (Norte Creativo) · **Pista:** solo Business (7 issues) · **Guion:** `docs/Guion_IA_Desarrollo_Software.md` · **SDD del proyecto:** `docs/sdd.md`
+> **Workspace:** `backend_IA` (Norte Creativo) · **Pista:** solo Business (7 issues) · **Guion:** `docs/proceso.md` · **SDD del proyecto:** `docs/sdd.md`
 
 # ISS-06 — Features tareas + entregables + version-entregables CA
 
 **Naturaleza:** práctico (desarrollo de software backend)
 **Issue GitHub:** `#__`
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
-**Revisor humano:**
+**Revisor humano:** Carlos H. Zárate
 **Dependencias:** ISS-05 en **Hecho**
-**Commit esperado:** `feat(iss-06): features tareas, entregables y version-entregables CA` con `Refs #__`
-
-> El estado del issue **vive en el tablero Kanban**, no en este archivo.
-> Este issue agrupa las **tres features de cadena** (Tarea → Entregable → VersionEntregable), que repiten el patrón de FK simple ya validado en ISS-04. Se agrupan porque no tienen lógica especial; el cierre transaccional que las recorre se hace en ISS-07.
+**Commit esperado:** `feat(iss-06): features tareas, entregables y version-entregables CA` con `Refs #6`
 
 ---
 
-## 1. SDD — se escribe en **Preparado**
+## 1. SDD 
 
 **OBJ:** Al finalizar, existirá la cadena completa Tarea → Entregable → VersionEntregable, cada una con su CRUD mínimo y sus FK validadas, para que ISS-07 pueda recorrerla al evaluar el cierre del hito.
 
@@ -48,34 +45,36 @@ Las tres registradas en `BusinessModule`.
 - Sin JWT/Auth. No adelantar ISS-07 (aprobaciones).
 
 **AC (Dado → Cuando → Entonces; deciden el Gate):**
-- [ ] **AC-1** Dado el seeder corrido; cuando `GET /api/tareas`; entonces responde `200` con ≥ 1 tarea, sin duplicar al reiniciar.
-- [ ] **AC-2** Dado un `hitoId` existente; cuando `POST /api/tareas`; entonces `201`. Con `hitoId` inexistente → `404`.
-- [ ] **AC-3** Dado un `tareaId` existente; cuando `POST /api/entregables`; entonces `201`. Con `tareaId` inexistente → `404`.
-- [ ] **AC-4** Dado un `entregableId` existente; cuando `POST /api/version-entregables` dos veces sobre el mismo entregable; entonces la primera crea `numeroVersion: 1` y la segunda `numeroVersion: 2` (automático).
-- [ ] **AC-5** Dado cualquier payload sin su FK requerida o con campo no permitido; cuando se hace el POST; entonces responde `400`.
-- [ ] **AC-6** Dado las tres entidades de dominio; cuando se inspeccionan; entonces son TypeScript puro (sin Sequelize/NestJS/extends Model).
+- [x ] **AC-1** Dado el seeder corrido; cuando `GET /api/tareas`; entonces responde `200` con ≥ 1 tarea, sin duplicar al reiniciar.
+- [x] **AC-2** Dado un `hitoId` existente; cuando `POST /api/tareas`; entonces `201`. Con `hitoId` inexistente → `404`.
+- [x] **AC-3** Dado un `tareaId` existente; cuando `POST /api/entregables`; entonces `201`. Con `tareaId` inexistente → `404`.
+- [x] **AC-4** Dado un `entregableId` existente; cuando `POST /api/version-entregables` dos veces sobre el mismo entregable; entonces la primera crea `numeroVersion: 1` y la segunda `numeroVersion: 2` (automático).
+- [x] **AC-5** Dado cualquier payload sin su FK requerida o con campo no permitido; cuando se hace el POST; entonces responde `400`.
+- [x] **AC-6** Dado las tres entidades de dominio; cuando se inspeccionan; entonces son TypeScript puro (sin Sequelize/NestJS/extends Model).
 
 **Checklist interno (IA, En curso):**
-- [ ] tareas: 4 capas + `ALL_MODELS` + módulo
-- [ ] entregables: 4 capas + `ALL_MODELS` + módulo
-- [ ] version-entregables: 4 capas + `numeroVersion` automático + `ALL_MODELS` + módulo
-- [ ] las tres en `BusinessModule`, respetando el orden de imports
+- [x] tareas: 4 capas + `ALL_MODELS` + módulo
+- [x] entregables: 4 capas + `ALL_MODELS` + módulo
+- [x] version-entregables: 4 capas + `numeroVersion` automático + `ALL_MODELS` + módulo
+- [x] las tres en `BusinessModule`, respetando el orden de imports
 
 ---
 
-## 2. Revisión de AC — autoriza **En curso**
+## 2. Revisión de AC 
 
 | Fecha | Revisor | Actuación | AC revisados | Evidencia consultada | Hallazgo | Decisión |
 |-------|---------|-----------|--------------|----------------------|----------|----------|
-|       |         |           | OBJ, SPEC, REQ, AC | este archivo   |          | pendiente |
+|17/09 | Carlos Z | Revisor | OBJ, SPEC, REQ, AC | este archivo   |          | pendiente |
 
 ---
 
-## 3. IA usada — se diligencia en **En curso**
+## 3. IA usada 
 
-**Herramienta / modelo:** Claude Code
-**Fecha:** (pendiente)
-**Prompt enviado:**
+**Herramienta / modelo:** Claude Code - modelo sonnet 5 high.
+
+**Fecha:** (17/09)
+
+**Prompt enviado**:
 
 ```text
 Naturaleza: PRACTICO. Eres asistente SOLO de ISS-06, no del backend entero.
@@ -114,23 +113,23 @@ NO toques docs/.
 Al final entrega tres listas: archivos tocados; como verifico cada AC (de las tres features); que quedo fuera de alcance.
 ```
 
-**Ajustes o correcciones que hiciste a lo generado:** (pendiente)
+**Ajustes o correcciones que hiciste a lo generado:** Completado
 
 ---
 
-## 4. EVI — se diligencia en **Verificación**
+## 4. EVI 
 
 | Fecha | Tipo | AC que demuestra | Enlace o ruta | Cómo reproducir |
 |-------|------|------------------|---------------|-----------------|
-|       | log + conteo | AC-1 | (log + count ×2) | `npm run start:dev` ×2 |
-|       | HTTP 201/404 tareas | AC-2 | (respuestas) | `curl` POST /api/tareas con hitoId válido e inválido |
-|       | HTTP 201/404 entregables | AC-3 | (respuestas) | `curl` POST /api/entregables |
-|       | numeroVersion automático | AC-4 | (dos respuestas: v1 y v2) | `curl` POST /api/version-entregables ×2 mismo entregable |
-|       | HTTP 400 | AC-5 | (respuesta) | `curl` sin FK requerida |
-|       | archivos fuente | AC-6 | 3 rutas `.../domain/entities/*.entity.ts` | `rg -n "sequelize|@nestjs|extends Model" <rutas>` |
+|17/09  | log + conteo | AC-1 | Ver proceso.md ISS 6 procedimiento | `npm run start:dev` ×2 |
+|17/09  | HTTP 201/404 tareas | AC-2 | Ver proceso.md ISS 6 procedimiento | `curl` POST /api/tareas con hitoId válido e inválido |
+|17/09  | HTTP 201/404 entregables | AC-3 | Ver proceso.md ISS 6 procedimiento | `curl` POST /api/entregables |
+|17/09  | numeroVersion automático | AC-4 | Ver proceso.md ISS 6 procedimiento | `curl` POST /api/version-entregables ×2 mismo entregable |
+|17/09  | HTTP 400 | AC-5 | Ver proceso.md ISS 6 procedimiento | `curl` sin FK requerida |
+|17/09  | archivos fuente | AC-6 | 3 rutas `.../domain/entities/*.entity.ts` | `rg -n "sequelize|@nestjs|extends Model" <rutas>` |
 
-**Commit (hash):** pendiente — `feat(iss-06): features tareas, entregables y version-entregables CA` · `Refs #__`
-**Autoevaluación de AC:** pendiente
+**Commit (hash):** completado — `feat(iss-06): features tareas, entregables y version-entregables CA` · `Refs #6`
+**Autoevaluación de AC:** completado
 
 ---
 
@@ -140,14 +139,32 @@ Preguntas guía: «¿dónde se calcula el `numeroVersion` y por qué no lo manda
 
 | Fecha | Revisor | Actuación | AC revisados | Evidencia consultada | Hallazgo | Decisión |
 |-------|---------|-----------|--------------|----------------------|----------|----------|
-|       |         |           |              |                      |          |          |
+|17/09  |Carlos Z|Revisor|Todos|en proceso.md |          |          |
 
 **Respuesta del autor (ajuste o justificación):**
+
+el numeroversion se calcula en create-version-entregable.use-case.ts, en application, antes de crear la
+version llama a iversionentregablerepository.countbyentregableid(entregableid), cuenta cuantas versiones
+tiene ya ese entregable, y le suma 1, ese numero es el que se guarda.
+
+no lo manda el cliente porque el createversionentregabledto no tiene el campo numeroversion, si el cliente lo manda igual, whitelist lo rechaza con 400, la razon de fondo es que si el cliente pudiera mandar cualquier numero, podria mandar version 1 dos veces o saltarse numeros, y el conteo de versiones dejaria de ser confiable, calculandolo el propio backend siempre queda consecutivo y sin huecos,
+
+lo que se repite del patron de iss-03/04 en las tres features (tareas, entregables, version-entregables):
+cada una tiene sus cuatro capas (domain, application, infrastructure, presentation), la entidad de dominio es ts plano sin sequelize ni nestjs, el use-case de creacion inyecta el repositorio propio mas el
+repositorio de la feature padre para validar la fk antes de insertar (tareas valida hitoid contra
+ihitorepository, entregables valida tareaid contra itarearepository, version-entregables valida
+entregableid contra ientregablerepository), y cada modulo importa el modulo padre e y se registra en
+businessmodule en orden de dependencia.
+
+lo unico que cambia entre las tres y clientes/campanias es que estas no tienen una regla de negocio extra
+como el rn-08 de hitos, son fk simple sin nada mas, y version-entregables suma el calculo de numeroversion que las otras dos no necesitan.
 
 ---
 
 ## 6. Gate — decide **Hecho**
 
-**Estado:** pendiente
-**Conclusión:**
-**Trazabilidad final:**
+**Estado:** aprobado 
+
+**Conclusión:** se cumplieron todos los AC, se pasa al issue #6
+
+**Trazabilidad final:** [enlace al Issue)](https://github.com/DW-2026-IISem/dw-2026-DEV-Gordon/issues/5)

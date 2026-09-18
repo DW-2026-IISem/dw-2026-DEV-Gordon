@@ -482,6 +482,100 @@ OBJ: Al finalizar, existirá la cadena completa Tarea → Entregable → Version
 - [ ] **AC-5** Dado cualquier payload sin su FK requerida o con campo no permitido; cuando se hace el POST; entonces responde `400`.
 - [ ] **AC-6** Dado las tres entidades de dominio; cuando se inspeccionan; entonces son TypeScript puro (sin Sequelize/NestJS/extends Model).
 
+
+### Procedimiento
+
+pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-06, no del backend entero.
+
+Implementa los AC de docs/trazabilidad/ISS-06.md. Son TRES features en cadena, mismo patron de FK simple ya usado
+en campanias/hitos; hazlas en este orden porque cada una depende de la anterior.
+
+1) Feature src/features/business/tareas: entidad Tarea PURA (id, hitoId, nombre, descripcion?, isActive);
+ITareaRepository (incluye findByHitoId); TareaNotFoundException. TareaModel (tabla tareas, FK a hitos) en ALL_MODELS.
+CreateTareaDto (hitoId y nombre requeridos). Use-case CreateTarea verifica que hitoId exista (-> 404). ListTareas,
+GetTareaById. Controller GET /api/tareas, GET /api/tareas/:id, POST /api/tareas. Seeder idempotente sobre un hito
+existente. TareasModule importa HitosModule.
+
+2) Feature src/features/business/entregables: entidad Entregable PURA (id, tareaId, fechaInicio?, fechaFin?, total?,
+estado default EN_PROCESO, observaciones?); IEntregableRepository (incluye findByTareaId); EntregableNotFoundException.
+EntregableModel (tabla entregables, FK a tareas) en ALL_MODELS. CreateEntregableDto (tareaId requerido, observaciones
+opcional). Use-case CreateEntregable verifica que tareaId exista (-> 404). ListEntregables, GetEntregableById.
+Controller GET /api/entregables, GET /api/entregables/:id, POST /api/entregables. Seeder idempotente sobre una tarea
+existente. EntregablesModule importa TareasModule.
+
+3) Feature src/features/business/version-entregables: entidad VersionEntregable PURA (id, entregableId, numeroVersion,
+fechaInicio?, fechaFin?, total?, estado [EN_REVISION|APROBADA|RECHAZADA] default EN_REVISION, observaciones?);
+IVersionEntregableRepository (incluye findByEntregableId, findUltimaVersion, countByEntregableId); VersionNotFoundException.
+VersionEntregableModel (tabla version_entregables, FK a entregables, UNIQUE(entregableId, numeroVersion)) en ALL_MODELS.
+CreateVersionEntregableDto (entregableId requerido; observaciones opcional). Use-case CreateVersionEntregable verifica
+que entregableId exista (-> 404) y calcula numeroVersion automaticamente como countByEntregableId + 1 (el cliente NUNCA
+envia numeroVersion). GetVersionById. Controller GET /api/version-entregables/:id, POST /api/version-entregables.
+Seeder idempotente que crea la version 1 de un entregable existente. VersionEntregablesModule importa EntregablesModule.
+
+Las tres modulos se registran en BusinessModule, en orden: TareasModule, EntregablesModule, VersionEntregablesModule.
+
+Prohibido: Auth, Users, JWT Token, guards, RBAC; entidades que extiendan Model; force: true. NO adelantes ISS-07
+(aprobaciones/cierre de hito).
+NO toques docs/.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (de las tres features); que quedo fuera de alcance.
+```
+
+Salidas:
+
+![alt text](images/proceso-1789697752369.png)
+![alt text](images/proceso-1789697764279.png)
+
+entidades en la base de datos, tareas, versiones y entregables
+
+![alt text](images/proceso-1789697861241.png)
+
+el proyecto arranca y muestra las nuevas rutas
+
+![alt text](images/proceso-1789697903748.png)
+
+ahora comprobamos los ac
+
+Ac1: entre reinicios el total sigue siendo el mismo por lo que no hay duplicacion
+
+![alt text](images/proceso-1789698041587.png)
+
+ac2: devuelve 201 y guarda el id 1 hito
+
+![alt text](images/proceso-1789698064908.png)
+
+da 404 con un hito no inesistente
+
+![alt text](images/proceso-1789698109177.png)
+
+ac3: usando el id del ac anterior, 1, se hace un post y retorna 201, con id 1 tarea
+
+![alt text](images/proceso-1789698158655.png)
+
+da 404 con un id inexistente
+
+ac4: retorna 201 con id 1
+
+![alt text](images/proceso-1789698250350.png)
+
+dio automaticamente 201, con datanumeroversion = 2
+
+![alt text](images/proceso-1789698281974.png)
+
+ac5: payload sin fk requerida da error 400
+
+![alt text](images/proceso-1789698380993.png)
+![alt text](images/proceso-1789698423787.png)
+![alt text](images/proceso-1789698435889.png)
+
+ac6: limpio ts
+
+![alt text](images/proceso-1789698458114.png)
+
+
 ## ISS - 07
 
 ### OBJ
