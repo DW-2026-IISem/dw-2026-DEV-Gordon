@@ -88,12 +88,12 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 
 | Fecha | Tipo | AC que demuestra | Enlace o ruta | Cómo reproducir |
 |-------|------|------------------|---------------|-----------------|
-|       | log de arranque + conteo | AC-1 | (log del seeder + `SELECT COUNT(*) FROM clientes` ×2 arranques) | `npm run start:dev` ×2 |
-|       | respuesta HTTP 201 | AC-2 | Ver proceso.md ISS 3 procedimiento | `curl -i -X POST localhost:3011/api/clientes -H 'Content-Type: application/json' -d '{"tipoDocumento":"CC","numeroDocumento":"123","nombre":"Ana"}'` |
-|       | respuesta HTTP 400 | AC-3 | Ver proceso.md ISS 3 procedimiento | `curl -i -X POST localhost:3011/api/clientes -H 'Content-Type: application/json' -d '{"nombre":""}'` |
-|       | respuesta HTTP 409 | AC-4 | Ver proceso.md ISS 3 procedimiento | repetir el POST de AC-2 |
-|       | respuesta HTTP 404 | AC-5 | Ver proceso.md ISS 3 procedimiento | `curl -i localhost:3011/api/clientes/999999` |
-|       | archivo fuente | AC-6 | `.../clientes/domain/entities/cliente.entity.ts` | `rg -n "sequelize|@nestjs|extends Model" <ruta>` → sin resultados |
+| 17/09 | log de arranque + conteo | AC-1 | (log del seeder + `SELECT COUNT(*) FROM clientes` ×2 arranques) | `npm run start:dev` ×2 |
+| 17/09 | respuesta HTTP 201 | AC-2 | Ver proceso.md ISS 3 procedimiento | `curl -i -X POST localhost:3011/api/clientes -H 'Content-Type: application/json' -d '{"tipoDocumento":"CC","numeroDocumento":"123","nombre":"Ana"}'` |
+| 17/09 | respuesta HTTP 400 | AC-3 | Ver proceso.md ISS 3 procedimiento | `curl -i -X POST localhost:3011/api/clientes -H 'Content-Type: application/json' -d '{"nombre":""}'` |
+| 17/09 | respuesta HTTP 409 | AC-4 | Ver proceso.md ISS 3 procedimiento | repetir el POST de AC-2 |
+|  17/09 | respuesta HTTP 404 | AC-5 | Ver proceso.md ISS 3 procedimiento | `curl -i localhost:3011/api/clientes/999999` |
+|17/09  | archivo fuente | AC-6 | `.../clientes/domain/entities/cliente.entity.ts` | `rg -n "sequelize|@nestjs|extends Model" <ruta>` → sin resultados |
 
 **Commit (hash):** Compeltado — `feat(iss-03): feature clientes CA` · `Refs #3`
 **Autoevaluación de AC:** Compeltado

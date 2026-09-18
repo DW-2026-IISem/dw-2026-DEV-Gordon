@@ -10,10 +10,12 @@ interface ClienteDemo {
   email?: string;
 }
 
+export const CLIENTE_DEMO_NUMERO_DOCUMENTO = '890900943-9';
+
 const CLIENTES_DEMO: ClienteDemo[] = [
   {
     tipoDocumento: 'NIT',
-    numeroDocumento: '890900943-9',
+    numeroDocumento: CLIENTE_DEMO_NUMERO_DOCUMENTO,
     nombre: 'Postobón S.A.',
     telefono: '+57 604 3391000',
     email: 'contacto@postobon.com',

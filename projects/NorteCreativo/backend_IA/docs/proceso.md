@@ -294,12 +294,89 @@ OBJ: Al finalizar, se podrán registrar y consultar campañas asociadas a un cli
 ### AC
 
 **AC (Dado → Cuando → Entonces; deciden el Gate):**
-- [ ] **AC-1** Dado el seeder corrido; cuando `GET /api/campanias`; entonces responde `200` con ≥ 1 campaña en `data.items`, sin duplicar al reiniciar.
-- [ ] **AC-2** Dado un `clienteId` existente y payload válido; cuando `POST /api/campanias`; entonces responde `201` con la campaña creada en `data`.
-- [ ] **AC-3** Dado un `clienteId` **inexistente**; cuando `POST /api/campanias`; entonces responde `404` y no crea fila.
-- [ ] **AC-4** Dado un payload sin `nombre` o con campo no permitido; cuando `POST /api/campanias`; entonces responde `400`.
-- [ ] **AC-5** Dado un `id` inexistente; cuando `GET /api/campanias/999999`; entonces responde `404`.
-- [ ] **AC-6** Dado `domain/entities/campania.entity.ts`; cuando se inspecciona; entonces es TypeScript puro.
+- [x] **AC-1** Dado el seeder corrido; cuando `GET /api/campanias`; entonces responde `200` con ≥ 1 campaña en `data.items`, sin duplicar al reiniciar.
+- [x] **AC-2** Dado un `clienteId` existente y payload válido; cuando `POST /api/campanias`; entonces responde `201` con la campaña creada en `data`.
+- [x] **AC-3** Dado un `clienteId` **inexistente**; cuando `POST /api/campanias`; entonces responde `404` y no crea fila.
+- [x] **AC-4** Dado un payload sin `nombre` o con campo no permitido; cuando `POST /api/campanias`; entonces responde `400`.
+- [x] **AC-5** Dado un `id` inexistente; cuando `GET /api/campanias/999999`; entonces responde `404`.
+- [x] **AC-6** Dado `domain/entities/campania.entity.ts`; cuando se inspecciona; entonces es TypeScript puro.
+
+### procedimiento
+
+pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-04, no del backend entero.
+
+Implementa los AC de docs/trazabilidad/ISS-04.md siguiendo el MISMO patron de src/features/business/clientes.
+
+Feature src/features/business/campanias: entidad Campania PURA (id, clienteId, nombre requerido, descripcion?, isActive);
+ICampaniaRepository; CampaniaModel (tabla campanias, FK a clientes via clienteId) en ALL_MODELS; use-cases CreateCampania,
+ListCampanias, GetCampaniaById; CreateCampaniaDto (clienteId y nombre requeridos); controller GET /api/campanias,
+GET /api/campanias/:id, POST /api/campanias; Swagger.
+El use-case CreateCampania verifica que clienteId exista usando IClienteRepository (-> 404 si no existe).
+Errores: 400 DTO invalido; 404 clienteId inexistente.
+Seeder idempotente que crea al menos una campania demo (ej. "Carnaval 2026") sobre el cliente demo; debe ejecutarse
+DESPUES del seeder de clientes. CampaniasModule importa ClientesModule y se registra en BusinessModule.
+
+Prohibido: Auth, Users, JWT Token, guards, RBAC; entidad que extienda Model; force: true. NO adelantes ISS-05 (hitos).
+NO toques docs/.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC; que quedo fuera de alcance.
+```
+
+Salidas:
+
+![alt text](images/proceso-1789692014082.png)
+![alt text](images/proceso-1789692019902.png)
+
+
+creo la entidad campanias, y la tabla en la base de datos
+
+![alt text](images/proceso-1789692096213.png)
+![alt text](images/proceso-1789692106569.png)
+
+el proyecto arranca y muestra las nuevas rutas mapeadas de campanias
+
+![alt text](images/proceso-1789692142718.png)
+
+ahora verificamos los ac
+
+ac1: verificamos el seeder
+
+![alt text](images/proceso-1789692208946.png)
+reiniciamos
+![alt text](images/proceso-1789692288143.png)
+el total sigue siendo el mismo, el seeder no esta duplicando
+
+ac2: payload valido, crea la campaña, responde 201 y un data id:3, se cumple
+
+``` bash
+curl -i -X POST http://localhost:3011/api/campanias \
+  -H 'Content-Type: application/json' \
+  -d '{"clienteId":1,"nombre":"Test AC2"}'
+```
+
+![alt text](images/proceso-1789692400895.png)
+
+ac3: responde 404, y el mensaje de que id 999999 no fue encontrado, no hay un 500 de error asi que el ac es valido, no hay error de sql.
+
+![alt text](images/proceso-1789692437467.png)
+
+ac4: responde 400 de bad request cuando se le da un payuload sin nombre
+
+![alt text](images/proceso-1789692488194.png)
+![alt text](images/proceso-1789693027401.png)
+
+ac5: responde 404 cuando no encuentra nada, pues el payload dado tenia una campaña que no existe con id 999999
+
+![alt text](images/proceso-1789692558308.png)
+
+ac6: la entidad de dominio es limpia
+
+![alt text](images/proceso-1789692595438.png)
+
+se realiza el commit y se sigue a iss05
 
 ## ISS - 05
 
