@@ -115,6 +115,20 @@ Preguntas guía: «muéstrame el método `cerrar()` y explica por qué la transi
 
 **Respuesta del autor (ajuste o justificación):**
 
+el metodo cerrar() esta en hito.entity.ts, hace dos cosas, primero valida que el estado actual sea abierto, si no es abierto tira hitoyacerradoexception (409), si es abierto pasa estado a cerrado y pone fechacierre en la fecha actual
+
+vive en el dominio y no en el controller porque es una regla de negocio, no de http, si estuviera en el
+controller cualquier otro punto de entrada que quisiera cerrar un hito (un job, un seeder, otro endpoint)
+podria saltarse la validacion y dejar el hito en un estado invalido, poniendolo en el dominio la regla se
+cumple siempre, sin importar quien llame al metodo
+
+por eso el createhitodto no tiene el campo estado, si el cliente manda estado en el post, el whitelist de
+nestjs lo rechaza con 400, la unica forma de cambiar el estado de un hito es a traves de cerrar(), nunca
+por http directo,
+
+lo probe llamando cerrar() dos veces seguidas sobre el mismo hito, la primera paso de abierto a cerrado
+con fechacierre seteada, la segunda lanzo hitoyacerradoexception, tambien probe mandar estado:"cerrado" en el post y me dio 400 "property estado should not exist"
+
 ---
 
 ## 6. Gate — decide **Hecho**
