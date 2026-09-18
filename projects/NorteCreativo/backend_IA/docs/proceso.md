@@ -387,12 +387,83 @@ OBJ: Al finalizar, se podrán registrar y consultar hitos de una campaña, con e
 ### AC
 
 **AC (Dado → Cuando → Entonces; deciden el Gate):**
-- [ ] **AC-1** Dado el seeder corrido; cuando `GET /api/hitos`; entonces responde `200` con ≥ 1 hito en `data.items`, sin duplicar al reiniciar.
-- [ ] **AC-2** Dado una `campaniaId` existente y activa; cuando `POST /api/hitos`; entonces responde `201` con el hito creado en estado `ABIERTO`.
-- [ ] **AC-3** Dado una `campaniaId` inexistente; cuando `POST /api/hitos`; entonces responde `404`.
-- [ ] **AC-4** Dado un payload sin `nombre` o campo no permitido; cuando `POST /api/hitos`; entonces responde `400`.
-- [ ] **AC-5** Dado un `id` inexistente; cuando `GET /api/hitos/999999`; entonces responde `404`.
-- [ ] **AC-6** Dado `domain/entities/hito.entity.ts`; cuando se inspecciona; entonces es TypeScript puro y el método `cerrar()` lanza excepción si el hito no está ABIERTO.
+- [x] **AC-1** Dado el seeder corrido; cuando `GET /api/hitos`; entonces responde `200` con ≥ 1 hito en `data.items`, sin duplicar al reiniciar.
+- [x] **AC-2** Dado una `campaniaId` existente y activa; cuando `POST /api/hitos`; entonces responde `201` con el hito creado en estado `ABIERTO`.
+- [x] **AC-3** Dado una `campaniaId` inexistente; cuando `POST /api/hitos`; entonces responde `404`.
+- [x] **AC-4** Dado un payload sin `nombre` o campo no permitido; cuando `POST /api/hitos`; entonces responde `400`.
+- [x] **AC-5** Dado un `id` inexistente; cuando `GET /api/hitos/999999`; entonces responde `404`.
+- [x] **AC-6** Dado `domain/entities/hito.entity.ts`; cuando se inspecciona; entonces es TypeScript puro y el método `cerrar()` lanza excepción si el hito no está ABIERTO.
+
+### Procedimiento
+
+pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-05, no del backend entero.
+
+Implementa los AC de docs/trazabilidad/ISS-05.md siguiendo el patron de clientes/campanias.
+
+Feature src/features/business/hitos: entidad Hito PURA (id, campaniaId, nombre, descripcion?, estado [ABIERTO|CERRADO|FACTURADO]
+con default ABIERTO, fechaCierre?, isActive) con metodo de dominio cerrar() que lanza HitoYaCerradoException si el estado
+no es ABIERTO (deja estado = CERRADO y fechaCierre = ahora). IHitoRepository (incluye actualizarEstado); HitoNotFoundException,
+CampaniaInactivaParaHitoException (409).
+HitoModel (tabla hitos) con @ForeignKey/@BelongsTo a CampaniaModel, columnas estado y fechaCierre, en ALL_MODELS.
+La relacion vive SOLO en el model, el dominio solo tiene campaniaId: number.
+CreateHitoDto: campaniaId y nombre requeridos.
+Use-case CreateHito verifica que campaniaId exista usando ICampaniaRepository (-> 404 si no existe; -> 409 si la
+campania esta inactiva, regla de negocio RN-08). ListHitos, GetHitoById.
+Controller GET /api/hitos, GET /api/hitos/:id, POST /api/hitos (la respuesta incluye estado). Swagger.
+Seeder idempotente que crea al menos un hito ABIERTO con una campania existente; debe ejecutarse DESPUES del seeder
+de campanias. HitosModule importa CampaniasModule y se registra en BusinessModule.
+
+Prohibido: Auth, Users, JWT Token, guards, RBAC; entidad que extienda Model; force: true. NO adelantes ISS-06.
+NO toques docs/.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC; que quedo fuera de alcance.
+```
+
+Salidas
+
+![alt text](images/proceso-1789694040671.png)
+![alt text](images/proceso-1789694046250.png)
+
+creo la entidad hitos en la base de datos con sus campo
+
+![alt text](images/proceso-1789694070699.png)
+
+
+verificamos arranque 
+![alt text](images/proceso-1789694710150.png)
+
+verificamos los ac
+
+ac1: el total es igual al hacer el curl entre reinicios, no hay duplicacion y responde 200
+
+![alt text](images/proceso-1789694767443.png)
+
+ac2: el hito se crea, codigo 201
+
+![alt text](images/proceso-1789694857873.png)
+
+ac3: una campania inexistente da 404
+
+![alt text](images/proceso-1789695157958.png)
+
+ac4: usamos un payload con dos variantes , una sin nombre y otra forzando un estado en http
+
+![alt text](images/proceso-1789695773073.png)
+![alt text](images/proceso-1789695778559.png)
+
+Da error 400 en ambos, nadie puede fijar un estado por fuera
+
+ac5: probamos un id de hito inexistente 999999, y da error 404.
+
+![alt text](images/proceso-1789695834660.png)
+
+ac6: 
+
+![alt text](images/proceso-1789696144814.png)
+
 
 ## ISS - 06
 

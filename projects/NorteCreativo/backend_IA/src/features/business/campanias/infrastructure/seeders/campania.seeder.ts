@@ -3,7 +3,7 @@ import { ClienteModel } from '../../../clientes/infrastructure/models/cliente.mo
 import { CLIENTE_DEMO_NUMERO_DOCUMENTO } from '../../../clientes/infrastructure/seeders/cliente.seeder.js';
 import { CampaniaModel } from '../models/campania.model.js';
 
-const CAMPANIA_DEMO_NOMBRE = 'Carnaval 2026';
+export const CAMPANIA_DEMO_NOMBRE = 'Carnaval 2026';
 
 @Injectable()
 export class CampaniaSeeder implements OnApplicationBootstrap {

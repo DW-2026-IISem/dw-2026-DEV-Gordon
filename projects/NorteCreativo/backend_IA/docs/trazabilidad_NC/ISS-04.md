@@ -105,7 +105,7 @@ Preguntas guía: «¿dónde se valida que el cliente exista antes de crear la ca
 
 | Fecha | Revisor | Actuación | AC revisados | Evidencia consultada | Hallazgo | Decisión |
 |-------|---------|-----------|--------------|----------------------|----------|----------|
-|       |         |           |              |                      |          |          |
+| 17/09 | Carlos Z | revisor  |  todos |  Ver proceso.md ISS 3 procedimiento   |          |          |
 
 **Respuesta del autor (ajuste o justificación):**
 
