@@ -16,6 +16,6 @@ import { VersionEntregablesController } from './presentation/controllers/version
     VersionEntregableSeeder,
     { provide: VERSION_ENTREGABLE_REPOSITORY, useClass: VersionEntregableRepository },
   ],
-  exports: [VERSION_ENTREGABLE_REPOSITORY],
+  exports: [VERSION_ENTREGABLE_REPOSITORY, VersionEntregableSeeder],
 })
 export class VersionEntregablesModule {}

@@ -16,6 +16,6 @@ import { ClientesController } from './presentation/controllers/clientes.controll
     ClienteSeeder,
     { provide: CLIENTE_REPOSITORY, useClass: ClienteRepository },
   ],
-  exports: [CLIENTE_REPOSITORY],
+  exports: [CLIENTE_REPOSITORY, ClienteSeeder],
 })
 export class ClientesModule {}

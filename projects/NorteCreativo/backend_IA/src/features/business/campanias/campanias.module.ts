@@ -18,6 +18,6 @@ import { CampaniasController } from './presentation/controllers/campanias.contro
     CampaniaSeeder,
     { provide: CAMPANIA_REPOSITORY, useClass: CampaniaRepository },
   ],
-  exports: [CAMPANIA_REPOSITORY],
+  exports: [CAMPANIA_REPOSITORY, CampaniaSeeder],
 })
 export class CampaniasModule {}

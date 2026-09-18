@@ -1,4 +1,4 @@
-import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import type { TipoDocumentoCliente } from '../../domain/entities/cliente.entity.js';
 import { ClienteModel } from '../models/cliente.model.js';
 
@@ -23,10 +23,10 @@ const CLIENTES_DEMO: ClienteDemo[] = [
 ];
 
 @Injectable()
-export class ClienteSeeder implements OnApplicationBootstrap {
+export class ClienteSeeder {
   private readonly logger = new Logger(ClienteSeeder.name);
 
-  async onApplicationBootstrap(): Promise<void> {
+  async seed(): Promise<void> {
     for (const demo of CLIENTES_DEMO) {
       const [, created] = await ClienteModel.findOrCreate({
         where: { numeroDocumento: demo.numeroDocumento },

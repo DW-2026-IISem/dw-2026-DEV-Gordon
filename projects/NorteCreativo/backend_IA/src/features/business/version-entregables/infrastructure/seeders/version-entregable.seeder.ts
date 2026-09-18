@@ -1,20 +1,18 @@
-import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EntregableModel } from '../../../entregables/infrastructure/models/entregable.model.js';
 import { TareaModel } from '../../../tareas/infrastructure/models/tarea.model.js';
 import { TAREA_DEMO_NOMBRE } from '../../../tareas/infrastructure/seeders/tarea.seeder.js';
 import { VersionEntregableModel } from '../models/version-entregable.model.js';
 
 @Injectable()
-export class VersionEntregableSeeder implements OnApplicationBootstrap {
+export class VersionEntregableSeeder {
   private readonly logger = new Logger(VersionEntregableSeeder.name);
 
   /**
-   * Se registra después de `EntregableSeeder` en `BusinessModule`/`EntregablesModule`,
-   * y Nest ejecuta los hooks `onApplicationBootstrap` en ese mismo orden de
-   * registro (uno a la vez, esperando cada uno), así que el entregable demo
-   * ya existe cuando esto corre.
+   * Lo invoca `SeedersRunner` después de `EntregableSeeder.seed()`, así que
+   * el entregable demo ya existe cuando esto corre.
    */
-  async onApplicationBootstrap(): Promise<void> {
+  async seed(): Promise<void> {
     const tareaDemo = await TareaModel.findOne({ where: { nombre: TAREA_DEMO_NOMBRE } });
 
     if (!tareaDemo) {

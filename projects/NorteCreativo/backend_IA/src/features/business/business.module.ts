@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AprobacionesModule } from './aprobaciones/aprobaciones.module.js';
 import { CampaniasModule } from './campanias/campanias.module.js';
 import { ClientesModule } from './clientes/clientes.module.js';
 import { EntregablesModule } from './entregables/entregables.module.js';
@@ -14,6 +15,7 @@ import { VersionEntregablesModule } from './version-entregables/version-entregab
     TareasModule,
     EntregablesModule,
     VersionEntregablesModule,
+    AprobacionesModule,
   ],
 })
 export class BusinessModule {}

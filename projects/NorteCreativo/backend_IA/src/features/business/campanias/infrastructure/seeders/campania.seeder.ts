@@ -1,4 +1,4 @@
-import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ClienteModel } from '../../../clientes/infrastructure/models/cliente.model.js';
 import { CLIENTE_DEMO_NUMERO_DOCUMENTO } from '../../../clientes/infrastructure/seeders/cliente.seeder.js';
 import { CampaniaModel } from '../models/campania.model.js';
@@ -6,16 +6,14 @@ import { CampaniaModel } from '../models/campania.model.js';
 export const CAMPANIA_DEMO_NOMBRE = 'Carnaval 2026';
 
 @Injectable()
-export class CampaniaSeeder implements OnApplicationBootstrap {
+export class CampaniaSeeder {
   private readonly logger = new Logger(CampaniaSeeder.name);
 
   /**
-   * Se registra después de `ClienteSeeder` en `BusinessModule`/`ClientesModule`,
-   * y Nest ejecuta los hooks `onApplicationBootstrap` en ese mismo orden de
-   * registro (uno a la vez, esperando cada uno), así que el cliente demo ya
-   * existe cuando esto corre.
+   * Lo invoca `SeedersRunner` después de `ClienteSeeder.seed()`, así que el
+   * cliente demo ya existe cuando esto corre.
    */
-  async onApplicationBootstrap(): Promise<void> {
+  async seed(): Promise<void> {
     const clienteDemo = await ClienteModel.findOne({
       where: { numeroDocumento: CLIENTE_DEMO_NUMERO_DOCUMENTO },
     });

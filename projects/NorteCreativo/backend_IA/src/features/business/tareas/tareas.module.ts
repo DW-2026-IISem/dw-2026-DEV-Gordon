@@ -18,6 +18,6 @@ import { TareasController } from './presentation/controllers/tareas.controller.j
     TareaSeeder,
     { provide: TAREA_REPOSITORY, useClass: TareaRepository },
   ],
-  exports: [TAREA_REPOSITORY],
+  exports: [TAREA_REPOSITORY, TareaSeeder],
 })
 export class TareasModule {}

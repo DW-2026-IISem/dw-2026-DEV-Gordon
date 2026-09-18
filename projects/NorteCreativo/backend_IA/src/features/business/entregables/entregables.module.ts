@@ -18,6 +18,6 @@ import { EntregablesController } from './presentation/controllers/entregables.co
     EntregableSeeder,
     { provide: ENTREGABLE_REPOSITORY, useClass: EntregableRepository },
   ],
-  exports: [ENTREGABLE_REPOSITORY],
+  exports: [ENTREGABLE_REPOSITORY, EntregableSeeder],
 })
 export class EntregablesModule {}

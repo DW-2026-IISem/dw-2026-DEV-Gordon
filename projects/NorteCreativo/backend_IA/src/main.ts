@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
@@ -26,6 +27,16 @@ async function bootstrap() {
 
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor(), new TimeoutInterceptor(), new ResponseInterceptor());
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Norte Creativo — Backend IA')
+    .setDescription(
+      'API de gestión de clientes, campañas, hitos, tareas, entregables, versiones de entregable y aprobaciones (con cierre automático de hito).',
+    )
+    .setVersion('1.0')
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, swaggerDocument);
 
   await app.listen(process.env.PORT ?? 3011);
 }
