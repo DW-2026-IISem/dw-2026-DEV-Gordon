@@ -101,7 +101,7 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | borrado lógico y físico | AC-6 | (Evidencia en Proceso.md) | `curl -i -X PATCH localhost:3012/api/clientes/1/deactivate` luego `curl localhost:3012/api/clientes` |
 |       | HTTP 404 | AC-7 | (Evidencia en Proceso.md) | `curl -i localhost:3012/api/clientes/999999` |
 
-**Commit (hash):** `feat(iss-03): feature cliente CRUD Refs #3`
+**Commit (hash):** `feat(iss-03): feature cliente CRUD express Refs #3`
 **Autoevaluación de AC:** Completado
 
 ---

@@ -242,3 +242,64 @@ probamos con cliente inexsistente que debe dar error 404
 
 ![alt text](images/proceso-1790713501210.png)
 
+## ISS - 04
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrá poblar la tabla `clientes` con datos falsos coherentes mediante `npm run db:seed`, variando la cantidad, sin duplicar al repetir.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado la tabla vacía; cuando `npm run db:seed`; entonces se insertan los clientes del conteo por defecto.
+- [x] **AC-2** Dado la tabla con datos; cuando se vuelve a correr `npm run db:seed`; entonces no se duplican filas.
+- [x] **AC-3** Dado la tabla vacía; cuando `npm run db:seed -- --clientes=20` o `SEED_CLIENTES=5 npm run db:seed`; entonces se insertan 20 o 5.
+- [x] **AC-4** Dado los clientes sembrados; cuando `GET /api/clientes`; entonces aparecen con documentos únicos y emails válidos.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-04, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-04.md siguiendo docs/manual.md seccion 9 (ISS-04, seeders con Faker), adaptado a Cliente.
+
+Instala @faker-js/faker como dev.
+Crea src/features/business/cliente/cliente.seeder.ts con export async function seedClientes(count: number): Promise<number>,
+idempotente (si Cliente.count() > 0, omite). Datos coherentes: tipo_documento NIT o CC, numero_documento unico,
+nombre de empresa, telefono y email validos, status active.
+Crea src/database/seeders/counts.ts (clientes: default, variable SEED_CLIENTES, argumento --clientes=N)
+y src/database/seeders/index.ts (SeedersRunner) que conecta, hace sync sin force/alter, ejecuta los seeders en orden y cierra la conexion.
+Agrega el script "db:seed" en package.json como en el manual.
+El seeder NO debe ejecutarse al arrancar la app.
+
+Prohibido: Swagger, Campania, Hito, force, alter. NO adelantes ISS-05. Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+![alt text](images/proceso-1790714495112.png)
+
+![alt text](images/proceso-1790714589047.png)
+
+probamos el ac1, conteo con el primer seed
+
+![alt text](images/proceso-1790714623835.png)
+![alt text](images/proceso-1790714636119.png)
+
+ac2 de indepotencia, corriendo el seed otra vez, nos da el mismo numero asi que no se duplica
+
+![alt text](images/proceso-1790714683574.png)
+
+miramos mla cantidad de variables para insertar 20
+
+![alt text](images/proceso-1790714820562.png)
+![alt text](images/proceso-1790714831034.png)
+![alt text](images/proceso-1790714841919.png)
+
+vemos que los datos sean coherentes
+
+![alt text](images/proceso-1790715258455.png)
+
