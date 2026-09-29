@@ -1,0 +1,22 @@
+### Cliente — actualización (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### PUT: reemplazo completo (los opcionales omitidos quedan en null)
+PUT {{baseUrl}}/clientes/1
+Content-Type: application/json
+
+{
+  "tipo_documento": "NIT",
+  "numero_documento": "900123",
+  "nombre": "Postobón S.A. (actualizado)",
+  "telefono": "3009998888",
+  "email": "nuevo@postobon.com"
+}
+
+### PATCH: solo los campos enviados
+PATCH {{baseUrl}}/clientes/1
+Content-Type: application/json
+
+{
+  "telefono": "3001234567"
+}

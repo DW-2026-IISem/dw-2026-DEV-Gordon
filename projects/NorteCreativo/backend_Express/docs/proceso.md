@@ -157,3 +157,88 @@ vemos si el ac5 se cumple
 
 ![alt text](images/proceso-1790711577059.png)
 
+## ISS - 03
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán crear, consultar, actualizar (PUT/PATCH) y eliminar (física y lógicamente) clientes persistidos en `norte_creativo_express`, con las reglas de negocio del SDD.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado la app arrancada; cuando termina `sync`; entonces existe la tabla `clientes` en `norte_creativo_express`.
+- [x] **AC-2** Dado un payload válido; cuando `POST /api/clientes`; entonces `201` con el cliente creado y `status: active`.
+- [x] **AC-3** Dado un `numero_documento` ya registrado; cuando `POST /api/clientes`; entonces `409` y no se crea fila.
+- [x] **AC-4** Dado un payload sin `nombre` o con email inválido; cuando `POST /api/clientes`; entonces `400`.
+- [x] **AC-5** Dado un cliente existente; cuando `PUT` y luego `PATCH` sobre `/api/clientes/:id`; entonces `200` con los cambios persistidos.
+- [x] **AC-6** Dado un cliente; cuando `PATCH /api/clientes/:id/deactivate`; entonces queda `inactive` y ya no aparece en `GET /api/clientes`; con `DELETE /api/clientes/:id` desaparece de la tabla.
+- [x] **AC-7** Dado un `id` inexistente; cuando `GET /api/clientes/999999`; entonces `404`.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-03, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-03.md siguiendo docs/manual.md secciones 4 a 8 (ISS-03-A a ISS-03-E, feature Client),
+adaptado a la entidad Cliente de Norte Creativo.
+
+Feature src/features/business/cliente: cliente.model.ts, cliente.controller.ts, cliente.routes.ts y carpeta http/.
+Modelo Cliente (tabla clientes, timestamps true): tipo_documento ENUM(CC,NIT,CE,TI,PASAPORTE) requerido,
+numero_documento STRING unico requerido, nombre STRING requerido (notEmpty), telefono STRING opcional,
+email STRING opcional con isEmail, status ENUM(active,inactive) default active.
+IMPORTANTE: el Cliente de Norte Creativo NO tiene password ni bcrypt (no es usuario del sistema).
+Controller ClienteController con getAll (solo status active), getOne, create, updatePut, updatePatch,
+deletePhysical y deleteLogical (status = inactive), mismo estilo del manual (respuestas { cliente } / { clientes }).
+Errores: validacion de Sequelize -> 400, no encontrado -> 404, numero_documento duplicado (UniqueConstraintError) -> 409.
+Rutas SIN AUTH: GET/POST /api/clientes, GET/PUT/PATCH/DELETE /api/clientes/:id, PATCH /api/clientes/:id/deactivate.
+src/routes/index.ts como agregador; en src/config/index.ts cablea routes() y en dbConnection() haz testConnection + sequelize.sync() sin force ni alter.
+Crea http/clientes.get.http, clientes.create.http, clientes.update.http, clientes.delete.http con leyenda SIN AUTH, apuntando a localhost:3012.
+
+Prohibido: seeder, Swagger, Campania, Hito, force, alter. NO adelantes ISS-04. Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790712741632.png)
+
+![alt text](images/proceso-1790712855403.png)
+probamos el aac 1 de crear una tabla
+
+![alt text](images/proceso-1790712786272.png)
+
+creamos un cliente valido 
+![alt text](images/proceso-1790713199542.png)
+
+
+probamos el ac3 para ver si nos crea un documento duplicado buscnado 409 de error
+
+![alt text](images/proceso-1790712938639.png)
+
+probamos un payload invalido buscando error 400
+
+![alt text](images/proceso-1790713035985.png)
+
+probamos el put buscando un codigo 200 con el id del ac2 que es el 8
+
+![alt text](images/proceso-1790713248963.png)
+
+ probamos el metodo patch
+
+ ![alt text](images/proceso-1790713316972.png)
+
+Ahora el ac6, borrado logico con el mismo id 8
+
+![alt text](images/proceso-1790713344890.png)
+
+![alt text](images/proceso-1790713413909.png)
+
+probamos con cliente inexsistente que debe dar error 404 
+
+![alt text](images/proceso-1790713462773.png)
+
+![alt text](images/proceso-1790713501210.png)
+

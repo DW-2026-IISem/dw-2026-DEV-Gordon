@@ -1,0 +1,11 @@
+### Cliente — consultas (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Listar clientes activos
+GET {{baseUrl}}/clientes
+
+### Obtener un cliente por id
+GET {{baseUrl}}/clientes/1
+
+### Id inexistente -> 404
+GET {{baseUrl}}/clientes/999999

@@ -74,15 +74,17 @@ export const getDatabaseInfo = () => ({
   user: selectedConfig.username,
 });
 
-export const testConnection = async (): Promise<void> => {
+export const testConnection = async (): Promise<boolean> => {
   try {
     await sequelize.authenticate();
     console.log(`Conexión exitosa a ${selectedEngine.toUpperCase()}`);
+    return true;
   } catch (error) {
     const { host, port, database } = getDatabaseInfo();
     console.error(
       `No se pudo conectar a ${selectedEngine.toUpperCase()} (${host}:${port}/${database}):`,
       error instanceof Error ? error.message : error
     );
+    return false;
   }
 };

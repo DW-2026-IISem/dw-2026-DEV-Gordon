@@ -1,0 +1,34 @@
+### Cliente — creación (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Crear cliente válido -> 201, status active
+POST {{baseUrl}}/clientes
+Content-Type: application/json
+
+{
+  "tipo_documento": "NIT",
+  "numero_documento": "900123",
+  "nombre": "Postobón S.A.",
+  "telefono": "3001234567",
+  "email": "contacto@postobon.com"
+}
+
+### numero_documento repetido -> 409
+POST {{baseUrl}}/clientes
+Content-Type: application/json
+
+{
+  "tipo_documento": "NIT",
+  "numero_documento": "900123",
+  "nombre": "Duplicado"
+}
+
+### Sin nombre y email inválido -> 400
+POST {{baseUrl}}/clientes
+Content-Type: application/json
+
+{
+  "tipo_documento": "CC",
+  "numero_documento": "111",
+  "email": "malo"
+}

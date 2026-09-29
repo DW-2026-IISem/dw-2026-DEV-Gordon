@@ -3,7 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import routes from '../routes';
-import { testConnection } from '../database/db';
+import { sequelize, testConnection } from '../database/db';
 
 dotenv.config();
 
@@ -18,7 +18,7 @@ export class App {
     this.settings();
     this.middlewares();
     this.routes();
-    this.dbConnection();
+    void this.dbConnection();
   }
 
   private settings(): void {
@@ -36,8 +36,14 @@ export class App {
     this.app.use('/api', routes);
   }
 
-  private dbConnection(): void {
-    void testConnection();
+  private async dbConnection(): Promise<void> {
+    if (!(await testConnection())) return;
+    try {
+      await sequelize.sync();
+      console.log('Modelos sincronizados con la base de datos');
+    } catch (error) {
+      console.error('Error al sincronizar modelos:', error instanceof Error ? error.message : error);
+    }
   }
 
   public listen(): void {
