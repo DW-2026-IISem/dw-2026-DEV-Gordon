@@ -97,7 +97,7 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | árbol | AC-5 | (videncia en Proceso.md) | `find src -type d | sort` |
 
 **Commit (hash):** `feat(iss-01): esqueleto Express TS arrancable Refs #1`
-**Autoevaluación de AC:** Completo
+**Autoevaluación de AC:** Completo 
 
 ---
 
