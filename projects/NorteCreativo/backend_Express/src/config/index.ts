@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import routes from '../routes';
 import { sequelize, testConnection } from '../database/db';
+import { setupSwagger } from '../swagger';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ export class App {
 
     this.settings();
     this.middlewares();
+    this.docs();
     this.routes();
     void this.dbConnection();
   }
@@ -30,6 +32,10 @@ export class App {
     this.app.use(morgan('dev'));
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+  }
+
+  private docs(): void {
+    setupSwagger(this.app);
   }
 
   private routes(): void {

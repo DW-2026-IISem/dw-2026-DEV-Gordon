@@ -303,3 +303,60 @@ vemos que los datos sean coherentes
 
 ![alt text](images/proceso-1790715258455.png)
 
+## ISS - 05
+
+### OBJ
+
+**OBJ:** Al finalizar, la API de clientes quedará documentada en OpenAPI 3 y visible en Swagger UI, con un registry que permita sumar features siguientes.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado la app arrancada; cuando se abre `http://localhost:3012/api/docs`; entonces carga Swagger UI con el tag Clientes.
+- [x] **AC-2** Dado la app; cuando `GET /api/docs.json`; entonces devuelve el documento OpenAPI 3 con los paths de `/api/clientes`.
+- [x] **AC-3** Dado Swagger UI; cuando se ejecuta *Try it out* en `GET /api/clientes`; entonces responde `200`.
+- [x] **AC-4** Dado `src/swagger/index.ts`; cuando se revisa; entonces importa `clienteSwagger` desde el feature (no define los paths él mismo).
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-05, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-05.md siguiendo docs/manual.md seccion 10 (ISS-05, Swagger), adaptado a Cliente.
+
+Instala swagger-ui-express y @types/swagger-ui-express (dev).
+Crea src/features/business/cliente/cliente.swagger.ts exportando clienteSwagger (tags, paths, components.schemas)
+con los 7 endpoints de /api/clientes (incluido PATCH /api/clientes/{id}/deactivate), marcados SIN AUTH,
+con los campos reales del modelo (tipo_documento, numero_documento, nombre, telefono, email, status).
+Crea src/swagger/index.ts (registry) que fusiona los modulos de features y exporta setupSwagger(app),
+montando /api/docs (UI) y /api/docs.json (spec), servidor http://localhost:3012.
+En src/config/index.ts agrega el metodo docs() que llama setupSwagger.
+
+Prohibido: Campania, Hito. NO adelantes ISS-06. Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790716894509.png)
+![alt text](images/proceso-1790716928118.png)
+
+probamos que la ui de swagger cargue
+
+![alt text](images/proceso-1790717056312.png)
+
+miramos el doc con openapi y nos da la version v 3.0.3 tambien nos muestra la rutas
+
+![alt text](images/proceso-1790717099222.png)
+
+probamos swagger ui con try it out y tenemos codigo 200
+
+![alt text](images/proceso-1790718964077.png)
+
+
+probamos que el registry importa desde el feature
+
+![alt text](images/proceso-1790719252535.png)
