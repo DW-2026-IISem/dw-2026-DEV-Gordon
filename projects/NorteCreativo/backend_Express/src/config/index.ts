@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import routes from '../routes';
+import { testConnection } from '../database/db';
 
 dotenv.config();
 
@@ -36,7 +37,7 @@ export class App {
   }
 
   private dbConnection(): void {
-    // Sin base de datos en ISS-01; la conexión se implementa en ISS-02.
+    void testConnection();
   }
 
   public listen(): void {

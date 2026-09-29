@@ -90,3 +90,70 @@ verificamos el healt
 
 arranca y seguimos al iss 02
 
+## ISS - 02
+
+### OBJ
+
+**OBJ:** Al finalizar, la app se conectará a la base `norte_creativo_express` del motor indicado por `DB_ENGINE`, fallando con un mensaje claro si el motor no está soportado.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado `.env.example`; cuando se revisa; entonces tiene `PORT=3012`, `DB_ENGINE` y los cuatro bloques sin contraseñas, y `.env` no aparece en `git status`.
+- [x] **AC-2** Dado el proyecto; cuando `npx tsc --noEmit`; entonces no hay errores.
+- [x] **AC-3** Dado MySQL arriba y la base creada; cuando `npm run dev`; entonces el log muestra `Conexión exitosa a MYSQL` y el servidor queda en 3012.
+- [x] **AC-4** Dado `DB_ENGINE=foo` en una copia del `.env`; cuando se arranca; entonces falla con `Motor de base de datos no soportado: foo`; al restaurar vuelve a conectar.
+- [x] **AC-5** Dado `src/database/seeders/`; cuando se lista; entonces existe y no contiene `*.seeder.ts` ni runner.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-02, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-02.md siguiendo docs/manual.md seccion 3 (ISS-02), adaptado a Norte Creativo.
+
+Instala los drivers del manual seccion 3.1 (sequelize, mysql2, pg, pg-hstore, tedious, oracledb).
+Crea .env.example (versionado, SIN contraseñas) y actualiza .env local con:
+PORT=3012, DB_ENGINE=mysql,
+MYSQL_HOST=localhost MYSQL_USER=root MYSQL_PASSWORD= MYSQL_NAME=norte_creativo_express MYSQL_PORT=3306,
+POSTGRES_HOST=localhost POSTGRES_USER=nc_admin POSTGRES_PASSWORD= POSTGRES_NAME=norte_creativo_express POSTGRES_PORT=5433,
+MSSQL_HOST=localhost MSSQL_USER=sa MSSQL_PASSWORD= MSSQL_NAME=norte_creativo_express MSSQL_PORT=1433,
+ORACLE_HOST=localhost ORACLE_USER=system ORACLE_PASSWORD= ORACLE_NAME=XEPDB1 ORACLE_PORT=1521.
+En .env (no en .env.example) deja las contraseñas vacias para que yo las llene; no inventes contraseñas.
+Crea src/database/db.ts como el manual seccion 3.2 (exporta sequelize, getDatabaseInfo, testConnection) pero con los
+CUATRO motores en dbConfigurations (mysql, postgres, mssql, oracle). Si DB_ENGINE no esta soportado, lanza
+"Motor de base de datos no soportado: <valor>".
+En src/config/index.ts, dbConnection() debe llamar testConnection(). Todavia NO hay modelos ni sync.
+Deja src/database/seeders/ con un .gitkeep.
+
+Prohibido: modelos de negocio, sync, force, alter. NO adelantes ISS-03. Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790711330711.png)
+
+verificamos env.example y .env fuera de git
+![alt text](images/proceso-1790711358198.png)
+
+vemos si compila
+![alt text](images/proceso-1790711380125.png)
+
+probamos la conexion
+
+![alt text](images/proceso-1790711401783.png)
+
+![alt text](images/proceso-1790711480224.png)
+
+Detenemos el servidor y probamos si falla poniendole db=foo
+
+![alt text](images/proceso-1790711531383.png)
+
+vemos si el ac5 se cumple
+
+![alt text](images/proceso-1790711577059.png)
+

@@ -7,7 +7,7 @@
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
 **Revisor humano:** Carlos H. Zárate
 **Dependencias:** ninguna (primer issue del backend Express)
-**Commit esperado:** `feat(iss-01): esqueleto Express TS arrancable` con `Refs #1`
+**Commit esperado:** `feat(iss-01): esqueleto Express TS arrancable Refs #1`
 
 ---
 
@@ -57,10 +57,8 @@
 
 ## 3. IA usada
 
-**Herramienta / modelo:** Claude Code - modelo (completar)
-
-**Fecha:** (pendiente)
-
+**Herramienta / modelo:** Claude Code - Sonnet 5
+**Fecha:** 28/09/26
 **Prompt enviado**:
 
 ```text
