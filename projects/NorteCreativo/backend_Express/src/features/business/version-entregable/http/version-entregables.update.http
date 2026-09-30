@@ -1,0 +1,37 @@
+### Versión de entregable — actualización (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### PUT: reemplazo de los campos editables (los opcionales omitidos quedan en null)
+PUT {{baseUrl}}/version-entregables/1
+Content-Type: application/json
+
+{
+  "fecha_inicio": "2026-10-01T00:00:00.000Z",
+  "fecha_fin": "2026-10-20T00:00:00.000Z",
+  "total": 3200.75,
+  "observaciones": "Actualizada"
+}
+
+### PATCH: solo los campos enviados
+PATCH {{baseUrl}}/version-entregables/1
+Content-Type: application/json
+
+{
+  "observaciones": "Solo cambia la observación"
+}
+
+### PATCH con estado -> 400 (solo lo cambia el feature de aprobaciones)
+PATCH {{baseUrl}}/version-entregables/1
+Content-Type: application/json
+
+{
+  "estado": "APROBADA"
+}
+
+### PUT/PATCH sobre una versión APROBADA -> 409 RN-04
+PATCH {{baseUrl}}/version-entregables/1
+Content-Type: application/json
+
+{
+  "observaciones": "No se puede si está APROBADA"
+}

@@ -1,0 +1,54 @@
+### Versión de entregable — creación (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Crear versión: numero_version es automático (1, 2, 3...) y nace EN_REVISION -> 201
+POST {{baseUrl}}/version-entregables
+Content-Type: application/json
+
+{
+  "entregable_id": 1,
+  "total": 1200.50,
+  "observaciones": "Nueva versión"
+}
+
+### Enviar numero_version -> 400 (lo controla el sistema)
+POST {{baseUrl}}/version-entregables
+Content-Type: application/json
+
+{
+  "entregable_id": 1,
+  "numero_version": 5
+}
+
+### Enviar estado -> 400 (lo controla el sistema)
+POST {{baseUrl}}/version-entregables
+Content-Type: application/json
+
+{
+  "entregable_id": 1,
+  "estado": "APROBADA"
+}
+
+### Entregable inexistente -> 404
+POST {{baseUrl}}/version-entregables
+Content-Type: application/json
+
+{
+  "entregable_id": 999999
+}
+
+### Sin entregable_id -> 400
+POST {{baseUrl}}/version-entregables
+Content-Type: application/json
+
+{
+  "observaciones": "Sin entregable"
+}
+
+### Hito CERRADO -> 409 RN-06 (primero: PATCH {{baseUrl}}/hitos/{id} con {"estado":"CERRADO"})
+POST {{baseUrl}}/version-entregables
+Content-Type: application/json
+
+{
+  "entregable_id": 1
+}

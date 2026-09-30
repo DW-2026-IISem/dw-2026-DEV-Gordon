@@ -95,6 +95,7 @@ export const entregableSwagger: SwaggerModule = {
           '200': jsonResponse('Entregable eliminado', 'Message'),
           '400': badRequest,
           '404': notFound,
+          '409': jsonResponse('El entregable tiene versiones asociadas', 'Error'),
         },
       },
     },

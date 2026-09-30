@@ -1,13 +1,14 @@
-> **Workspace:** `backend_express` (Norte Creativo) · **Pista:** Business Express + TypeScript (11 issues) · **Manual base:** `docs/manual.md` · **SDD del proyecto:** `docs/sdd.md`
+> **Workspace:** `backend_express` (Norte Creativo) · **Pista:** Business Express + TypeScript (11 issues) · **Guion:** `docs/proceso.md` · **SDD del proyecto:** `docs/sdd.md`
+
 
 # ISS-10 — Feature version-entregable — versionado automático e inmutabilidad
 
 **Naturaleza:** práctico
-**Issue GitHub:** `#__`
+**Issue GitHub:** `#10`
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
 **Revisor humano:** Carlos H. Zárate
 **Dependencias:** ISS-09 en **Hecho**
-**Commit esperado:** `[S07][#__] ISS-10 feature version-entregable` con `Refs #__`
+**Commit esperado:** `feat(iss-10): feature version-entregable Refs #10`
 
 ---
 
@@ -108,8 +109,8 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | FK + UNIQUE | AC-6 | (pegar salida o ruta a captura) | `docker exec -it nc-mysql mysql -uroot -p'NorteCreativo2026*' norte_creativo_express -e "SHOW CREATE TABLE version_entregables\G"` |
 |       | seed idempotente | AC-7 | (pegar salida o ruta a captura) | `npm run db:seed` ×2 + COUNT |
 
-**Commit (hash):** pendiente — `[S07][#__] ISS-10 feature version-entregable` · `Refs #__`
-**Autoevaluación de AC:** pendiente
+**Commit (hash):** `feat(iss-10): feature version-entregable Refs #10`
+**Autoevaluación de AC:** completado
 
 ---
 
@@ -123,10 +124,27 @@ Preguntas guía: «¿Dónde se calcula `numero_version` y por qué no lo manda e
 
 **Respuesta del autor (ajuste o justificación):**
 
+numero_version se calcula en version-entregable.controller.ts, en el create, antes de insertar cuenta las
+versiones que ya tiene ese entregable con VersionEntregable.count y le asigna count + 1, el cliente no lo
+manda porque si pudiera elegir el numero podria repetir el mismo o saltarse alguno, y la numeracion dejaria
+de ser confiable, ademas la tabla tiene un unique sobre entregable_id y numero_version, entonces la base
+tampoco deja dos versiones con el mismo numero en un entregable, y si el body trae numero_version el
+controller responde 400
+
+una version aprobada ya no se puede modificar porque la aprobacion es una decision del cliente sobre ese
+contenido exacto, si despues se pudiera editar, lo que quedo aprobado ya no seria lo que el cliente vio,
+y la agencia podria cambiar la pieza sin que nadie la vuelva a revisar, por eso rn-04, put, patch y delete
+sobre una version aprobada responden 409, y si hay que corregir algo se crea una version nueva que vuelve
+a pasar por aprobacion
+
+si el estado se pudiera cambiar por patch cualquiera podria marcar una version como aprobada sin que el
+cliente aprobador haya aprobado nada, y como el cierre del hito depende de que la ultima version de cada
+entregable este aprobada, se podria cerrar un hito con aprobaciones falsas y facturar trabajo que el
+cliente nunca acepto, eso rompe la regla central del proyecto, por eso el controller responde 400 si el
+body trae estado, el unico que lo cambia es el feature de aprobaciones
 ---
 
 ## 6. Gate
 
-**Estado:** pendiente
-**Conclusión:**
-**Trazabilidad final:**
+**Estado:** completado
+**Trazabilidad final:** completado

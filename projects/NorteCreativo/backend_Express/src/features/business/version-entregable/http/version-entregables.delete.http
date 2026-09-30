@@ -1,0 +1,8 @@
+### Versión de entregable — borrado (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Borrado lógico: status = inactive (deja de aparecer en el listado). Una versión APROBADA -> 409 (RN-04)
+PATCH {{baseUrl}}/version-entregables/1/deactivate
+
+### Borrado físico: elimina la fila. Una versión APROBADA -> 409 (RN-04)
+DELETE {{baseUrl}}/version-entregables/1

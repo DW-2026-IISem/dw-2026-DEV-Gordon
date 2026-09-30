@@ -1,0 +1,11 @@
+### Versión de entregable — consultas (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Listar versiones activas
+GET {{baseUrl}}/version-entregables
+
+### Obtener una versión por id (incluye su entregable)
+GET {{baseUrl}}/version-entregables/1
+
+### Id inexistente -> 404
+GET {{baseUrl}}/version-entregables/999999

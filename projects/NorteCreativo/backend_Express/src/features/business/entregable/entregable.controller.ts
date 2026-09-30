@@ -148,6 +148,9 @@ export class EntregableController {
       await entregable.destroy();
       return res.status(200).json({ message: 'Entregable eliminado' });
     } catch (error) {
+      if (error instanceof ForeignKeyConstraintError) {
+        return res.status(409).json({ message: 'No se puede eliminar: el entregable tiene versiones asociadas' });
+      }
       return handleError(error, res);
     }
   }

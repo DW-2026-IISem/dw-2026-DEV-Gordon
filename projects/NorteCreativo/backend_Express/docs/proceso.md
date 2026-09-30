@@ -683,3 +683,87 @@ probamos el getone que traiga en la respuesta el objeto de tarea
 
 
 
+## ISS - 10
+
+### OBJ
+
+**OBJ:** Al finalizar, cada entregable tendrá versiones numeradas automáticamente (v1, v2, v3…), con estado controlado solo por el sistema y protegidas contra cambios una vez aprobadas.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado un entregable; cuando `POST /api/version-entregables` dos veces; entonces la primera responde `numero_version: 1` y la segunda `numero_version: 2`, ambas `EN_REVISION`.
+- [x] **AC-2** Dado un body con `numero_version` o `estado`; cuando `POST`; entonces `400`.
+- [x] **AC-3** Dado un `entregable_id` inexistente; cuando `POST`; entonces `404`.
+- [x] **AC-4** Dado una versión `APROBADA` (fijada a mano en BD para esta prueba); cuando `PATCH` o `DELETE`; entonces `409` (RN-04).
+- [x] **AC-5** Dado un hito `CERRADO` (fijado a mano en BD para esta prueba); cuando se crea versión de un entregable suyo; entonces `409` (RN-06).
+- [x] **AC-6** Dado la tabla; cuando `SHOW CREATE TABLE version_entregables`; entonces existe la FK y el UNIQUE (`entregable_id`, `numero_version`).
+- [x] **AC-7** Dado la tabla vacía; cuando `npm run db:seed` ×2; entonces cada entregable tiene su versión 1, sin duplicar.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-10, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-10.md siguiendo docs/manual.md secciones 11 y 12 (CRUD completo + relacion
+con archivo associations), con el MISMO estilo de los features cliente, campania e hito ya hechos en este proyecto.
+
+Feature src/features/business/version-entregable: model, controller, routes, associations, seeder, swagger y carpeta http/.
+Modelo VersionEntregable (tabla version_entregables, timestamps true): entregable_id INTEGER requerido FK a entregables.id, numero_version INTEGER requerido, fecha_inicio DATE opcional, fecha_fin DATE opcional, total DECIMAL(12,2) opcional, estado ENUM(EN_REVISION,APROBADA,RECHAZADA) default EN_REVISION, observaciones TEXT opcional, status ENUM(active,inactive) default active. Indice UNIQUE compuesto (entregable_id, numero_version).
+version-entregable.associations.ts: Entregable.hasMany(VersionEntregable, foreignKey entregable_id, as "versiones") y VersionEntregable.belongsTo(Entregable, foreignKey entregable_id, as "entregable"), importado antes del sync.
+Controller VersionEntregableController con los 7 metodos (getAll solo status active, getOne con include del padre, create, updatePut,
+updatePatch, deletePhysical, deleteLogical). Reglas (mismas decisiones del backend NestJS IA):
+- numero_version AUTOMATICO: en create cuenta las versiones de ese entregable y asigna count + 1. El cliente NUNCA lo envia.
+- Si el body de create, updatePut o updatePatch trae estado o numero_version -> 400 ("estado y numero_version los controla el sistema").
+  El estado solo lo cambiara el feature aprobaciones (ISS-11).
+- En create: entregable inexistente -> 404. Si el hito del entregable (entregable -> tarea -> hito) esta CERRADO -> 409 (RN-06).
+- RN-04: updatePut, updatePatch, deletePhysical y deleteLogical sobre una version con estado APROBADA -> 409.
+Errores: validacion -> 400, no encontrado -> 404, regla de negocio -> 409.
+Rutas SIN AUTH en /api/version-entregables (incluido PATCH /api/version-entregables/:id/deactivate) registradas en src/routes/index.ts.
+http/ con los .http de get, create, update y delete, leyenda SIN AUTH, puerto 3012.
+Seeder seedVersionEntregables idempotente: crea la version 1 (EN_REVISION) de cada entregable que no tenga versiones; agregalo al SeedersRunner DESPUES de entregables.
+Usa el path /api/version-entregables para las rutas.
+Swagger del feature registrado en src/swagger/index.ts.
+
+NO adelantes ISS-11 (aprobaciones). Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS, force, alter. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+![alt text](images/proceso-1790735462954.png)
+
+probamos que corra
+
+![alt text](images/proceso-1790735481594.png)
+
+creamos uno limpio para comprobar los ac
+
+![alt text](images/proceso-1790735650297.png)
+
+probamos el numero_version automatico del ac1
+primera version
+
+![alt text](images/proceso-1790735943995.png)
+
+ahora estado o numero de version, los 3 nos dan codigo 400
+
+![alt text](images/proceso-1790736040696.png)
+
+entregable inexistente
+
+![alt text](images/proceso-1790736071622.png)
+
+ahora probamos version aprobada inmutable que de 409 y rn04, fijamos el estado a mano en la base ya que no se permite en la api, usamos y los 3 nos dan 409
+
+![alt text](images/proceso-1790736133214.png)
+
+ahora con los hitos cerrados que no admiten versiones nuevas, todos nos deben dar 409, al final reabrimos para no tener errores futuros
+
+![alt text](images/proceso-1790736188134.png)
+
+ac6, fk y unique
+
+![alt text](images/proceso-1790736247431.png)
