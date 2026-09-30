@@ -361,7 +361,7 @@ probamos que el registry importa desde el feature
 
 ![alt text](images/proceso-1790719252535.png)
 
-## ISS - 05
+## ISS - 06
 
 ### OBJ
 
@@ -445,4 +445,85 @@ Aparece la campaña en el swagger
 
 ![alt text](images/proceso-1790729915282.png)
 
+
+## ISS - 07
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán gestionar hitos de una campaña con su estado de negocio, aplicando RN-08 (no hay hitos en campañas inactivas) y las invariantes de estado del SDD.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado la app arrancada; cuando `sync`; entonces existe `hitos` con FK real a `campanias`.
+- [x] **AC-2** Dado una campaña activa; cuando `POST /api/hitos` (aunque se envíe `"estado":"CERRADO"`); entonces `201` con `estado: ABIERTO` y `fecha_cierre: null`.
+- [x] **AC-3** Dado una campaña `inactive`; cuando `POST /api/hitos` con su id; entonces `409` (RN-08) y no se crea fila.
+- [x] **AC-4** Dado un `campania_id` inexistente; cuando `POST /api/hitos`; entonces `404`.
+- [x] **AC-5** Dado un hito; cuando `PATCH` con `"estado":"PERDIDO"`; entonces `400`.
+- [x] **AC-6** Dado un hito `ABIERTO`; cuando `PATCH` a `CERRADO`; entonces `200` con `fecha_cierre` asignada; y un `PATCH` posterior a `ABIERTO` responde `409`.
+- [x] **AC-7** Dado la tabla vacía; cuando `npm run db:seed`; entonces se crean hitos `ABIERTO` sobre campañas activas, en orden clientes → campanias → hitos, sin duplicar al repetir.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-07, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-07.md siguiendo docs/manual.md seccion 12 (ISS-07, feature Product con relacion),
+adaptado a la entidad Hito de Norte Creativo. Mismo estilo de los features cliente y campania ya hechos.
+
+Feature src/features/business/hito: model, controller, routes, associations, seeder, swagger y carpeta http/.
+Modelo Hito (tabla hitos, timestamps true): campania_id INTEGER requerido FK a campanias.id, nombre STRING requerido,
+descripcion TEXT opcional, estado ENUM(ABIERTO,CERRADO,FACTURADO) default ABIERTO, fecha_cierre DATE opcional,
+status ENUM(active,inactive) default active.
+hito.associations.ts: Campania.hasMany(Hito, foreignKey campania_id) y Hito.belongsTo(Campania, foreignKey campania_id, as "campania"),
+importado en src/config/index.ts antes del sync.
+Controller HitoController con los 7 metodos. En create y updatePut: campania inexistente -> 404; campania inactive -> 409 (RN-08).
+Invariantes: create IGNORA estado y fecha_cierre del body (siempre nace ABIERTO y fecha_cierre null);
+en updatePatch un estado fuera del ENUM -> 400; pasar a CERRADO asigna fecha_cierre = ahora;
+un hito CERRADO no puede volver a ABIERTO -> 409 (RN-06). getOne incluye la campania.
+Rutas SIN AUTH en /api/hitos (incluido PATCH /api/hitos/:id/deactivate) en src/routes/index.ts.
+http/ con los .http de get, create, update y delete, leyenda SIN AUTH, puerto 3012.
+Seeder seedHitos(count) idempotente sobre campanias activas, estado ABIERTO; agregalo al SeedersRunner despues de campanias,
+con SEED_HITOS y --hitos=N. hitoSwagger registrado en src/swagger/index.ts.
+Al final verifica y reporta que el orden de seeders es clientes -> campanias -> hitos.
+
+Prohibido: tareas, entregables, aprobaciones, cierre automatico de hito, force, alter. Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790731319750.png)
+![alt text](images/proceso-1790731434852.png)
+![alt text](images/proceso-1790731443468.png)
+
+probamos que corra
+![alt text](images/proceso-1790731469683.png)
+
+probamos el fk real del ac1
+
+![alt text](images/proceso-1790731534856.png)
+
+probamos que un hito nace abierto aunque este en cerrado, debe dar 201
+
+![alt text](images/proceso-1790731592013.png)
+
+probamos con una campaña inexistente que de 404 error
+
+![alt text](images/proceso-1790731718862.png)
+
+estado invalido
+
+![alt text](images/proceso-1790731734334.png)
+
+probamos con errar un hito y que de 200 con la fecha de cierre
+
+![alt text](images/proceso-1790731811235.png)
+
+error 409
+
+![alt text](images/proceso-1790731863351.png)
 

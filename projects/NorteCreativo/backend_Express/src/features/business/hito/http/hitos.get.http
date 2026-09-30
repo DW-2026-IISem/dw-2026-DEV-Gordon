@@ -1,0 +1,11 @@
+### Hito — consultas (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Listar hitos activos
+GET {{baseUrl}}/hitos
+
+### Obtener un hito por id (incluye su campaña)
+GET {{baseUrl}}/hitos/1
+
+### Id inexistente -> 404
+GET {{baseUrl}}/hitos/999999

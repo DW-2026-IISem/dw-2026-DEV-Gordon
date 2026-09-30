@@ -98,6 +98,7 @@ export const campaniaSwagger: SwaggerModule = {
           '200': jsonResponse('Campaña eliminada', 'Message'),
           '400': badRequest,
           '404': notFound,
+          '409': jsonResponse('La campaña tiene hitos asociados', 'Error'),
         },
       },
     },

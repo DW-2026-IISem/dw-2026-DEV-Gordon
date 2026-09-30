@@ -144,6 +144,9 @@ export class CampaniaController {
       await campania.destroy();
       return res.status(200).json({ message: 'Campaña eliminada' });
     } catch (error) {
+      if (error instanceof ForeignKeyConstraintError) {
+        return res.status(409).json({ message: 'No se puede eliminar: la campaña tiene hitos asociados' });
+      }
       return handleError(error, res);
     }
   }

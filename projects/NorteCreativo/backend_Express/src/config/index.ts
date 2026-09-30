@@ -6,6 +6,7 @@ import routes from '../routes';
 import { sequelize, testConnection } from '../database/db';
 import { setupSwagger } from '../swagger';
 import '../features/business/campania/campania.associations';
+import '../features/business/hito/hito.associations';
 
 dotenv.config();
 

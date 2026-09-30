@@ -1,0 +1,49 @@
+### Hito — creación (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Crear hito en una campaña activa -> 201 (nace ABIERTO, fecha_cierre null)
+POST {{baseUrl}}/hitos
+Content-Type: application/json
+
+{
+  "campania_id": 1,
+  "nombre": "Campaña en redes",
+  "descripcion": "Piezas y calendario de publicación"
+}
+
+### estado y fecha_cierre enviados se ignoran -> 201 con estado ABIERTO
+POST {{baseUrl}}/hitos
+Content-Type: application/json
+
+{
+  "campania_id": 1,
+  "nombre": "Intenta nacer cerrado",
+  "estado": "CERRADO",
+  "fecha_cierre": "2026-01-01T00:00:00.000Z"
+}
+
+### Campaña inexistente -> 404
+POST {{baseUrl}}/hitos
+Content-Type: application/json
+
+{
+  "campania_id": 999999,
+  "nombre": "Sin campaña"
+}
+
+### Campaña inactiva -> 409 RN-08 (primero: PATCH {{baseUrl}}/campanias/{id}/deactivate)
+POST {{baseUrl}}/hitos
+Content-Type: application/json
+
+{
+  "campania_id": 2,
+  "nombre": "Para campaña inactiva"
+}
+
+### Sin nombre -> 400
+POST {{baseUrl}}/hitos
+Content-Type: application/json
+
+{
+  "campania_id": 1
+}

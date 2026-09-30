@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import clienteRoutes from '../features/business/cliente/cliente.routes';
 import campaniaRoutes from '../features/business/campania/campania.routes';
+import hitoRoutes from '../features/business/hito/hito.routes';
 
 const router = Router();
 
@@ -10,5 +11,6 @@ router.get('/health', (_req: Request, res: Response) => {
 
 router.use('/clientes', clienteRoutes);
 router.use('/campanias', campaniaRoutes);
+router.use('/hitos', hitoRoutes);
 
 export default router;
