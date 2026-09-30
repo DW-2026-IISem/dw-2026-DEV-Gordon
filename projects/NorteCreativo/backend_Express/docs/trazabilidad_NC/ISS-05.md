@@ -3,7 +3,7 @@
 # ISS-05 — Swagger / OpenAPI (feature + registry)
 
 **Naturaleza:** práctico
-**Issue GitHub:** `#4`
+**Issue GitHub:** `#5`
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
 **Revisor humano:** Carlos H. Zárate
 **Dependencias:** ISS-04 en **Hecho**
@@ -51,7 +51,7 @@
 
 ## 3. IA usada
 
-**Herramienta / modelo:** Claude Code - modelo (completar)
+**Herramienta / modelo:** Claude Code - sonet 5.5
 
 **Fecha:** (pendiente)
 

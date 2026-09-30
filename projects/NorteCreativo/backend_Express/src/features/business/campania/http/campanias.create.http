@@ -1,0 +1,38 @@
+### Campaña — creación (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Crear campaña para un cliente existente y activo -> 201
+POST {{baseUrl}}/campanias
+Content-Type: application/json
+
+{
+  "cliente_id": 1,
+  "nombre": "Carnaval 2026",
+  "descripcion": "Campaña de lanzamiento de temporada"
+}
+
+### Cliente inexistente -> 404
+POST {{baseUrl}}/campanias
+Content-Type: application/json
+
+{
+  "cliente_id": 999999,
+  "nombre": "Sin cliente"
+}
+
+### Cliente inactivo -> 409 (primero: PATCH {{baseUrl}}/clientes/{id}/deactivate)
+POST {{baseUrl}}/campanias
+Content-Type: application/json
+
+{
+  "cliente_id": 2,
+  "nombre": "Para cliente inactivo"
+}
+
+### Sin nombre -> 400
+POST {{baseUrl}}/campanias
+Content-Type: application/json
+
+{
+  "cliente_id": 1
+}

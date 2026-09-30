@@ -1,5 +1,7 @@
 import { sequelize, testConnection } from '../db';
 import { seedClientes } from '../../features/business/cliente/cliente.seeder';
+import { seedCampanias } from '../../features/business/campania/campania.seeder';
+import '../../features/business/campania/campania.associations';
 import { getSeedCounts } from './counts';
 
 export class SeedersRunner {
@@ -13,6 +15,7 @@ export class SeedersRunner {
     try {
       await sequelize.sync();
       await seedClientes(counts.clientes);
+      await seedCampanias(counts.campanias);
       console.log('Seeders finalizados');
     } finally {
       await sequelize.close();

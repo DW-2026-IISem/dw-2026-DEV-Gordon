@@ -1,10 +1,11 @@
 import { Application, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { clienteSwagger } from '../features/business/cliente/cliente.swagger';
+import { campaniaSwagger } from '../features/business/campania/campania.swagger';
 import { SwaggerModule } from './types';
 
 // Para documentar un feature nuevo basta con agregar su módulo a esta lista.
-const modules: SwaggerModule[] = [clienteSwagger];
+const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger];
 
 const buildSpec = () => ({
   openapi: '3.0.3',

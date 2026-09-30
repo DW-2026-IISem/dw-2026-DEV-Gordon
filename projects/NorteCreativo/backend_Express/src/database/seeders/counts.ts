@@ -1,9 +1,11 @@
 export interface SeedCounts {
   clientes: number;
+  campanias: number;
 }
 
 const DEFAULTS: SeedCounts = {
   clientes: 10,
+  campanias: 15,
 };
 
 const parseCount = (raw: string | undefined, origen: string): number | undefined => {
@@ -15,13 +17,17 @@ const parseCount = (raw: string | undefined, origen: string): number | undefined
   return value;
 };
 
+const getCliArg = (argv: string[], name: string): string | undefined =>
+  argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=')[1];
+
 // Prioridad: argumento CLI (--clientes=N) > variable de entorno (SEED_CLIENTES) > valor por defecto.
-export const getSeedCounts = (argv: string[] = process.argv.slice(2)): SeedCounts => {
-  const cliArg = argv.find((arg) => arg.startsWith('--clientes='))?.split('=')[1];
-  return {
-    clientes:
-      parseCount(cliArg, '--clientes') ??
-      parseCount(process.env.SEED_CLIENTES, 'SEED_CLIENTES') ??
-      DEFAULTS.clientes,
-  };
-};
+export const getSeedCounts = (argv: string[] = process.argv.slice(2)): SeedCounts => ({
+  clientes:
+    parseCount(getCliArg(argv, 'clientes'), '--clientes') ??
+    parseCount(process.env.SEED_CLIENTES, 'SEED_CLIENTES') ??
+    DEFAULTS.clientes,
+  campanias:
+    parseCount(getCliArg(argv, 'campanias'), '--campanias') ??
+    parseCount(process.env.SEED_CAMPANIAS, 'SEED_CAMPANIAS') ??
+    DEFAULTS.campanias,
+});

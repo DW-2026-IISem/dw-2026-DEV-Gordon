@@ -360,3 +360,89 @@ probamos swagger ui con try it out y tenemos codigo 200
 probamos que el registry importa desde el feature
 
 ![alt text](images/proceso-1790719252535.png)
+
+## ISS - 05
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán gestionar campañas asociadas a un cliente existente y activo, con seeder y documentación, dejando el contenedor del que cuelgan los hitos.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado la app arrancada; cuando `sync`; entonces existe `campanias` con FK real a `clientes` (`SHOW CREATE TABLE`).
+- [x] **AC-2** Dado un `cliente_id` existente y activo; cuando `POST /api/campanias`; entonces `201`.
+- [x] **AC-3** Dado un `cliente_id` inexistente; cuando `POST /api/campanias`; entonces `404` y no se crea fila.
+- [x] **AC-4** Dado un cliente `inactive`; cuando `POST /api/campanias` con su id; entonces `409`.
+- [x] **AC-5** Dado una campaña; cuando `GET /api/campanias/:id`; entonces la respuesta incluye su cliente.
+- [x] **AC-6** Dado la tabla vacía; cuando `npm run db:seed`; entonces se crean campañas sobre clientes existentes y repetir no duplica.
+- [x] **AC-7** Dado Swagger; cuando se abre `/api/docs`; entonces aparece el tag Campañas.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-06, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-06.md siguiendo docs/manual.md secciones 11 y 12 (patron de ProductType y de la relacion
+Product-ProductType con archivo associations), adaptado a la entidad Campania de Norte Creativo. Mismo estilo del feature cliente ya hecho.
+
+Feature src/features/business/campania: model, controller, routes, associations, seeder, swagger y carpeta http/.
+Modelo Campania (tabla campanias, timestamps true): cliente_id INTEGER requerido FK a clientes.id, nombre STRING requerido,
+descripcion TEXT opcional, status ENUM(active,inactive) default active.
+campania.associations.ts: Cliente.hasMany(Campania, foreignKey cliente_id) y Campania.belongsTo(Cliente, foreignKey cliente_id, as "cliente"),
+importado en src/config/index.ts antes del sync.
+Controller CampaniaController con los mismos 7 metodos del cliente. En create y updatePut: si el cliente no existe -> 404;
+si el cliente esta inactive -> 409 ("no se crea campaña para un cliente inactivo"). getOne incluye el cliente asociado.
+Rutas SIN AUTH en /api/campanias (incluido PATCH /api/campanias/:id/deactivate) registradas en src/routes/index.ts.
+http/ con los archivos .http de get, create, update y delete, leyenda SIN AUTH, puerto 3012.
+Seeder seedCampanias(count) idempotente que asigna campanias a clientes activos existentes; agregalo al SeedersRunner
+DESPUES de clientes, con SEED_CAMPANIAS y --campanias=N en counts.ts.
+campaniaSwagger registrado en src/swagger/index.ts.
+
+Prohibido: Hito, force, alter. NO adelantes ISS-07. Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790728479326.png)
+![alt text](images/proceso-1790728503621.png)
+![alt text](images/proceso-1790728515653.png)
+
+probamos que corre
+
+![alt text](images/proceso-1790728932272.png)
+
+verificamos el ac1 con el fk real en la base de datos
+
+![alt text](images/proceso-1790729140063.png)
+
+Creamos una cmapña valida para el ac2 con el id de cliente 3 y da el id 2 de campaña
+![alt text](images/proceso-1790729219197.png)
+
+
+cremos una para el ac3 con el cliente que no existe y que de 404
+![alt text](images/proceso-1790729328140.png)
+
+creamos ahora un cliente inactivo para probar el error 409, creamos un cliente nuevo para probarlo
+![alt text](images/proceso-1790729467171.png)
+
+tiene el id 21 y lo desactivamos
+![alt text](images/proceso-1790729503061.png)
+
+ahora le creamos una campaña y da el error que buscamos
+
+![alt text](images/proceso-1790729537608.png)
+
+ahora probamos el ac5 getone y nos trae el cliente dentro de la campaña
+
+![alt text](images/proceso-1790729690160.png)
+
+Aparece la campaña en el swagger
+
+![alt text](images/proceso-1790729915282.png)
+
+

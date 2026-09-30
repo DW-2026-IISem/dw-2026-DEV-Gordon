@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { UniqueConstraintError, ValidationError } from 'sequelize';
+import { ForeignKeyConstraintError, UniqueConstraintError, ValidationError } from 'sequelize';
 import { Cliente } from './cliente.model';
 
 const CAMPOS_EDITABLES = ['tipo_documento', 'numero_documento', 'nombre', 'telefono', 'email', 'status'] as const;
@@ -15,6 +15,9 @@ const pickCampos = (body: Record<string, unknown> = {}) => {
 const handleError = (error: unknown, res: Response): Response => {
   if (error instanceof UniqueConstraintError) {
     return res.status(409).json({ message: 'El numero_documento ya está registrado' });
+  }
+  if (error instanceof ForeignKeyConstraintError) {
+    return res.status(409).json({ message: 'No se puede eliminar: el cliente tiene campañas asociadas' });
   }
   if (error instanceof ValidationError) {
     return res.status(400).json({

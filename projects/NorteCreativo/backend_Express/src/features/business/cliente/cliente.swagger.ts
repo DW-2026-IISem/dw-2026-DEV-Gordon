@@ -97,6 +97,7 @@ export const clienteSwagger: SwaggerModule = {
           '200': jsonResponse('Cliente eliminado', 'Message'),
           '400': badId,
           '404': notFound,
+          '409': errorResponse('El cliente tiene campañas asociadas'),
         },
       },
     },

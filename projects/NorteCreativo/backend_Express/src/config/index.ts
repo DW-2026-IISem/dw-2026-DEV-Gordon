@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import routes from '../routes';
 import { sequelize, testConnection } from '../database/db';
 import { setupSwagger } from '../swagger';
+import '../features/business/campania/campania.associations';
 
 dotenv.config();
 

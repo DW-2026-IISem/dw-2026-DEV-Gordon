@@ -1,0 +1,11 @@
+### Campaña — consultas (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Listar campañas activas
+GET {{baseUrl}}/campanias
+
+### Obtener una campaña por id (incluye su cliente)
+GET {{baseUrl}}/campanias/1
+
+### Id inexistente -> 404
+GET {{baseUrl}}/campanias/999999
