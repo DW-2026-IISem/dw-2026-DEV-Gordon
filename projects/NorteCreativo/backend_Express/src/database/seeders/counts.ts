@@ -3,6 +3,7 @@ export interface SeedCounts {
   campanias: number;
   hitos: number;
   tareas: number;
+  entregables: number;
 }
 
 const DEFAULTS: SeedCounts = {
@@ -10,6 +11,7 @@ const DEFAULTS: SeedCounts = {
   campanias: 15,
   hitos: 20,
   tareas: 30,
+  entregables: 40,
 };
 
 const parseCount = (raw: string | undefined, origen: string): number | undefined => {
@@ -42,4 +44,8 @@ export const getSeedCounts = (argv: string[] = process.argv.slice(2)): SeedCount
     parseCount(getCliArg(argv, 'tareas'), '--tareas') ??
     parseCount(process.env.SEED_TAREAS, 'SEED_TAREAS') ??
     DEFAULTS.tareas,
+  entregables:
+    parseCount(getCliArg(argv, 'entregables'), '--entregables') ??
+    parseCount(process.env.SEED_ENTREGABLES, 'SEED_ENTREGABLES') ??
+    DEFAULTS.entregables,
 });

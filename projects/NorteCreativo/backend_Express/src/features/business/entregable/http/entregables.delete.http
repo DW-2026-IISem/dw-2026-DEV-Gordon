@@ -1,0 +1,8 @@
+### Entregable — borrado (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Borrado lógico: status = inactive (deja de aparecer en el listado)
+PATCH {{baseUrl}}/entregables/1/deactivate
+
+### Borrado físico: elimina la fila
+DELETE {{baseUrl}}/entregables/1

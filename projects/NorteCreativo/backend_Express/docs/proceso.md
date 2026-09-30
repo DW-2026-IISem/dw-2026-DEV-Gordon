@@ -606,3 +606,80 @@ payload invalido al id 1 sin nombre y sin hito id del ac4
 ac5 patch y desactivar, al final ya no muestra el listado
 
 ![alt text](images/proceso-1790734177661.png)
+
+## ISS - 09
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán gestionar los entregables que produce cada tarea, que son las piezas cuyas versiones se aprueban o rechazan.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado la app; cuando `sync`; entonces existe `entregables` con FK real a `tareas`.
+- [x] **AC-2** Dado un `tarea_id` existente; cuando `POST /api/entregables`; entonces `201` con `estado: EN_PROCESO` y `fecha_inicio` asignada.
+- [x] **AC-3** Dado un `tarea_id` inexistente; cuando `POST`; entonces `404`.
+- [x] **AC-4** Dado un payload sin `tarea_id`; cuando `POST`; entonces `400`.
+- [x] **AC-5** Dado un entregable; cuando `GET /api/entregables/:id`; entonces incluye su tarea.
+- [x] **AC-6** Dado la tabla vacía; cuando `npm run db:seed` ×2; entonces se crean entregables sin duplicar.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-09, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-09.md siguiendo docs/manual.md secciones 11 y 12 (CRUD completo + relacion
+con archivo associations), con el MISMO estilo de los features cliente, campania e hito ya hechos en este proyecto.
+
+Feature src/features/business/entregable: model, controller, routes, associations, seeder, swagger y carpeta http/.
+Modelo Entregable (tabla entregables, timestamps true): tarea_id INTEGER requerido FK a tareas.id, fecha_inicio DATE opcional, fecha_fin DATE opcional, total DECIMAL(12,2) opcional, estado ENUM(EN_PROCESO,ENTREGADO) default EN_PROCESO, observaciones TEXT opcional, status ENUM(active,inactive) default active. Convierte total a Number al responder (DECIMAL puede llegar como string).
+entregable.associations.ts: Tarea.hasMany(Entregable, foreignKey tarea_id, as "entregables") y Entregable.belongsTo(Tarea, foreignKey tarea_id, as "tarea"), importado antes del sync.
+Controller EntregableController con los 7 metodos (getAll solo status active, getOne con include del padre, create, updatePut,
+updatePatch, deletePhysical, deleteLogical). En create y updatePut: si la tarea no existe -> 404. En create, si no llega fecha_inicio, asigna la fecha actual.
+Errores: validacion -> 400, no encontrado -> 404, regla de negocio -> 409.
+Rutas SIN AUTH en /api/entregables (incluido PATCH /api/entregables/:id/deactivate) registradas en src/routes/index.ts.
+http/ con los .http de get, create, update y delete, leyenda SIN AUTH, puerto 3012.
+Seeder seedEntregables(count) idempotente sobre tareas existentes; agregalo al SeedersRunner DESPUES de tareas, con SEED_ENTREGABLES y --entregables=N.
+
+Swagger del feature registrado en src/swagger/index.ts.
+
+NO adelantes ISS-10 (version-entregable). Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS, force, alter. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790734488232.png)
+
+![alt text](images/proceso-1790734547916.png)
+
+![alt text](images/proceso-1790734595040.png)
+
+Miramos el fk, que pide el ac1
+
+![alt text](images/proceso-1790734644285.png)
+
+creamos un entregable valido
+
+![alt text](images/proceso-1790734702348.png)
+
+
+creamos un entregable en una tarea inexistente que de 404
+
+![alt text](images/proceso-1790734735447.png)
+
+ahora probamos con un payload invalido que cause error 400
+
+![alt text](images/proceso-1790734764864.png)
+
+probamos el getone que traiga en la respuesta el objeto de tarea
+
+![alt text](images/proceso-1790734877739.png)
+
+![alt text](images/proceso-1790734928695.png)
+
+
+

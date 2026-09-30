@@ -95,6 +95,7 @@ export const tareaSwagger: SwaggerModule = {
           '200': jsonResponse('Tarea eliminada', 'Message'),
           '400': badRequest,
           '404': notFound,
+          '409': jsonResponse('La tarea tiene entregables asociados', 'Error'),
         },
       },
     },

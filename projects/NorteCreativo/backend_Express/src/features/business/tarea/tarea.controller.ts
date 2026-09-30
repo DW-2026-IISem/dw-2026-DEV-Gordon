@@ -139,6 +139,9 @@ export class TareaController {
       await tarea.destroy();
       return res.status(200).json({ message: 'Tarea eliminada' });
     } catch (error) {
+      if (error instanceof ForeignKeyConstraintError) {
+        return res.status(409).json({ message: 'No se puede eliminar: la tarea tiene entregables asociados' });
+      }
       return handleError(error, res);
     }
   }

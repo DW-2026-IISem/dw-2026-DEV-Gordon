@@ -3,6 +3,7 @@ import clienteRoutes from '../features/business/cliente/cliente.routes';
 import campaniaRoutes from '../features/business/campania/campania.routes';
 import hitoRoutes from '../features/business/hito/hito.routes';
 import tareaRoutes from '../features/business/tarea/tarea.routes';
+import entregableRoutes from '../features/business/entregable/entregable.routes';
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use('/clientes', clienteRoutes);
 router.use('/campanias', campaniaRoutes);
 router.use('/hitos', hitoRoutes);
 router.use('/tareas', tareaRoutes);
+router.use('/entregables', entregableRoutes);
 
 export default router;

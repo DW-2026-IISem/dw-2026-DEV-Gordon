@@ -1,0 +1,48 @@
+### Entregable — creación (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Crear entregable para una tarea existente -> 201 (estado EN_PROCESO, fecha_inicio = ahora si no se envía)
+POST {{baseUrl}}/entregables
+Content-Type: application/json
+
+{
+  "tarea_id": 1,
+  "total": 1500.50,
+  "observaciones": "Primera entrega"
+}
+
+### Con fechas explícitas -> 201
+POST {{baseUrl}}/entregables
+Content-Type: application/json
+
+{
+  "tarea_id": 1,
+  "fecha_inicio": "2026-10-01T00:00:00.000Z",
+  "fecha_fin": "2026-10-15T00:00:00.000Z",
+  "total": 2300
+}
+
+### Tarea inexistente -> 404
+POST {{baseUrl}}/entregables
+Content-Type: application/json
+
+{
+  "tarea_id": 999999
+}
+
+### Sin tarea_id -> 400
+POST {{baseUrl}}/entregables
+Content-Type: application/json
+
+{
+  "observaciones": "Sin tarea"
+}
+
+### Estado fuera del ENUM -> 400
+POST {{baseUrl}}/entregables
+Content-Type: application/json
+
+{
+  "tarea_id": 1,
+  "estado": "PERDIDO"
+}

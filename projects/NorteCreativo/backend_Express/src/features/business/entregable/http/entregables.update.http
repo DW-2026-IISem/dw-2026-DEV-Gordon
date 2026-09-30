@@ -1,0 +1,31 @@
+### Entregable — actualización (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### PUT: reemplazo completo (los opcionales omitidos quedan en null; estado en EN_PROCESO)
+PUT {{baseUrl}}/entregables/1
+Content-Type: application/json
+
+{
+  "tarea_id": 1,
+  "fecha_inicio": "2026-10-01T00:00:00.000Z",
+  "fecha_fin": "2026-10-20T00:00:00.000Z",
+  "total": 3200.75,
+  "estado": "EN_PROCESO",
+  "observaciones": "Actualizado"
+}
+
+### PUT con tarea inexistente -> 404
+PUT {{baseUrl}}/entregables/1
+Content-Type: application/json
+
+{
+  "tarea_id": 999999
+}
+
+### PATCH: solo los campos enviados
+PATCH {{baseUrl}}/entregables/1
+Content-Type: application/json
+
+{
+  "estado": "ENTREGADO"
+}

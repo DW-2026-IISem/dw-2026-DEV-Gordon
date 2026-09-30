@@ -1,0 +1,11 @@
+### Entregable — consultas (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Listar entregables activos
+GET {{baseUrl}}/entregables
+
+### Obtener un entregable por id (incluye su tarea)
+GET {{baseUrl}}/entregables/1
+
+### Id inexistente -> 404
+GET {{baseUrl}}/entregables/999999
