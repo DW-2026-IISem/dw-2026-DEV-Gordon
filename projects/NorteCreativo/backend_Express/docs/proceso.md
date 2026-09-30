@@ -527,3 +527,82 @@ error 409
 
 ![alt text](images/proceso-1790731863351.png)
 
+## ISS - 08
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán gestionar las tareas de un hito existente, primer eslabón de la cadena que el cierre automático recorre.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Dado la app; cuando `sync`; entonces existe `tareas` con FK real a `hitos`.
+- [x] **AC-2** Dado un `hito_id` existente; cuando `POST /api/tareas`; entonces `201`.
+- [x] **AC-3** Dado un `hito_id` inexistente; cuando `POST /api/tareas`; entonces `404` y no crea fila.
+- [x] **AC-4** Dado un payload sin `nombre` o sin `hito_id`; cuando `POST /api/tareas`; entonces `400`.
+- [x] **AC-5** Dado una tarea; cuando `PATCH` y luego `PATCH /:id/deactivate`; entonces `200` y deja de aparecer en `GET /api/tareas`.
+- [x] **AC-6** Dado la tabla vacía; cuando `npm run db:seed` ×2; entonces se crean tareas sin duplicar.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-08, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-08.md siguiendo docs/manual.md secciones 11 y 12 (CRUD completo + relacion
+con archivo associations), con el MISMO estilo de los features cliente, campania e hito ya hechos en este proyecto.
+
+Feature src/features/business/tarea: model, controller, routes, associations, seeder, swagger y carpeta http/.
+Modelo Tarea (tabla tareas, timestamps true): hito_id INTEGER requerido FK a hitos.id, nombre STRING requerido, descripcion TEXT opcional, status ENUM(active,inactive) default active.
+tarea.associations.ts: Hito.hasMany(Tarea, foreignKey hito_id, as "tareas") y Tarea.belongsTo(Hito, foreignKey hito_id, as "hito"), importado en src/config/index.ts antes del sync.
+Controller TareaController con los 7 metodos (getAll solo status active, getOne con include del padre, create, updatePut,
+updatePatch, deletePhysical, deleteLogical). En create y updatePut: si el hito no existe -> 404.
+Errores: validacion -> 400, no encontrado -> 404, regla de negocio -> 409.
+Rutas SIN AUTH en /api/tareas (incluido PATCH /api/tareas/:id/deactivate) registradas en src/routes/index.ts.
+http/ con los .http de get, create, update y delete, leyenda SIN AUTH, puerto 3012.
+Seeder seedTareas(count) idempotente sobre hitos existentes; agregalo al SeedersRunner DESPUES de hitos, con SEED_TAREAS y --tareas=N en counts.ts.
+
+Swagger del feature registrado en src/swagger/index.ts.
+
+NO adelantes ISS-09 (entregable). Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS, force, alter. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790732397722.png)
+![alt text](images/proceso-1790732412961.png)
+![alt text](images/proceso-1790732426110.png)
+
+probamos que corra
+
+![alt text](images/proceso-1790732458078.png)
+
+vemos un id de un hito
+
+![alt text](images/proceso-1790732510837.png)
+
+vemos el fk que hay
+
+![alt text](images/proceso-1790732547910.png)
+![alt text](images/proceso-1790732567816.png)
+
+creamos la tarea valida del ac2 y nos da codigo 201
+
+![alt text](images/proceso-1790732896495.png)
+
+Hito inexsistente del ac3 dando codigo 404
+
+![alt text](images/proceso-1790733942007.png)
+
+payload invalido al id 1 sin nombre y sin hito id del ac4
+
+![alt text](images/proceso-1790734004416.png)
+
+![alt text](images/proceso-1790734014072.png)
+
+ac5 patch y desactivar, al final ya no muestra el listado
+
+![alt text](images/proceso-1790734177661.png)

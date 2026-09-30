@@ -100,6 +100,7 @@ export const hitoSwagger: SwaggerModule = {
           '200': jsonResponse('Hito eliminado', 'Message'),
           '400': badRequest,
           '404': notFound,
+          '409': jsonResponse('El hito tiene tareas asociadas', 'Error'),
         },
       },
     },

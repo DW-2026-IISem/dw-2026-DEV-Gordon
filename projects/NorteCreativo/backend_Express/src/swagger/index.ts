@@ -3,10 +3,11 @@ import swaggerUi from 'swagger-ui-express';
 import { clienteSwagger } from '../features/business/cliente/cliente.swagger';
 import { campaniaSwagger } from '../features/business/campania/campania.swagger';
 import { hitoSwagger } from '../features/business/hito/hito.swagger';
+import { tareaSwagger } from '../features/business/tarea/tarea.swagger';
 import { SwaggerModule } from './types';
 
 // Para documentar un feature nuevo basta con agregar su módulo a esta lista.
-const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger];
+const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger, tareaSwagger];
 
 const buildSpec = () => ({
   openapi: '3.0.3',

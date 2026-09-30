@@ -1,0 +1,29 @@
+### Tarea — actualización (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### PUT: reemplazo completo (descripcion omitida queda en null)
+PUT {{baseUrl}}/tareas/1
+Content-Type: application/json
+
+{
+  "hito_id": 1,
+  "nombre": "Diseñar piezas (actualizada)",
+  "descripcion": "Nueva descripción"
+}
+
+### PUT con hito inexistente -> 404
+PUT {{baseUrl}}/tareas/1
+Content-Type: application/json
+
+{
+  "hito_id": 999999,
+  "nombre": "n"
+}
+
+### PATCH: solo los campos enviados
+PATCH {{baseUrl}}/tareas/1
+Content-Type: application/json
+
+{
+  "descripcion": "Solo cambia la descripción"
+}

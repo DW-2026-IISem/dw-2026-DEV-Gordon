@@ -177,6 +177,9 @@ export class HitoController {
       await hito.destroy();
       return res.status(200).json({ message: 'Hito eliminado' });
     } catch (error) {
+      if (error instanceof ForeignKeyConstraintError) {
+        return res.status(409).json({ message: 'No se puede eliminar: el hito tiene tareas asociadas' });
+      }
       return handleError(error, res);
     }
   }

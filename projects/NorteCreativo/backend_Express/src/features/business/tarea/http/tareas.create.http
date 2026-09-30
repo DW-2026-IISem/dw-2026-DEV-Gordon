@@ -1,0 +1,37 @@
+### Tarea — creación (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Crear tarea en un hito existente -> 201
+POST {{baseUrl}}/tareas
+Content-Type: application/json
+
+{
+  "hito_id": 1,
+  "nombre": "Diseñar piezas",
+  "descripcion": "Piezas gráficas para redes"
+}
+
+### Hito inexistente -> 404
+POST {{baseUrl}}/tareas
+Content-Type: application/json
+
+{
+  "hito_id": 999999,
+  "nombre": "Sin hito"
+}
+
+### Sin nombre -> 400
+POST {{baseUrl}}/tareas
+Content-Type: application/json
+
+{
+  "hito_id": 1
+}
+
+### Sin hito_id -> 400
+POST {{baseUrl}}/tareas
+Content-Type: application/json
+
+{
+  "nombre": "Sin hito_id"
+}

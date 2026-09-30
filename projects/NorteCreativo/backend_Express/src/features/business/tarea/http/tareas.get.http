@@ -1,0 +1,11 @@
+### Tarea — consultas (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Listar tareas activas
+GET {{baseUrl}}/tareas
+
+### Obtener una tarea por id (incluye su hito)
+GET {{baseUrl}}/tareas/1
+
+### Id inexistente -> 404
+GET {{baseUrl}}/tareas/999999

@@ -7,6 +7,7 @@ import { sequelize, testConnection } from '../database/db';
 import { setupSwagger } from '../swagger';
 import '../features/business/campania/campania.associations';
 import '../features/business/hito/hito.associations';
+import '../features/business/tarea/tarea.associations';
 
 dotenv.config();
 

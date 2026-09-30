@@ -2,12 +2,14 @@ export interface SeedCounts {
   clientes: number;
   campanias: number;
   hitos: number;
+  tareas: number;
 }
 
 const DEFAULTS: SeedCounts = {
   clientes: 10,
   campanias: 15,
   hitos: 20,
+  tareas: 30,
 };
 
 const parseCount = (raw: string | undefined, origen: string): number | undefined => {
@@ -36,4 +38,8 @@ export const getSeedCounts = (argv: string[] = process.argv.slice(2)): SeedCount
     parseCount(getCliArg(argv, 'hitos'), '--hitos') ??
     parseCount(process.env.SEED_HITOS, 'SEED_HITOS') ??
     DEFAULTS.hitos,
+  tareas:
+    parseCount(getCliArg(argv, 'tareas'), '--tareas') ??
+    parseCount(process.env.SEED_TAREAS, 'SEED_TAREAS') ??
+    DEFAULTS.tareas,
 });
