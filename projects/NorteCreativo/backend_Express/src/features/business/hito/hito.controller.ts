@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import { ForeignKeyConstraintError, UniqueConstraintError, ValidationError } from 'sequelize';
 import { Campania } from '../campania/campania.model';
-import { ESTADOS_HITO, Hito } from './hito.model';
+import { Hito } from './hito.model';
 import './hito.associations';
 
-// estado y fecha_cierre no son editables por el cliente: los gobierna resolverEstado.
+// estado y fecha_cierre no son editables por HTTP: solo los cambia una aprobación (CerrarHito).
 const CAMPOS_EDITABLES = ['campania_id', 'nombre', 'descripcion', 'status'] as const;
 
 const pickCampos = (body: Record<string, unknown> = {}) => {
@@ -68,30 +68,16 @@ const validarCampania = async (campaniaId: unknown, res: Response): Promise<bool
   return true;
 };
 
-// Invariantes de estado (PUT y PATCH): ENUM válido (400), no reabrir (409, RN-06) y CERRADO fija fecha_cierre.
-// Devuelve los cambios a aplicar, o null si ya respondió con error.
-const resolverEstado = (
-  hito: Hito,
-  nuevo: unknown,
-  res: Response
-): { estado?: Hito['estado']; fecha_cierre?: Date } | null => {
-  if (nuevo === undefined) return {};
-  if (typeof nuevo !== 'string' || !(ESTADOS_HITO as readonly string[]).includes(nuevo)) {
-    res.status(400).json({
-      message: 'Error de validación',
-      errors: [`estado debe ser uno de: ${ESTADOS_HITO.join(', ')}`],
-    });
-    return null;
-  }
-  const estado = nuevo as Hito['estado'];
-  if (estado === 'ABIERTO' && hito.estado !== 'ABIERTO') {
-    res.status(409).json({ message: `Un hito ${hito.estado} no puede volver a ABIERTO` });
-    return null;
-  }
-  if (estado === 'CERRADO' && hito.estado !== 'CERRADO') {
-    return { estado, fecha_cierre: new Date() };
-  }
-  return { estado };
+// El estado del hito solo lo cambia una aprobación: estado o fecha_cierre en el body -> 400.
+// Devuelve true si se puede continuar.
+const rechazarCamposDeCierre = (body: Record<string, unknown> | undefined, res: Response): boolean => {
+  const enviados = (['estado', 'fecha_cierre'] as const).filter((c) => Object.prototype.hasOwnProperty.call(body ?? {}, c));
+  if (enviados.length === 0) return true;
+  res.status(400).json({
+    message: 'Error de validación',
+    errors: [`el estado del hito solo lo cambia una aprobación (recibido: ${enviados.join(', ')})`],
+  });
+  return false;
 };
 
 export class HitoController {
@@ -114,9 +100,10 @@ export class HitoController {
     }
   }
 
-  // Siempre nace ABIERTO con fecha_cierre null: estado y fecha_cierre del body se ignoran.
+  // Siempre nace ABIERTO con fecha_cierre null; estado y fecha_cierre en el body responden 400.
   static async create(req: Request, res: Response) {
     try {
+      if (!rechazarCamposDeCierre(req.body, res)) return;
       const data = pickCampos(req.body);
       if (!(await validarCampania(data.campania_id, res))) return;
       const hito = await Hito.create({ ...data, estado: 'ABIERTO', fecha_cierre: null } as any);
@@ -126,11 +113,12 @@ export class HitoController {
     }
   }
 
-  // PUT reemplaza los campos de negocio; el estado solo cambia si se envía (y respeta las invariantes).
+  // PUT reemplaza los campos de negocio; el estado no es editable por HTTP.
   static async updatePut(req: Request, res: Response) {
     try {
       const hito = await findHito(req, res);
       if (!hito) return;
+      if (!rechazarCamposDeCierre(req.body, res)) return;
       const data = pickCampos(req.body);
       if (!(await validarCampania(data.campania_id, res))) return;
       if (data.nombre === undefined) {
@@ -139,14 +127,11 @@ export class HitoController {
           errors: ['nombre es requerido en PUT'],
         });
       }
-      const cambiosEstado = resolverEstado(hito, req.body?.estado, res);
-      if (!cambiosEstado) return;
       await hito.update({
         campania_id: data.campania_id,
         nombre: data.nombre,
         descripcion: data.descripcion ?? null,
         status: data.status ?? 'active',
-        ...cambiosEstado,
       } as any);
       return res.status(200).json({ hito });
     } catch (error) {
@@ -159,11 +144,10 @@ export class HitoController {
     try {
       const hito = await findHito(req, res);
       if (!hito) return;
+      if (!rechazarCamposDeCierre(req.body, res)) return;
       const data = pickCampos(req.body);
       if (data.campania_id !== undefined && !(await validarCampania(data.campania_id, res))) return;
-      const cambiosEstado = resolverEstado(hito, req.body?.estado, res);
-      if (!cambiosEstado) return;
-      await hito.update({ ...data, ...cambiosEstado } as any);
+      await hito.update(data as any);
       return res.status(200).json({ hito });
     } catch (error) {
       return handleError(error, res);

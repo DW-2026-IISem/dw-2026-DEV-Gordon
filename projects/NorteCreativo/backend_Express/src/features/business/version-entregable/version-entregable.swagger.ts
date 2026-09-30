@@ -100,13 +100,13 @@ export const versionEntregableSwagger: SwaggerModule = {
       delete: {
         tags: ['Versiones de entregable'],
         summary: 'Borrado físico de una versión (SIN AUTH)',
-        description: `Elimina la fila de la tabla version_entregables. Una versión APROBADA responde 409 (RN-04). ${SIN_AUTH}`,
+        description: `Elimina la fila de la tabla version_entregables. Una versión APROBADA responde 409 (RN-04), igual que una versión con aprobaciones asociadas. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
           '200': jsonResponse('Versión eliminada', 'Message'),
           '400': badRequest,
           '404': notFound,
-          '409': aprobada,
+          '409': jsonResponse('RN-04 (versión APROBADA) o la versión tiene aprobaciones asociadas', 'Error'),
         },
       },
     },

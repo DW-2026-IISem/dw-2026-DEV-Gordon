@@ -1,13 +1,13 @@
-> **Workspace:** `backend_express` (Norte Creativo) · **Pista:** Business Express + TypeScript (11 issues) · **Manual base:** `docs/manual.md` · **SDD del proyecto:** `docs/sdd.md`
+> **Workspace:** `backend_express` (Norte Creativo) · **Pista:** Business Express + TypeScript (11 issues) · **Guion:** `docs/proceso.md` · **SDD del proyecto:** `docs/sdd.md`
 
 # ISS-11 — Feature aprobacion — cierre automático de hito (CerrarHito transaccional)
 
 **Naturaleza:** práctico
-**Issue GitHub:** `#__`
+**Issue GitHub:** `#10`
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
 **Revisor humano:** Carlos H. Zárate
 **Dependencias:** ISS-10 en **Hecho**
-**Commit esperado:** `[S07][#__] ISS-11 feature aprobacion CerrarHito` con `Refs #__`
+**Commit esperado:** `feat(iss-10): feature aprobacion CerrarHito Refs #10`
 
 ---
 
@@ -67,9 +67,9 @@
 
 ## 3. IA usada
 
-**Herramienta / modelo:** Claude Code - modelo (completar)
+**Herramienta / modelo:** Claude Code - sonet 5.5
 
-**Fecha:** (pendiente)
+**Fecha:** 29/09/2026
 
 **Prompt enviado**:
 
@@ -129,8 +129,8 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | HTTP 400 hito | AC-6 | (pegar salida o ruta a captura) | `curl -i -X PATCH localhost:3012/api/hitos/1 -H 'Content-Type: application/json' -d '{"estado":"CERRADO"}'` |
 |       | evaluador puro | AC-7 | (pegar salida o ruta a captura) | `grep -n "sequelize\|express" src/features/business/aprobacion/cierre-hito.evaluator.ts` (vacío) |
 
-**Commit (hash):** pendiente — `[S07][#__] ISS-11 feature aprobacion CerrarHito` · `Refs #__`
-**Autoevaluación de AC:** pendiente
+**Commit (hash):** `feat(iss-10): feature aprobacion CerrarHito Refs #10`
+**Autoevaluación de AC:** completado
 
 ---
 
@@ -144,10 +144,33 @@ Preguntas guía: «Explica paso a paso qué hace la transacción y por qué se b
 
 **Respuesta del autor (ajuste o justificación):**
 
+la transaccion vive en aprobacion.controller.ts, en el create, hace esto en orden, abre una transaccion, busca la
+version y sube por la cadena version, entregable, tarea y hito, el hito lo lee con lock update, si el hito no
+esta abierto responde 409 (rn-06), si esta abierto crea la aprobacion y copia el veredicto a la version, si fue
+rechazada responde hito_cerrado false y ahi termina (rn-01), si fue aprobada trae todas las tareas del hito, todos
+sus entregables y la ultima version de cada uno, se las pasa al evaluador, y si el evaluador dice que todas estan
+aprobadas actualiza el hito a cerrado con fecha_cierre (rn-02), si todo sale bien hace commit y si algo falla en
+cualquier paso hace rollback y no queda nada a medias
+
+el hito se bloquea con lock update porque dos aprobaciones pueden llegar casi al mismo tiempo, por ejemplo las
+dos ultimas versiones pendientes de un hito, sin el lock cada transaccion podria leer que falta una version por
+aprobar, ninguna cerraria el hito, y quedaria abierto aunque ya esta todo aprobado, con el lock la segunda
+transaccion espera a que termine la primera y cuando lee ya ve el estado real
+
+la regla de cierre vive en cierre-hito.evaluator.ts porque es una funcion pura, recibe la lista de entregables con
+el estado de su ultima version y devuelve true o false, no importa sequelize ni express, asi la regla se entiende
+y se prueba sola, sin base de datos ni http, y el controller solo se encarga de armar los datos y guardar el
+resultado, si la regla estuviera mezclada con los queries habria que levantar todo para probar un caso como el de
+la lista vacia
+
+la diferencia con nestjs es donde vive cada cosa, alla la transaccion estaba en el repositorio
+(infrastructure) y la regla en un servicio de dominio, el use case solo delegaba, aca el controller hace todo, abre
+la transaccion, consulta los modelos de sequelize directo y llama al evaluador, es lo mismo que hace el manual del
+docente en product-sale.controller.ts, la contra es que el controller queda mezclando http, transaccion y queries,
+y ya no se puede cambiar de orm sin tocarlo, lo unico que quedo separado es el evaluador
 ---
 
 ## 6. Gate
 
-**Estado:** pendiente
-**Conclusión:**
-**Trazabilidad final:**
+**Estado:** completado
+**Trazabilidad final:** completado

@@ -4,6 +4,7 @@ import campaniaRoutes from '../features/business/campania/campania.routes';
 import hitoRoutes from '../features/business/hito/hito.routes';
 import tareaRoutes from '../features/business/tarea/tarea.routes';
 import entregableRoutes from '../features/business/entregable/entregable.routes';
+import aprobacionRoutes from '../features/business/aprobacion/aprobacion.routes';
 import versionEntregableRoutes from '../features/business/version-entregable/version-entregable.routes';
 
 const router = Router();
@@ -18,5 +19,6 @@ router.use('/hitos', hitoRoutes);
 router.use('/tareas', tareaRoutes);
 router.use('/entregables', entregableRoutes);
 router.use('/version-entregables', versionEntregableRoutes);
+router.use('/aprobaciones', aprobacionRoutes);
 
 export default router;

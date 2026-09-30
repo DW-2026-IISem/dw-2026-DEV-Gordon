@@ -1,0 +1,63 @@
+### Aprobación — creación / CerrarHito (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### RECHAZADA -> 201, hito_cerrado false (el hito sigue ABIERTO)
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+
+{
+  "version_entregable_id": 1,
+  "estado": "RECHAZADA",
+  "aprobador_id": 1,
+  "comentario": "Falta ajustar los colores"
+}
+
+### APROBADA -> 201; hito_cerrado true solo si TODOS los entregables del hito tienen su última versión APROBADA
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+
+{
+  "version_entregable_id": 1,
+  "estado": "APROBADA",
+  "aprobador_id": 1,
+  "comentario": "Cumple con el brief"
+}
+
+### Hito ya CERRADO -> 409 (RN-06), nada cambia
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+
+{
+  "version_entregable_id": 1,
+  "estado": "APROBADA",
+  "aprobador_id": 1
+}
+
+### Versión inexistente -> 404
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+
+{
+  "version_entregable_id": 999999,
+  "estado": "APROBADA",
+  "aprobador_id": 1
+}
+
+### Estado inválido (solo APROBADA o RECHAZADA) -> 400
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+
+{
+  "version_entregable_id": 1,
+  "estado": "QUIZAS",
+  "aprobador_id": 1
+}
+
+### Falta aprobador_id -> 400
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+
+{
+  "version_entregable_id": 1,
+  "estado": "APROBADA"
+}

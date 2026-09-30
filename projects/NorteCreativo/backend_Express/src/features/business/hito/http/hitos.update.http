@@ -1,7 +1,7 @@
 ### Hito — actualización (SIN AUTH: ningún endpoint exige token)
 @baseUrl = http://localhost:3012/api
 
-### PUT: reemplazo completo (descripcion omitida queda en null; el estado solo cambia si se envía)
+### PUT: reemplazo completo (descripcion omitida queda en null; estado no es editable)
 PUT {{baseUrl}}/hitos/1
 Content-Type: application/json
 
@@ -19,15 +19,7 @@ Content-Type: application/json
   "descripcion": "Solo cambia la descripción"
 }
 
-### PATCH estado inválido -> 400
-PATCH {{baseUrl}}/hitos/1
-Content-Type: application/json
-
-{
-  "estado": "PERDIDO"
-}
-
-### PATCH a CERRADO -> 200 con fecha_cierre asignada
+### PATCH con estado -> 400 (el estado del hito solo lo cambia una aprobación)
 PATCH {{baseUrl}}/hitos/1
 Content-Type: application/json
 
@@ -35,10 +27,12 @@ Content-Type: application/json
   "estado": "CERRADO"
 }
 
-### PATCH de un hito CERRADO a ABIERTO -> 409 (RN-06)
-PATCH {{baseUrl}}/hitos/1
+### PUT con fecha_cierre -> 400
+PUT {{baseUrl}}/hitos/1
 Content-Type: application/json
 
 {
-  "estado": "ABIERTO"
+  "campania_id": 1,
+  "nombre": "Campaña en redes",
+  "fecha_cierre": "2026-01-01T00:00:00.000Z"
 }

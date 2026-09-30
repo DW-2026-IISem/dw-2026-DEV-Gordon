@@ -767,3 +767,115 @@ ahora con los hitos cerrados que no admiten versiones nuevas, todos nos deben da
 ac6, fk y unique
 
 ![alt text](images/proceso-1790736247431.png)
+
+## ISS - 11
+
+### OBJ
+
+**OBJ:** Al finalizar, registrar una aprobación podrá cerrar el hito automáticamente y de forma atómica cuando todos sus entregables tengan su última versión APROBADA, igual que la capacidad integrada del backend IA.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** Dado un hito con un único entregable y su versión `EN_REVISION`; cuando `POST /api/aprobaciones` `APROBADA`; entonces `201` con `hito_cerrado: true`, `hito_id` y `fecha_cierre`, y el hito queda `CERRADO` en BD.
+- [ ] **AC-2** Dado un hito con dos entregables; cuando se aprueba la versión de solo uno; entonces `201` con `hito_cerrado: false` y el hito sigue `ABIERTO`.
+- [ ] **AC-3** Dado una versión; cuando se registra `RECHAZADA`; entonces `201`, `hito_cerrado: false`, la versión queda `RECHAZADA` y el hito sigue `ABIERTO`.
+- [ ] **AC-4** Dado un hito `CERRADO`; cuando se registra una aprobación sobre una de sus versiones; entonces `409` y nada cambia.
+- [ ] **AC-5** Dado un `version_entregable_id` inexistente; cuando `POST`; entonces `404`. Con `estado` distinto de `APROBADA|RECHAZADA` → `400`.
+- [ ] **AC-6** Dado un hito; cuando `PATCH /api/hitos/:id` con `"estado":"CERRADO"`; entonces `400` (el estado solo lo cambia una aprobación).
+- [ ] **AC-7** Dado `cierre-hito.evaluator.ts`; cuando se inspecciona; entonces no importa Sequelize ni Express (función pura).
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-11, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-11.md. Es la capacidad integrada CerrarHito, con las MISMAS decisiones del
+backend NestJS IA (../backend_IA), adaptada a la estructura del manual Express del curso (modelo + controller + rutas, sin repositorio ni capa de dominio; la transaccion va en el controller, como en product-sale.controller.ts del manual, seccion 13.2b).
+
+Feature src/features/business/aprobacion: model, controller, routes, associations, cierre-hito.evaluator.ts, swagger y http/.
+Modelo Aprobacion (tabla aprobaciones, timestamps true): version_entregable_id INTEGER requerido FK a version_entregables.id,
+estado ENUM(PENDIENTE,APROBADA,RECHAZADA) requerido, aprobador_id INTEGER requerido (SIN FK, no hay tabla de usuarios),
+comentario TEXT opcional, fecha DATE default ahora, status ENUM(active,inactive) default active.
+Associations: VersionEntregable.hasMany(Aprobacion, as "aprobaciones") y Aprobacion.belongsTo(VersionEntregable, as "version"), importado antes del sync.
+
+cierre-hito.evaluator.ts: funcion PURA debeCerrarHito(entregables: { entregable_id: number; ultima_version_estado: string | null }[]): boolean,
+true SOLO si todos tienen ultima_version_estado === 'APROBADA'; si la lista esta vacia devuelve false. No importa sequelize ni express.
+
+AprobacionController.create dentro de UNA sola transaccion: await sequelize.transaction(async (t) => { ... }):
+1) Busca la version (404 si no existe), su entregable, su tarea y su hito; el hito con { transaction: t, lock: t.LOCK.UPDATE }.
+2) Si el hito no esta ABIERTO -> 409 "El hito ya esta cerrado y no admite nuevas aprobaciones" (RN-06).
+3) Crea la aprobacion y actualiza version_entregables.estado con el mismo veredicto, ambas con { transaction: t }.
+4) Si estado es RECHAZADA -> responde hito_cerrado false (la aprobacion SI queda guardada).
+5) Si es APROBADA -> trae todas las tareas del hito, todos sus entregables y la ultima version de cada uno
+   (order numero_version DESC), arma la lista y llama debeCerrarHito. Si es true, actualiza el hito a estado CERRADO y
+   fecha_cierre = ahora dentro de la transaccion.
+6) Cualquier error -> rollback automatico.
+Validacion: estado distinto de APROBADA o RECHAZADA -> 400; faltan version_entregable_id o aprobador_id -> 400.
+Respuesta 201: { aprobacion, hito_cerrado, hito_id, fecha_cierre }.
+Rutas SIN AUTH: POST /api/aprobaciones, GET /api/aprobaciones, GET /api/aprobaciones/:id. NO hay PUT, PATCH ni DELETE:
+la aprobacion es un registro de auditoria inmutable.
+
+AJUSTE OBLIGATORIO al feature hito (src/features/business/hito/hito.controller.ts): create, updatePut y updatePatch deben
+responder 400 si el body trae estado o fecha_cierre ("el estado del hito solo lo cambia una aprobacion"). Actualiza tambien
+hito.swagger.ts para no documentar esos campos como editables. No cambies nada mas del hito.
+
+Sin seeder de aprobaciones. aprobacionSwagger registrado en src/swagger/index.ts.
+Actualiza el README del backend con el libreto de la demo: cliente -> campania -> hito -> tarea -> entregable -> version 1 ->
+RECHAZADA (hito sigue ABIERTO) -> version 2 -> APROBADA (hito CERRADO) -> nueva aprobacion sobre ese hito -> 409.
+
+Prohibido: autenticacion, JWT, bcrypt, passwords, guards, RBAC, NestJS, force, alter. NO toques docs/. NO commitees .env.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1790736794372.png)
+![alt text](images/proceso-1790736802621.png)
+
+probamos que corra
+
+![alt text](images/proceso-1790736824035.png)
+
+preparacion para probar los ac
+
+![alt text](images/proceso-1790737057919.png)
+
+probamos el ac 1 de cierre automatico, al final dice cerrado con la fecha
+
+![alt text](images/proceso-1790737099400.png)
+
+![alt text](images/proceso-1790737116126.png)
+
+ahora el ac2, un solo entregable aprobado no cierra el hito
+
+![alt text](images/proceso-1790737181393.png)
+ 
+confirmamos que sigue abierto
+
+![alt text](images/proceso-1790737253792.png)
+
+ahora comprobamos el ac3, que rechace la version del segundo entregable, nos da al final el
+
+![alt text](images/proceso-1790737323995.png)
+
+comprobamos el ac4, el hito cerrado no admite mas aprobaciones y debe dar error 409
+
+![alt text](images/proceso-1790737485186.png)
+
+comrpobamos el ac5 mandando una version inexistente y un estado invalido
+
+![alt text](images/proceso-1790738255145.png)
+
+probamos el ac6, que nadie cierra un hito a mano, da error 400 y tambien probamos el put y el post
+
+![alt text](images/proceso-1790738280778.png)
+![alt text](images/proceso-1790738304088.png)
+
+ahora probamos que el evaluador sea puro
+
+![alt text](images/proceso-1790738324564.png)
+

@@ -6,10 +6,11 @@ import { hitoSwagger } from '../features/business/hito/hito.swagger';
 import { tareaSwagger } from '../features/business/tarea/tarea.swagger';
 import { entregableSwagger } from '../features/business/entregable/entregable.swagger';
 import { versionEntregableSwagger } from '../features/business/version-entregable/version-entregable.swagger';
+import { aprobacionSwagger } from '../features/business/aprobacion/aprobacion.swagger';
 import { SwaggerModule } from './types';
 
 // Para documentar un feature nuevo basta con agregar su módulo a esta lista.
-const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger, tareaSwagger, entregableSwagger, versionEntregableSwagger];
+const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger, tareaSwagger, entregableSwagger, versionEntregableSwagger, aprobacionSwagger];
 
 const buildSpec = () => ({
   openapi: '3.0.3',

@@ -1,0 +1,13 @@
+### Aprobación — consultas (SIN AUTH: ningún endpoint exige token)
+@baseUrl = http://localhost:3012/api
+
+### Listar aprobaciones
+GET {{baseUrl}}/aprobaciones
+
+### Obtener una aprobación por id (incluye su versión)
+GET {{baseUrl}}/aprobaciones/1
+
+### Id inexistente -> 404
+GET {{baseUrl}}/aprobaciones/999999
+
+### No existen PUT, PATCH ni DELETE: la aprobación es un registro de auditoría (-> 404)

@@ -22,12 +22,12 @@ const idParam = {
   schema: { type: 'integer', minimum: 1, example: 1 },
 };
 
-const badRequest = jsonResponse('Error de validación (estado fuera del ENUM, id inválido o campo requerido ausente)', 'ValidationError');
+const badRequest = jsonResponse('Error de validación (id inválido, campo requerido ausente, o body con estado / fecha_cierre: el estado del hito solo lo cambia una aprobación)', 'ValidationError');
 const notFound = jsonResponse('Hito no encontrado', 'Error');
 const campaniaNotFound = jsonResponse('Campaña no encontrada', 'Error');
 const hitoOCampaniaNotFound = jsonResponse('Hito o campaña no encontrado', 'Error');
 const campaniaInactiva = jsonResponse('RN-08: la campaña está inactiva, no se crea hito', 'Error');
-const conflicto = jsonResponse('RN-08 (campaña inactiva) o RN-06 (un hito CERRADO/FACTURADO no vuelve a ABIERTO)', 'Error');
+const conflicto = jsonResponse('RN-08: la campaña está inactiva', 'Error');
 
 // Los schemas Error, ValidationError, Message y Campania los aportan los módulos de cliente y campaña.
 export const hitoSwagger: SwaggerModule = {
@@ -43,7 +43,7 @@ export const hitoSwagger: SwaggerModule = {
       post: {
         tags: ['Hitos'],
         summary: 'Crear hito (SIN AUTH)',
-        description: `La campaña debe existir (404) y estar activa (409, RN-08). El hito siempre nace ABIERTO con fecha_cierre null: estado y fecha_cierre enviados se ignoran. ${SIN_AUTH}`,
+        description: `La campaña debe existir (404) y estar activa (409, RN-08). El hito siempre nace ABIERTO con fecha_cierre null; enviar estado o fecha_cierre responde 400 (el estado solo lo cambia una aprobación). ${SIN_AUTH}`,
         requestBody: jsonBody('HitoInput', 'Datos del hito'),
         responses: {
           '201': jsonResponse('Hito creado con estado ABIERTO y fecha_cierre null', 'HitoResponse'),
@@ -68,7 +68,7 @@ export const hitoSwagger: SwaggerModule = {
       put: {
         tags: ['Hitos'],
         summary: 'Reemplazar un hito (SIN AUTH)',
-        description: `campania_id y nombre son obligatorios; descripcion omitida queda en null y status omitido en "active". El estado solo cambia si se envía y respeta las invariantes (ENUM 400, no reabrir 409, CERRADO fija fecha_cierre); fecha_cierre enviada se ignora. La campaña debe existir (404) y estar activa (409). ${SIN_AUTH}`,
+        description: `campania_id y nombre son obligatorios; descripcion omitida queda en null y status omitido en "active". estado y fecha_cierre no se pueden enviar (400): el estado del hito solo lo cambia una aprobación. La campaña debe existir (404) y estar activa (409). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('HitoInput', 'Representación completa del hito'),
         responses: {
@@ -81,7 +81,7 @@ export const hitoSwagger: SwaggerModule = {
       patch: {
         tags: ['Hitos'],
         summary: 'Actualizar campos de un hito (SIN AUTH)',
-        description: `Modifica solo los campos enviados. Un estado fuera del ENUM responde 400; pasar a CERRADO asigna fecha_cierre = ahora; un hito CERRADO no vuelve a ABIERTO (409, RN-06). ${SIN_AUTH}`,
+        description: `Modifica solo los campos enviados. estado o fecha_cierre en el body responden 400: el estado del hito solo lo cambia una aprobación (CerrarHito). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('HitoPatch', 'Campos a modificar'),
         responses: {
@@ -137,25 +137,21 @@ export const hitoSwagger: SwaggerModule = {
       HitoInput: {
         type: 'object',
         required: ['campania_id', 'nombre'],
+        description: 'No enviar estado ni fecha_cierre: el estado del hito solo lo cambia una aprobación (400).',
         properties: {
           campania_id: { type: 'integer', description: 'Id de una campaña existente y activa', example: 1 },
           nombre: { type: 'string', minLength: 1, example: 'Campaña en redes' },
           descripcion: { type: 'string', example: 'Piezas y calendario de publicación' },
-          estado: {
-            type: 'string',
-            enum: [...ESTADOS_HITO],
-            description: 'Ignorado en POST (siempre nace ABIERTO). En PUT es opcional y respeta las invariantes.',
-          },
           status: { type: 'string', enum: [...STATUS_HITO], default: 'active' },
         },
       },
       HitoPatch: {
         type: 'object',
+        description: 'No enviar estado ni fecha_cierre: el estado del hito solo lo cambia una aprobación (400).',
         properties: {
           campania_id: { type: 'integer' },
           nombre: { type: 'string', minLength: 1 },
           descripcion: { type: 'string' },
-          estado: { type: 'string', enum: [...ESTADOS_HITO], description: 'CERRADO fija fecha_cierre; no se puede volver a ABIERTO' },
           status: { type: 'string', enum: [...STATUS_HITO] },
         },
       },

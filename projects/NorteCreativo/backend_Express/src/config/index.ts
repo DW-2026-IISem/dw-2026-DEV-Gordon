@@ -10,6 +10,7 @@ import '../features/business/hito/hito.associations';
 import '../features/business/tarea/tarea.associations';
 import '../features/business/entregable/entregable.associations';
 import '../features/business/version-entregable/version-entregable.associations';
+import '../features/business/aprobacion/aprobacion.associations';
 
 dotenv.config();
 

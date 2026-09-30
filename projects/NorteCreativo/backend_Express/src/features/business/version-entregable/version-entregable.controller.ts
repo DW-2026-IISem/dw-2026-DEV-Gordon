@@ -191,6 +191,9 @@ export class VersionEntregableController {
       await version.destroy();
       return res.status(200).json({ message: 'Versión de entregable eliminada' });
     } catch (error) {
+      if (error instanceof ForeignKeyConstraintError) {
+        return res.status(409).json({ message: 'No se puede eliminar: la versión tiene aprobaciones asociadas' });
+      }
       return handleError(error, res);
     }
   }

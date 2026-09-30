@@ -11,7 +11,7 @@ Content-Type: application/json
   "descripcion": "Piezas y calendario de publicación"
 }
 
-### estado y fecha_cierre enviados se ignoran -> 201 con estado ABIERTO
+### estado o fecha_cierre en el body -> 400 (el estado del hito solo lo cambia una aprobación)
 POST {{baseUrl}}/hitos
 Content-Type: application/json
 
