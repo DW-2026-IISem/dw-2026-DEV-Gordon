@@ -1,13 +1,13 @@
 import { Request, Response } from 'express';
 import { ForeignKeyConstraintError, UniqueConstraintError, ValidationError } from 'sequelize';
 import { sequelize } from '../../../database/db';
-import { Hito } from '../hito/hito.model';
+import { Hito } from '../hitos/hito.model';
 import { Tarea } from '../tarea/tarea.model';
 import { Entregable } from '../entregable/entregable.model';
 import { VersionEntregable } from '../version-entregable/version-entregable.model';
 import { Aprobacion } from './aprobacion.model';
 import { debeCerrarHito, EntregableUltimaVersion } from './cierre-hito.evaluator';
-import '../hito/hito.associations';
+import '../hitos/hito.associations';
 import '../tarea/tarea.associations';
 import '../entregable/entregable.associations';
 import '../version-entregable/version-entregable.associations';

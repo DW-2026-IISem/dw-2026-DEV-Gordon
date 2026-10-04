@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { ForeignKeyConstraintError, UniqueConstraintError, ValidationError } from 'sequelize';
 import { Entregable } from '../entregable/entregable.model';
 import { Tarea } from '../tarea/tarea.model';
-import { Hito } from '../hito/hito.model';
+import { Hito } from '../hitos/hito.model';
 import { VersionEntregable } from './version-entregable.model';
 import '../entregable/entregable.associations';
 import '../tarea/tarea.associations';

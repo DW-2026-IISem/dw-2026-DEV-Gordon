@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import clienteRoutes from '../features/business/cliente/cliente.routes';
-import campaniaRoutes from '../features/business/campania/campania.routes';
-import hitoRoutes from '../features/business/hito/hito.routes';
+import clienteRoutes from '../features/business/clientes/clientes.routes';
+import campaniaRoutes from '../features/business/campanias/campanias.routes';
+import hitoRoutes from '../features/business/hitos/hitos.routes';
 import tareaRoutes from '../features/business/tarea/tarea.routes';
 import entregableRoutes from '../features/business/entregable/entregable.routes';
 import aprobacionRoutes from '../features/business/aprobacion/aprobacion.routes';

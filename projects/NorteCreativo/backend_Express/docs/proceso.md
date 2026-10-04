@@ -13,7 +13,12 @@ Tambien verificamos que el motor de base de datos este accesible, el ISS-00 del 
 
 Tambien organizamos los ISS de esta ocasion, son 7 igual que en nestjs pero repartidos distinto, porque la semana 7 solo pide 3 entidades (cliente, campania y hito) y el manual de express trae cosas que nestjs no tenia: crud completo (put, patch, borrado fisico y logico), seeders con faker y swagger. Quedan asi: ISS-01 esqueleto, ISS-02 base de datos, ISS-03 cliente crud, ISS-04 seeders, ISS-05 swagger, ISS-06 campania, ISS-07 hito. Tarea, entregable, version y aprobacion no entran en esta semana.
 
-Tambien configuramos claude code via CLI, no usamos ninguna skill y mantendremos el uso del modelo Sonnet 5 con esfuerzo alto, en dado caso sea requerido usaremos el modelo Opus 5.
+Tambien configuramos claude code via CLI, no usamos ninguna skill y mantendremos el uso del modelo Sonnet 5.5 con esfuerzo alto, en dado caso sea requerido usaremos el modelo Opus 5.
+
+Para la fase de auth con rbac se usa la ruta express 2026 del docente, la fase II del manual, que corre sobre el mismo backend_Express, con el mismo puerto 3012 y la misma base norte_creativo_express. 
+
+Los ISS nuevos van del 12 al 21: el ISS-12 y el ISS-13 son el refactor de la fase I a capas (controller, service, repository, model, con dto y shared), que se hace segun lo que confirme el docente, y del ISS-14 al ISS-21 se construye la seguridad. Se agregan 6 tablas, users, roles, resources, role_users, resource_roles y refresh_tokens, que ya estaban modeladas en el sdd, y no existe una entidad permission porque el permiso es la fila que une un rol con un recurso. Las rutas tienen tres modalidades, abiertas (login, refresh, logout y swagger), solo jwt (perfil, permisos y sesiones propias) y jwt mas rbac (todo el negocio y la administracion), y el acceso es deny by default, sin concesion se responde 403 y la matriz se consulta en cada peticion. El access token es corto, firmado con hs256 con iss, aud, exp y jti, y el refresh token es opaco, se guarda hasheado, rota en cada uso y se puede revocar. Se instalan jsonwebtoken y bcryptjs, el secreto jwt va solo en el .env y el .env.example queda sin valores. Los 5 roles son admin, cuentas, creativo, cliente_aprobador y finanzas, con un usuario sembrado por cada uno para poder probar los 403 rol por rol, y la matriz de concesiones sale de los actores del sdd. Con esto la rn-05 se cumple de verdad, solo cliente_aprobador aprueba y el aprobador_id sale del token, no del body. Quedan fuera el ownership, que el aprobador vea solo sus campañas, y asignaciontarea, porque el rbac del docente es por endpoint, y se documenta como limitacion. Seguimos con claude code via cli, sin skills, con sonnet 5 en esfuerzo alto, y los commits los hago yo despues de verificar cada ac.
+
 
 Comandos:
 ```bash
@@ -26,6 +31,12 @@ Salida:
 ![alt text](images/proceso-1790709038026.png)
 ![alt text](images/proceso-1790709109176.png)
 ![alt text](images/proceso-1790709213704.png)
+
+
+## FASE 1 - Bussines
+
+
+
 
 ## ISS - 01 
 
@@ -878,4 +889,104 @@ probamos el ac6, que nadie cierra un hito a mano, da error 400 y tambien probamo
 ahora probamos que el evaluador sea puro
 
 ![alt text](images/proceso-1790738324564.png)
+
+
+## FASE 2 - AUTH Y REFACTORIZACIONES
+
+Para la fase de auth con rbac se usa la ruta express 2026 del docente, la fase II del manual, que corre sobre el mismo backend_Express, con el mismo puerto 3012 y la misma base norte_creativo_express. 
+
+Los ISS nuevos van del 12 al 21: el ISS-12 y el ISS-13 son el refactor de la fase I a capas (controller, service, repository, model, con dto y shared), esto debido a una confusion donde termine usando una arquitectura puesta en model + controller + routes
+
+ISS-14 al ISS-21 se construye la seguridad. Se agregan 6 tablas, users, roles, resources, role_users, resource_roles y refresh_tokens, que ya estaban modeladas en el sdd, y no existe una entidad permission porque el permiso es la fila que une un rol con un recurso. 
+
+Las rutas tienen tres modalidades, abiertas (login, refresh, logout y swagger), solo jwt (perfil, permisos y sesiones propias) y jwt mas rbac (todo el negocio y la administracion), y el acceso es deny by default, sin concesion se responde 403 y la matriz se consulta en cada peticion. 
+
+El access token es corto, firmado con hs256 con iss, aud, exp y jti, y el refresh token es opaco, se guarda hasheado, rota en cada uso y se puede revocar. Se instalan jsonwebtoken y bcryptjs, el secreto jwt va solo en el .env y el .env.example queda sin valores. 
+
+Los 5 roles son admin, cuentas, creativo, cliente_aprobador y finanzas, con un usuario sembrado por cada uno para poder probar los 403 rol por rol, y la matriz de concesiones sale de los actores del sdd. 
+
+Con esto la rn-05 se cumple de verdad, solo cliente_aprobador aprueba y el aprobador_id sale del token, no del body. Quedan fuera el ownership, que el aprobador vea solo sus campañas, y asignaciontarea, porque el rbac del docente es por endpoint, y se documenta como limitacion. Seguimos con claude code via cli, sin skills, con sonnet 5 en esfuerzo alto, y los commits los hago yo despues de verificar cada ac.
+
+## ISS - 12
+
+### OBJ
+
+**OBJ:** Al finalizar, Cliente, Campania e Hito seguirán el recorrido por capas del manual nuevo, sin cambiar el comportamiento de la API.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Existen los tres archivos de `src/shared/`.
+- [x] **AC-2** Existen `clientes/`, `campanias/` e `hitos/` con `dto/`, repository, service, controller y routes, y ya no existen `cliente/`, `campania/` ni `hito/`.
+- [x] **AC-3** Ningún controller de esos tres features importa `sequelize` ni un `.model`.
+- [x] **AC-4** Las reglas (documento duplicado 409, cliente inactivo 409, RN-08 409, `estado` del hito 400) viven en los services y responden igual que antes.
+- [x] **AC-5** `GET /api/clientes/abc` responde 400 (validación de `paramId`).
+- [x] **AC-6** `npx tsc --noEmit` sin errores, `npm run dev` arranca y `npm run db:seed` corre.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-12, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-12.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Refactoriza los features cliente, campania e hito al patron por capas del manual nuevo, renombrando las carpetas a plural:
+features/business/clientes, campanias, hitos. Crea src/shared (app-error, base-controller, with-transaction) como en la seccion 4.0.
+Mueve TODA regla de negocio del controller al service (numero_documento unico 409, cliente inactivo no admite campania 409,
+RN-08 campania inactiva no admite hito 409, estado/fecha_cierre del hito por HTTP -> 400). El repository es la unica capa que usa Sequelize.
+Mantén EXACTAMENTE las rutas, codigos HTTP y forma de respuesta actuales. Actualiza los imports en src/config, src/routes,
+src/database/seeders y src/swagger, y los de tarea (FK a hitos) si se rompen.
+
+NO refactorices tarea, entregable, version-entregable ni aprobacion (ISS-13). Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+![alt text](images/proceso-1791157022244.png)
+
+![alt text](images/proceso-1791157173528.png)
+
+Compramos que arranca
+
+![alt text](images/proceso-1791156899965.png)
+
+![alt text](images/proceso-1791156904878.png)
+
+vemos que existen los 3 folders de shared
+
+![alt text](images/proceso-1791157004992.png)
+
+ahora vemos que las carpetas viejas escritas en plural ya no existen
+
+![alt text](images/proceso-1791157090472.png)
+
+![alt text](images/proceso-1791157102087.png)
+
+Miramos ahora que los controllers no toquen sequelize y vemos que las reglas respondan igual que antes.
+
+Tenemos tanto codigo 201 para crear el cliente y error 409 cuanto tratamos de crearlo nuevamente con los mismos valores
+
+![alt text](images/proceso-1791157272792.png)
+
+si tratamos de crear un nuevo cliente y este esta inactivo no puede tener una campaña
+
+![alt text](images/proceso-1791157375496.png)
+
+ahora vemos que campaña inactiva no admita un hito y de 409
+
+![alt text](images/proceso-1791157438996.png)
+
+Ahora vemos el ac5, para que el paramID nos valide un id y nos da error 400
+
+![alt text](images/proceso-1791157475034.png)
+
+Vemos que compile, haga la siembra y arranque sin problemas.
+
+![alt text](images/proceso-1791157551742.png)
 

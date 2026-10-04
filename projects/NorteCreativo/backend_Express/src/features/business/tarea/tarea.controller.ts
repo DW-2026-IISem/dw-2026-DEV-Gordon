@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ForeignKeyConstraintError, UniqueConstraintError, ValidationError } from 'sequelize';
-import { Hito } from '../hito/hito.model';
+import { Hito } from '../hitos/hito.model';
 import { Tarea } from './tarea.model';
 import './tarea.associations';
 

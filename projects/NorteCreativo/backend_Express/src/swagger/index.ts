@@ -1,8 +1,8 @@
 import { Application, Request, Response } from 'express';
 import swaggerUi from 'swagger-ui-express';
-import { clienteSwagger } from '../features/business/cliente/cliente.swagger';
-import { campaniaSwagger } from '../features/business/campania/campania.swagger';
-import { hitoSwagger } from '../features/business/hito/hito.swagger';
+import { clienteSwagger } from '../features/business/clientes/cliente.swagger';
+import { campaniaSwagger } from '../features/business/campanias/campania.swagger';
+import { hitoSwagger } from '../features/business/hitos/hito.swagger';
 import { tareaSwagger } from '../features/business/tarea/tarea.swagger';
 import { entregableSwagger } from '../features/business/entregable/entregable.swagger';
 import { versionEntregableSwagger } from '../features/business/version-entregable/version-entregable.swagger';

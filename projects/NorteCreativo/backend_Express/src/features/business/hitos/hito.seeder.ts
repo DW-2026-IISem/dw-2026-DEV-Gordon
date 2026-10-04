@@ -1,5 +1,5 @@
 import { fakerES as faker } from '@faker-js/faker';
-import { Campania } from '../campania/campania.model';
+import { Campania } from '../campanias/campania.model';
 import { Hito } from './hito.model';
 
 export async function seedHitos(count: number): Promise<number> {

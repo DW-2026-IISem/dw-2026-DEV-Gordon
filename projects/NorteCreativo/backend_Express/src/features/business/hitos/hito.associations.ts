@@ -1,4 +1,4 @@
-import { Campania } from '../campania/campania.model';
+import { Campania } from '../campanias/campania.model';
 import { Hito } from './hito.model';
 
 Campania.hasMany(Hito, { foreignKey: 'campania_id', onDelete: 'RESTRICT' });

@@ -1,5 +1,5 @@
 import { fakerES as faker } from '@faker-js/faker';
-import { Hito } from '../hito/hito.model';
+import { Hito } from '../hitos/hito.model';
 import { Tarea } from './tarea.model';
 
 export async function seedTareas(count: number): Promise<number> {
