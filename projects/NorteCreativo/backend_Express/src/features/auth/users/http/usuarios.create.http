@@ -1,0 +1,42 @@
+### Usuarios — creación (SIN AUTH temporal)
+@baseUrl = http://localhost:3012/api
+
+### Crear usuario válido -> 201, sin password en la respuesta
+POST {{baseUrl}}/usuarios
+Content-Type: application/json
+
+{
+  "username": "maria",
+  "email": "maria@norte-creativo.example",
+  "password": "Clave-Lab-123"
+}
+
+### username repetido -> 409
+POST {{baseUrl}}/usuarios
+Content-Type: application/json
+
+{
+  "username": "maria",
+  "email": "otra@norte-creativo.example",
+  "password": "Clave-Lab-123"
+}
+
+### email repetido -> 409
+POST {{baseUrl}}/usuarios
+Content-Type: application/json
+
+{
+  "username": "maria2",
+  "email": "maria@norte-creativo.example",
+  "password": "Clave-Lab-123"
+}
+
+### Contraseña corta y email inválido -> 400
+POST {{baseUrl}}/usuarios
+Content-Type: application/json
+
+{
+  "username": "pepe",
+  "email": "malo",
+  "password": "123"
+}

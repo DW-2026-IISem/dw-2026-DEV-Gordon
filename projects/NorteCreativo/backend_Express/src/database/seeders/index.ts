@@ -5,6 +5,14 @@ import { seedHitos } from '../../features/business/hitos/hito.seeder';
 import { seedTareas } from '../../features/business/tareas/tarea.seeder';
 import { seedEntregables } from '../../features/business/entregables/entregable.seeder';
 import { seedVersionEntregables } from '../../features/business/version-entregables/version-entregable.seeder';
+import { seedUsers } from '../../features/auth/users/users.seeder';
+import '../../features/auth/users/user.model';
+import '../../features/auth/roles/role.model';
+import '../../features/auth/resources/resource.model';
+import '../../features/auth/role-users/role-user.model';
+import '../../features/auth/resource-roles/resource-role.model';
+import '../../features/auth/refresh-tokens/refresh-token.model';
+import '../../features/auth/rbac.associations';
 import '../../features/business/campanias/campania.associations';
 import '../../features/business/hitos/hito.associations';
 import '../../features/business/tareas/tarea.associations';
@@ -29,6 +37,7 @@ export class SeedersRunner {
       await seedTareas(counts.tareas);
       await seedEntregables(counts.entregables);
       await seedVersionEntregables();
+      await seedUsers();
       console.log('Seeders finalizados');
     } finally {
       await sequelize.close();

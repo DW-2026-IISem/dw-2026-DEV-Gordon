@@ -1,0 +1,8 @@
+### Usuarios — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+@baseUrl = http://localhost:3012/api
+
+### Listar usuarios activos -> 200, ninguno trae password
+GET {{baseUrl}}/usuarios
+
+### Un usuario -> 200 (404 si no existe o está inactivo; 400 si el id no es entero positivo)
+GET {{baseUrl}}/usuarios/1

@@ -105,7 +105,7 @@ Preguntas guía: «¿Por qué el permiso es una fila de `resource_roles` y no un
 
 | Fecha | Revisor | Actuación | AC revisados | Evidencia consultada | Hallazgo | Decisión |
 |-------|---------|-----------|--------------|----------------------|----------|----------|
-|       |         |           |              |                      |          |          |
+|       | Carlos Z | Revisor | OBJ, SPEC, REQ, AC | este archivo |          | pendiente |
 
 **Respuesta del autor (ajuste o justificación):**
 

@@ -1155,3 +1155,73 @@ ahora vemos que compile
 
 ![alt text](images/proceso-1791165839853.png)
 
+## ISS - 15
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán administrar usuarios con contraseña hasheada que nunca sale por la API, y habrá un usuario sembrado por cada rol.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `POST /api/usuarios` responde 201 y la respuesta no trae `password`.
+- [ ] **AC-2** En la base, `password` está hasheada (empieza por `$2`).
+- [ ] **AC-3** Un `username` o `email` repetido responde 409.
+- [ ] **AC-4** `GET /api/usuarios` lista solo activos y ninguno trae `password`.
+- [ ] **AC-5** `npm run db:seed` ×2 deja exactamente 5 usuarios sembrados.
+- [ ] **AC-6** `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-15, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-15.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Construye el feature users del docente en src/features/auth/users con API /api/usuarios (CRUD completo + deactivate).
+La contraseña se hashea con bcrypt en el modelo y el DTO de respuesta nunca la devuelve. username y email unicos -> 409.
+Seeder idempotente con 5 usuarios de laboratorio, uno por rol de Norte Creativo: admin, cuentas, creativo, aprobador, finanzas
+(documenta las contraseñas de laboratorio en el README del backend). Registra seeder, rutas y swagger.
+
+NO asignes roles (ISS-17) ni protejas rutas todavia. Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+
+![alt text](images/proceso-1791166541771.png)
+
+probamos que compile
+
+![alt text](images/proceso-1791166654831.png)
+
+Ahora hacemos un post sin password a los usuarios y debe respondernos los campos pero sin el password, esto para comprobar
+
+![alt text](images/proceso-1791167105651.png)
+
+Ahora comprobamos que todos los usuariosm muestren hash en la base, si alguno muestra la contraseña en texto plano entonces el hash esta mal implementado
+
+![alt text](images/proceso-1791167152178.png)
+
+Venmos la version de bcryptjs aplicada
+
+Ahora probamos que nos de 409 por duplicado, haciendo el post del ac1 y nos debe de dar 409 porque ya esta creado ese usuarioi
+
+![alt text](images/proceso-1791167250928.png)
+
+![alt text](images/proceso-1791167372178.png)
+
+Miramos ahora solo activos y sin password del ac4, hacemos un curlo y nos imprime 0, si queremos comprobar lo de que muestre solo activos, entonces debemos desactivar el usuario
+
+![alt text](images/proceso-1791167397844.png)
+
+Ahora comprobamos que nos compile el backend
+
+![alt text](images/proceso-1791167542191.png)
+

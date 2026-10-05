@@ -1,0 +1,8 @@
+### Usuarios — borrado (SIN AUTH temporal)
+@baseUrl = http://localhost:3012/api
+
+### Borrado lógico -> 200, status inactive (deja de salir en el listado)
+PATCH {{baseUrl}}/usuarios/2/deactivate
+
+### Borrado físico -> 200 { message, id } (409 si tiene roles o sesiones asociados; 404 si no existe)
+DELETE {{baseUrl}}/usuarios/2

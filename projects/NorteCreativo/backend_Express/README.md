@@ -35,6 +35,21 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 | Entregables | `/api/entregables` | CRUD + `PATCH /:id/deactivate` |
 | Versiones de entregable | `/api/version-entregables` | CRUD + `PATCH /:id/deactivate` (`numero_version` y `estado` los controla el sistema) |
 | Aprobaciones | `/api/aprobaciones` | `POST`, `GET`, `GET /:id` (registro de auditoría: sin PUT, PATCH ni DELETE) |
+| Usuarios | `/api/usuarios` | CRUD + `PATCH /:id/deactivate` (la contraseña se hashea con bcrypt y nunca se devuelve; `username` y `email` únicos → `409`) |
+
+## Usuarios de laboratorio
+
+`npm run db:seed` siembra (de forma idempotente, por `username`) un usuario por cada rol de Norte Creativo. Son **solo para práctica en local**; no uses estas contraseñas en ningún entorno real. Todavía no tienen roles asignados (ISS-17) y `/api/usuarios` aún no está protegido (ISS-18 e ISS-21).
+
+| username | email | contraseña de laboratorio |
+|---|---|---|
+| `admin` | `admin@norte-creativo.example` | `Admin123!` |
+| `cuentas` | `cuentas@norte-creativo.example` | `Cuentas123!` |
+| `creativo` | `creativo@norte-creativo.example` | `Creativo123!` |
+| `aprobador` | `aprobador@norte-creativo.example` | `Aprobador123!` |
+| `finanzas` | `finanzas@norte-creativo.example` | `Finanzas123!` |
+
+En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la devuelve.
 
 ## CerrarHito: cómo funciona
 

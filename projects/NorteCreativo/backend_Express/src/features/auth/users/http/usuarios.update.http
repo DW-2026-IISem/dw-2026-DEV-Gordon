@@ -1,0 +1,27 @@
+### Usuarios — actualización (SIN AUTH temporal). password y status se ignoran.
+@baseUrl = http://localhost:3012/api
+
+### PUT: username y email obligatorios -> 200
+PUT {{baseUrl}}/usuarios/1
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "admin@norte-creativo.example"
+}
+
+### PUT sin email -> 400
+PUT {{baseUrl}}/usuarios/1
+Content-Type: application/json
+
+{
+  "username": "admin"
+}
+
+### PATCH parcial -> 200 (409 si el email ya lo usa otro usuario)
+PATCH {{baseUrl}}/usuarios/1
+Content-Type: application/json
+
+{
+  "email": "admin.nuevo@norte-creativo.example"
+}
