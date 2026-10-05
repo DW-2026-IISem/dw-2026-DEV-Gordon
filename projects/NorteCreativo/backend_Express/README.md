@@ -36,6 +36,8 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 | Versiones de entregable | `/api/version-entregables` | CRUD + `PATCH /:id/deactivate` (`numero_version` y `estado` los controla el sistema) |
 | Aprobaciones | `/api/aprobaciones` | `POST`, `GET`, `GET /:id` (registro de auditoría: sin PUT, PATCH ni DELETE) |
 | Usuarios | `/api/usuarios` | CRUD + `PATCH /:id/deactivate` (la contraseña se hashea con bcrypt y nunca se devuelve; `username` y `email` únicos → `409`) |
+| Roles | `/api/roles` | CRUD + `PATCH /:id/deactivate` (nombre único en mayúsculas → `409`) |
+| Recursos | `/api/recursos` | CRUD + `PATCH /:id/deactivate` (`(method, path)` único → `409`; el path es un patrón con `:id`) |
 
 ## Usuarios de laboratorio
 
@@ -50,6 +52,19 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 | `finanzas` | `finanzas@norte-creativo.example` | `Finanzas123!` |
 
 En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la devuelve.
+
+## Roles y catálogo de recursos
+
+`npm run db:seed` siembra, de forma determinista y reconciliadora (reejecutarlo no cambia los conteos):
+
+- **5 roles:** `ADMIN`, `CUENTAS`, `CREATIVO`, `CLIENTE_APROBADOR`, `FINANZAS`.
+- **76 recursos** (`src/features/auth/resources/resource-catalog.ts`): un `(method, path)` por endpoint de negocio y de administración de seguridad. Quedan fuera los abiertos (`/api/health`, `/api/docs`). Los de `/api/asignaciones` y `/api/concesiones` (10) están reservados y sus endpoints se construyen en ISS-17.
+
+Un rol o un recurso por sí solos **no conceden nada**: el permiso es la fila de `resource_roles` (ISS-17). Para comprobar que el catálogo cubre todas las rutas reales:
+
+```bash
+npx ts-node scripts/check-resource-catalog.ts
+```
 
 ## CerrarHito: cómo funciona
 

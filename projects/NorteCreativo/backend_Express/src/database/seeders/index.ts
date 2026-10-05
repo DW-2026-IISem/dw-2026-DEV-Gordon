@@ -6,6 +6,8 @@ import { seedTareas } from '../../features/business/tareas/tarea.seeder';
 import { seedEntregables } from '../../features/business/entregables/entregable.seeder';
 import { seedVersionEntregables } from '../../features/business/version-entregables/version-entregable.seeder';
 import { seedUsers } from '../../features/auth/users/users.seeder';
+import { seedRoles } from '../../features/auth/roles/roles.seeder';
+import { seedResources } from '../../features/auth/resources/resources.seeder';
 import '../../features/auth/users/user.model';
 import '../../features/auth/roles/role.model';
 import '../../features/auth/resources/resource.model';
@@ -38,6 +40,8 @@ export class SeedersRunner {
       await seedEntregables(counts.entregables);
       await seedVersionEntregables();
       await seedUsers();
+      await seedRoles();
+      await seedResources();
       console.log('Seeders finalizados');
     } finally {
       await sequelize.close();

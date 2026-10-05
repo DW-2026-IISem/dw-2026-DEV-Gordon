@@ -1,0 +1,20 @@
+### Recursos — actualización (SIN AUTH temporal). status se ignora.
+@baseUrl = http://localhost:3012/api
+
+### PUT: method y path obligatorios -> 200
+PUT {{baseUrl}}/recursos/100
+Content-Type: application/json
+
+{
+  "method": "GET",
+  "path": "/api/reportes",
+  "description": "Reporte"
+}
+
+### PATCH parcial -> 200 (409 si el par resultante ya existe)
+PATCH {{baseUrl}}/recursos/100
+Content-Type: application/json
+
+{
+  "description": "Reporte general"
+}

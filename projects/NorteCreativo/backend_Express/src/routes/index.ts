@@ -6,6 +6,8 @@ import tareaRoutes from '../features/business/tareas/tareas.routes';
 import entregableRoutes from '../features/business/entregables/entregables.routes';
 import aprobacionRoutes from '../features/business/aprobaciones/aprobaciones.routes';
 import usuariosRoutes from '../features/auth/users/users.routes';
+import rolesRoutes from '../features/auth/roles/roles.routes';
+import recursosRoutes from '../features/auth/resources/resources.routes';
 import versionEntregableRoutes from '../features/business/version-entregables/version-entregables.routes';
 
 const router = Router();
@@ -22,5 +24,7 @@ router.use('/entregables', entregableRoutes);
 router.use('/version-entregables', versionEntregableRoutes);
 router.use('/aprobaciones', aprobacionRoutes);
 router.use('/usuarios', usuariosRoutes);
+router.use('/roles', rolesRoutes);
+router.use('/recursos', recursosRoutes);
 
 export default router;

@@ -1,0 +1,8 @@
+### Recursos — borrado (SIN AUTH temporal)
+@baseUrl = http://localhost:3012/api
+
+### Borrado lógico -> 200, status inactive
+PATCH {{baseUrl}}/recursos/100/deactivate
+
+### Borrado físico -> 200 { message, id } (409 si tiene concesiones; 404 si no existe)
+DELETE {{baseUrl}}/recursos/100

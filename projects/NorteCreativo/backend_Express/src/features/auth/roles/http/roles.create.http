@@ -1,0 +1,27 @@
+### Roles — creación (SIN AUTH temporal)
+@baseUrl = http://localhost:3012/api
+
+### Crear rol -> 201 (el nombre se guarda en mayúsculas)
+POST {{baseUrl}}/roles
+Content-Type: application/json
+
+{
+  "name": "auditor",
+  "description": "Consulta sin modificar"
+}
+
+### Nombre repetido (sin distinguir mayúsculas) -> 409
+POST {{baseUrl}}/roles
+Content-Type: application/json
+
+{
+  "name": "ADMIN"
+}
+
+### Sin nombre -> 400
+POST {{baseUrl}}/roles
+Content-Type: application/json
+
+{
+  "description": "sin nombre"
+}

@@ -1,0 +1,8 @@
+### Roles — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+@baseUrl = http://localhost:3012/api
+
+### Listar roles activos -> 200 { roles }
+GET {{baseUrl}}/roles
+
+### Un rol -> 200 { rol } (404 si no existe; 400 si el id no es entero positivo)
+GET {{baseUrl}}/roles/1

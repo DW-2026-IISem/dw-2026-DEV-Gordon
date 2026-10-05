@@ -1,0 +1,19 @@
+### Roles — actualización (SIN AUTH temporal). status se ignora.
+@baseUrl = http://localhost:3012/api
+
+### PUT: name obligatorio -> 200
+PUT {{baseUrl}}/roles/6
+Content-Type: application/json
+
+{
+  "name": "AUDITOR_EXTERNO",
+  "description": "Solo lectura"
+}
+
+### PATCH parcial -> 200 (409 si el nombre ya lo usa otro rol)
+PATCH {{baseUrl}}/roles/6
+Content-Type: application/json
+
+{
+  "description": "Solo lectura de entregables"
+}

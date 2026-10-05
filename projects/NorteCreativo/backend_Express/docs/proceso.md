@@ -1164,12 +1164,12 @@ ahora vemos que compile
 ### AC
 
 **AC:**
-- [ ] **AC-1** `POST /api/usuarios` responde 201 y la respuesta no trae `password`.
-- [ ] **AC-2** En la base, `password` está hasheada (empieza por `$2`).
-- [ ] **AC-3** Un `username` o `email` repetido responde 409.
-- [ ] **AC-4** `GET /api/usuarios` lista solo activos y ninguno trae `password`.
-- [ ] **AC-5** `npm run db:seed` ×2 deja exactamente 5 usuarios sembrados.
-- [ ] **AC-6** `npx tsc --noEmit` sin errores.
+- [x ] **AC-1** `POST /api/usuarios` responde 201 y la respuesta no trae `password`.
+- [x] **AC-2** En la base, `password` está hasheada (empieza por `$2`).
+- [x] **AC-3** Un `username` o `email` repetido responde 409.
+- [x] **AC-4** `GET /api/usuarios` lista solo activos y ninguno trae `password`.
+- [x] **AC-5** `npm run db:seed` ×2 deja exactamente 5 usuarios sembrados.
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
 
 ### Procedimiento
 
@@ -1224,4 +1224,76 @@ Miramos ahora solo activos y sin password del ac4, hacemos un curlo y nos imprim
 Ahora comprobamos que nos compile el backend
 
 ![alt text](images/proceso-1791167542191.png)
+
+## ISS - 16
+
+### OBJ
+
+**OBJ:** Al finalizar, existirán los 5 roles de Norte Creativo y un recurso por cada endpoint protegible, sembrados de forma determinista.
+
+### AC
+
+**AC:**
+- [x] **AC-1** `npm run db:seed` deja 5 roles con los nombres exactos.
+- [x] **AC-2** El número de filas de `resources` es igual al número de entradas de `resource-catalog.ts`.
+- [x] **AC-3** Reejecutar el seed no cambia los conteos.
+- [x] **AC-4** Un rol con nombre repetido responde 409, y un recurso con `(method, path)` repetido también.
+- [x] **AC-5** `GET /api/recursos` lista los recursos de los 7 features de negocio y de los 5 de administración.
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-15, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-15.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Construye el feature users del docente en src/features/auth/users con API /api/usuarios (CRUD completo + deactivate).
+La contraseña se hashea con bcrypt en el modelo y el DTO de respuesta nunca la devuelve. username y email unicos -> 409.
+Seeder idempotente con 5 usuarios de laboratorio, uno por rol de Norte Creativo: admin, cuentas, creativo, aprobador, finanzas
+(documenta las contraseñas de laboratorio en el README del backend). Registra seeder, rutas y swagger.
+
+NO asignes roles (ISS-17) ni protejas rutas todavia. Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+salida:
+
+![alt text](images/proceso-1791168162571.png)
+
+![alt text](images/proceso-1791168169101.png)
+
+comprobamos que arranque
+
+![alt text](images/proceso-1791168545724.png)
+
+Ahora vemos los roles con el nombre exacto con npm seed
+![alt text](images/proceso-1791168612620.png)
+![alt text](images/proceso-1791168604439.png)
+
+ahora comparamos los resources y que sean iguales a las entradas del catalogo
+
+![alt text](images/proceso-1791168957468.png)
+
+probamos el ac3, en seed idempotente, omprobamos que ambos conteos en diferentes momentos sean identicos
+
+![alt text](images/proceso-1791169532376.png)
+
+Ahora comprobamos que al haer post en duplicados nos genere 409 en roles y recursos
+
+![alt text](images/proceso-1791169680713.png)
+
+para el ac5 vemos que el listado cubre los 12 grupos en total
+
+![alt text](images/proceso-1791169785835.png)
+
+verificamos que compila
+
+![alt text](images/proceso-1791169921254.png)
 

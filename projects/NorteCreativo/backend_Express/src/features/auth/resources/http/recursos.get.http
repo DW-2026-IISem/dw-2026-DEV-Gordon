@@ -1,0 +1,8 @@
+### Recursos — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+@baseUrl = http://localhost:3012/api
+
+### Listar recursos activos -> 200 { recursos } (catálogo completo tras db:seed)
+GET {{baseUrl}}/recursos
+
+### Un recurso -> 200 { recurso }
+GET {{baseUrl}}/recursos/1

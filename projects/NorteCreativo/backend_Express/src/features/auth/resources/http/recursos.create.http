@@ -1,0 +1,30 @@
+### Recursos — creación (SIN AUTH temporal). El path es un patrón con :id, no un valor concreto.
+@baseUrl = http://localhost:3012/api
+
+### Crear recurso -> 201 (method en mayúsculas, path sin barra final)
+POST {{baseUrl}}/recursos
+Content-Type: application/json
+
+{
+  "method": "get",
+  "path": "/api/reportes/",
+  "description": "Ejemplo"
+}
+
+### (method, path) repetido -> 409
+POST {{baseUrl}}/recursos
+Content-Type: application/json
+
+{
+  "method": "GET",
+  "path": "/api/clientes"
+}
+
+### method inválido -> 400
+POST {{baseUrl}}/recursos
+Content-Type: application/json
+
+{
+  "method": "TRACE",
+  "path": "/api/x"
+}

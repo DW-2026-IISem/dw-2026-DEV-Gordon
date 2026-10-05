@@ -1,0 +1,8 @@
+### Roles — borrado (SIN AUTH temporal)
+@baseUrl = http://localhost:3012/api
+
+### Borrado lógico -> 200, status inactive
+PATCH {{baseUrl}}/roles/6/deactivate
+
+### Borrado físico -> 200 { message, id } (409 si tiene usuarios o concesiones; 404 si no existe)
+DELETE {{baseUrl}}/roles/6
