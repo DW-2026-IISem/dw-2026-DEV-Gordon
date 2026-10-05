@@ -990,3 +990,132 @@ Vemos que compile, haga la siembra y arranque sin problemas.
 
 ![alt text](images/proceso-1791157551742.png)
 
+
+## ISS - 13
+
+### OBJ
+
+**OBJ:** Al finalizar, toda la Fase I estará por capas y CerrarHito vivirá en el service con `withTransaction`, como la venta del manual.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Existen las cuatro carpetas en plural con sus capas y ya no existen las versiones en singular.
+- [x] **AC-2** `aprobaciones.service.ts` usa `withTransaction` y el controller de aprobaciones no importa `sequelize`.
+- [x] **AC-3** El bloqueo del hito (`LOCK.UPDATE`) está en un repository, no en el service ni en el controller.
+- [x] **AC-4** `cierre-hito.evaluator.ts` no importa `sequelize` ni `express`.
+- [x] **AC-5** El libreto de la demo da: rechazo → `hito_cerrado: false`, última aprobación → `true`, nueva aprobación sobre hito cerrado → 409.
+- [x] **AC-6** `numero_version` automático, RN-04 (409) y RN-06 (409) responden igual que antes.
+- [x] **AC-7** `npx tsc --noEmit` OK, `npm run db:seed` OK y Swagger lista los 7 tags.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-13, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-13.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Refactoriza tarea, entregable, version-entregable y aprobacion al patron por capas, con carpetas en plural:
+tareas, entregables, version-entregables, aprobaciones. Mueve numero_version automatico, RN-04 y RN-06 al service de versiones.
+CerrarHito: el flujo transaccional pasa de aprobacion.controller a aprobaciones.service usando withTransaction (src/shared/database),
+como hace el manual con la venta (seccion de product-sales / sales). El bloqueo del hito (lock UPDATE) va en un metodo del repository.
+cierre-hito.evaluator.ts sigue puro. Aprobaciones sin PUT/PATCH/DELETE. Mantén rutas, codigos y respuestas identicos.
+Actualiza imports en config, routes, seeders y swagger.
+
+NO empieces auth (ISS-14). Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+![alt text](images/proceso-1791158742214.png)
+
+![alt text](images/proceso-1791158761214.png)
+
+probamos que arranque con las nuevas impelemntanciones
+
+![alt text](images/proceso-1791162045109.png)
+
+Vemos que la refactorizacion se aplico, mirando que en bussiness todas las carpetas esten en sigunlar y no plural
+
+![alt text](images/proceso-1791162219043.png)
+
+comprobamos que aprobaciones use withtransaction y que no se importe el sequelize
+
+![alt text](images/proceso-1791162425175.png)
+
+ahora comprobamos el evaluador y vemos que no genera una salida 
+
+![alt text](images/proceso-1791162458701.png)
+
+Ahora comprobamos el ac5 y ac6 armando un cadena nueva como en el iss 10 y asi probar la regla de cerrar o rechazar un hito y verificar versiones automaticas sin errores en los cambios, si se intenta aprobar algo que ya esta cerrado, el sistema no debe permitirlo y arrojar un 409 y el ac 6 dar aprobada y el hito cerrado
+
+``` bash
+CAMP=$(curl -s http://localhost:3012/api/campanias | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+H=$(curl -s -X POST http://localhost:3012/api/hitos -H 'Content-Type: application/json' -d "{\"campania_id\":$CAMP,\"nombre\":\"Hito R\"}" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+T=$(curl -s -X POST http://localhost:3012/api/tareas -H 'Content-Type: application/json' -d "{\"hito_id\":$H,\"nombre\":\"Tarea R\"}" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+E=$(curl -s -X POST http://localhost:3012/api/entregables -H 'Content-Type: application/json' -d "{\"tarea_id\":$T}" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+V1=$(curl -s -X POST http://localhost:3012/api/version-entregables -H 'Content-Type: application/json' -d "{\"entregable_id\":$E}" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+V2=$(curl -s -X POST http://localhost:3012/api/version-entregables -H 'Content-Type: application/json' -d "{\"entregable_id\":$E}" | grep -o '"id":[0-9]*' | head -1 | cut -d: -f2)
+echo "H=$H E=$E V1=$V1 V2=$V2"
+
+curl -i -X POST http://localhost:3012/api/aprobaciones -H 'Content-Type: application/json' -d "{\"version_entregable_id\":$V1,\"estado\":\"RECHAZADA\",\"aprobador_id\":1}"
+curl -i -X POST http://localhost:3012/api/aprobaciones -H 'Content-Type: application/json' -d "{\"version_entregable_id\":$V2,\"estado\":\"APROBADA\",\"aprobador_id\":1}"
+curl -i -X POST http://localhost:3012/api/aprobaciones -H 'Content-Type: application/json' -d "{\"version_entregable_id\":$V2,\"estado\":\"APROBADA\",\"aprobador_id\":1}"
+
+```
+
+![alt text](images/proceso-1791163079484.png)
+
+ahora probamos que compile y que sagger muestre los 7 tags
+
+![alt text](images/proceso-1791163160826.png)
+
+![alt text](images/proceso-1791163353539.png)
+
+## ISS - 14
+
+### OBJ
+
+**OBJ:** Al finalizar, existirán las 6 tablas de identidad y los helpers de contraseña y JWT, listos para construir los features de auth.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `package.json` incluye `jsonwebtoken` y `bcryptjs`; `.env.example` tiene las 3 variables JWT sin el secreto real y `.env` no aparece en `git status`.
+- [ ] **AC-2** Al arrancar se crean las tablas `users`, `roles`, `resources`, `role_users`, `resource_roles` y `refresh_tokens`.
+- [ ] **AC-3** `SHOW CREATE TABLE` de `role_users` y `resource_roles` muestra las FK y el índice único compuesto.
+- [ ] **AC-4** Un token firmado con `jwt.ts` se verifica bien, y uno alterado o vencido falla.
+- [ ] **AC-5** `hash` y `verify` de `password.ts` funcionan: la contraseña correcta da `true` y una incorrecta `false`.
+- [ ] **AC-6** `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-14, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-14.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Crea la base de seguridad del docente (seccion Auth base) para Norte Creativo:
+dependencias jsonwebtoken y bcryptjs con tipos; variables JWT_SECRET, JWT_ACCESS_TTL y JWT_REFRESH_TTL_DAYS en .env.example (sin valor
+para JWT_SECRET) y en .env (genera un secreto aleatorio largo SOLO en .env); src/shared/auth (password, jwt HS256 con iss/aud/exp/jti,
+resource-match, auth-user) y los 6 modelos en src/features/auth con rbac.associations.ts importado en config antes del sync.
+Si src/shared no existe todavia, crealo igual que el ISS-03 del docente (app-error, base-controller, with-transaction).
+Incluye un script de desarrollo scripts/check-auth-base.ts que firme y verifique un token y pruebe hash/verify, para la evidencia.
+
+NO crees rutas ni middlewares todavia. Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:

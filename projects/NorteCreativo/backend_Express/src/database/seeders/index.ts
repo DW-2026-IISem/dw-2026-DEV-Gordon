@@ -2,15 +2,15 @@ import { sequelize, testConnection } from '../db';
 import { seedClientes } from '../../features/business/clientes/cliente.seeder';
 import { seedCampanias } from '../../features/business/campanias/campania.seeder';
 import { seedHitos } from '../../features/business/hitos/hito.seeder';
-import { seedTareas } from '../../features/business/tarea/tarea.seeder';
-import { seedEntregables } from '../../features/business/entregable/entregable.seeder';
-import { seedVersionEntregables } from '../../features/business/version-entregable/version-entregable.seeder';
+import { seedTareas } from '../../features/business/tareas/tarea.seeder';
+import { seedEntregables } from '../../features/business/entregables/entregable.seeder';
+import { seedVersionEntregables } from '../../features/business/version-entregables/version-entregable.seeder';
 import '../../features/business/campanias/campania.associations';
 import '../../features/business/hitos/hito.associations';
-import '../../features/business/tarea/tarea.associations';
-import '../../features/business/entregable/entregable.associations';
-import '../../features/business/version-entregable/version-entregable.associations';
-import '../../features/business/aprobacion/aprobacion.associations';
+import '../../features/business/tareas/tarea.associations';
+import '../../features/business/entregables/entregable.associations';
+import '../../features/business/version-entregables/version-entregable.associations';
+import '../../features/business/aprobaciones/aprobacion.associations';
 import { getSeedCounts } from './counts';
 
 export class SeedersRunner {

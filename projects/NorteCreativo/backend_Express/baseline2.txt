@@ -1,0 +1,148 @@
+POST /clientes {"tipo_documento":"NIT","numero_documento":"1","nombre":"A","email":"a@a.com"} => 201 {"cliente":{"status":"active","id":1,"tipo_documento":"NIT","numero_documento":"1","nombre":"A","email":"a@a.com","updatedAt":"<date>","createdAt":"<date>"}}
+POST /campanias {"cliente_id":1,"nombre":"C"} => 201 {"campania":{"status":"active","id":1,"cliente_id":1,"nombre":"C","updatedAt":"<date>","createdAt":"<date>"}}
+POST /hitos {"campania_id":1,"nombre":"H1"} => 201 {"hito":{"status":"active","id":1,"campania_id":1,"nombre":"H1","estado":"ABIERTO","fecha_cierre":null,"updatedAt":"<date>","createdAt":"<date>"}}
+POST /hitos {"campania_id":1,"nombre":"H2"} => 201 {"hito":{"status":"active","id":2,"campania_id":1,"nombre":"H2","estado":"ABIERTO","fecha_cierre":null,"updatedAt":"<date>","createdAt":"<date>"}}
+POST /tareas {"hito_id":1,"nombre":"T","descripcion":"d","extra":1,"id":50} => 201 {"tarea":{"status":"active","id":1,"hito_id":1,"nombre":"T","descripcion":"d","updatedAt":"<date>","createdAt":"<date>"}}
+POST /tareas {"nombre":"T"} => 400 {"message":"Error de validación","errors":["hito_id es requerido y debe ser un entero positivo"]}
+POST /tareas {"hito_id":"x","nombre":"T"} => 400 {"message":"Error de validación","errors":["hito_id es requerido y debe ser un entero positivo"]}
+POST /tareas {"hito_id":1} => 400 {"message":"Error de validación","errors":["Tarea.nombre cannot be null"]}
+POST /tareas {"hito_id":1,"nombre":"T","status":"zzz"} => 400 {"message":"Error de validación","errors":["Validation isIn on status failed"]}
+POST /tareas {bad => 400 <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>SyntaxError: Expected property name or &#39;}&#39; in JSON at position 1 (line 1 column 2)<br> &nbsp; &nbsp;at JSON.parse (&lt;anonymous&gt;)<br> &nbsp; &nbsp;at parse (/home/carloszarate/dw-2026-DEV-Gordon/projects/NorteCreativo/backend_Express/node_modules/body-parser/lib/types/json.js:91:21)<br> &nbsp; &nbsp;at /home/carloszarate/dw-2026-DEV-Gordon/projects/NorteCreativo/backend_Express/node_modules/body-parser/lib/read.js:162:18<br> &nbsp; &nbsp;at AsyncResource.runInAsyncScope (node:async_hooks:214:14)<br> &nbsp; &nbsp;at invokeCallback (/home/carloszarate/dw-2026-DEV-Gordon/projects/NorteCreativo/backend_Express/node_modules/raw-body/index.js:238:16)<br> &nbsp; &nbsp;at done (/home/carloszarate/dw-2026-DEV-Gordon/projects/NorteCreativo/backend_Express/node_modules/raw-body/index.js:227:7)<br> &nbsp; &nbsp;at IncomingMessage.onEnd (/home/carloszarate/dw-2026-DEV-Gordon/projects/NorteCreativo/backend_Express/node_modules/raw-body/index.js:287:7)<br> &nbsp; &nbsp;at IncomingMessage.emit (node:events:519:28)<br> &nbsp; &nbsp;at IncomingMessage.emit (node:domain:489:12)<br> &nbsp; &nbsp;at endReadableNT (node:internal/streams/readable:1698:12)</pre>
+</body>
+</html>
+
+GET /tareas  => 200 {"tareas":[{"id":1,"hito_id":1,"nombre":"T","descripcion":"d","status":"active","createdAt":"<date>","updatedAt":"<date>"}]}
+GET /tareas/1  => 200 {"tarea":{"id":1,"hito_id":1,"nombre":"T","descripcion":"d","status":"active","createdAt":"<date>","updatedAt":"<date>","hito":{"id":1,"campania_id":1,"nombre":"H1","descripcion":null,"estado":"ABIERTO","fecha_cierre":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+GET /tareas/9999  => 404 {"message":"Tarea no encontrada"}
+GET /tareas/abc  => 400 {"message":"El id debe ser un entero positivo"}
+GET /tareas/0  => 400 {"message":"El id debe ser un entero positivo"}
+PUT /tareas/1 {"hito_id":1,"nombre":"T2"} => 200 {"tarea":{"id":1,"hito_id":1,"nombre":"T2","descripcion":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PUT /tareas/1 {"hito_id":1} => 400 {"message":"Error de validación","errors":["nombre es requerido en PUT"]}
+PUT /tareas/1 {"nombre":"x"} => 400 {"message":"Error de validación","errors":["hito_id es requerido y debe ser un entero positivo"]}
+PUT /tareas/1 {"hito_id":9999,"nombre":"x"} => 404 {"message":"Hito no encontrado"}
+PUT /tareas/9999 {"hito_id":1,"nombre":"x"} => 404 {"message":"Tarea no encontrada"}
+PATCH /tareas/1 {"descripcion":"p"} => 200 {"tarea":{"id":1,"hito_id":1,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PATCH /tareas/1 {"hito_id":2} => 200 {"tarea":{"id":1,"hito_id":2,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PATCH /tareas/1 {"hito_id":9999} => 404 {"message":"Hito no encontrado"}
+PATCH /tareas/1 {"nombre":""} => 400 {"message":"Error de validación","errors":["Validation notEmpty on nombre failed"]}
+PATCH /tareas/1 {} => 200 {"tarea":{"id":1,"hito_id":2,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+POST /tareas {"hito_id":1,"nombre":"Del"} => 201 {"tarea":{"status":"active","id":2,"hito_id":1,"nombre":"Del","updatedAt":"<date>","createdAt":"<date>"}}
+PATCH /tareas/2/deactivate  => 200 {"tarea":{"id":2,"hito_id":1,"nombre":"Del","descripcion":null,"status":"inactive","createdAt":"<date>","updatedAt":"<date>"}}
+GET /tareas  => 200 {"tareas":[{"id":1,"hito_id":2,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>"}]}
+DELETE /tareas/2  => 200 {"message":"Tarea eliminada"}
+DELETE /tareas/2  => 404 {"message":"Tarea no encontrada"}
+PATCH /tareas/9999/deactivate  => 404 {"message":"Tarea no encontrada"}
+POST /entregables {"tarea_id":1,"total":5,"observaciones":"o","fecha_inicio":"2026-01-01"} => 201 {"entregable":{"total":5,"estado":"EN_PROCESO","status":"active","id":1,"tarea_id":1,"fecha_inicio":"<date>","observaciones":"o","updatedAt":"<date>","createdAt":"<date>"}}
+POST /entregables {"tarea_id":1,"fecha_inicio":""} => 201 {"entregable":{"total":null,"estado":"EN_PROCESO","status":"active","id":2,"tarea_id":1,"fecha_inicio":"<date>","updatedAt":"<date>","createdAt":"<date>"}}
+POST /entregables {} => 400 {"message":"Error de validación","errors":["tarea_id es requerido y debe ser un entero positivo"]}
+POST /entregables {"tarea_id":9999} => 404 {"message":"Tarea no encontrada"}
+POST /entregables {"tarea_id":1,"estado":"ZZ"} => 400 {"message":"Error de validación","errors":["Validation isIn on estado failed"]}
+POST /entregables {"tarea_id":1,"total":-1} => 400 {"message":"Error de validación","errors":["Validation min on total failed"]}
+POST /entregables {"tarea_id":"q"} => 400 {"message":"Error de validación","errors":["tarea_id es requerido y debe ser un entero positivo"]}
+GET /entregables  => 200 {"entregables":[{"total":5,"id":1,"tarea_id":1,"fecha_inicio":"<date>","fecha_fin":null,"estado":"EN_PROCESO","observaciones":"o","status":"active","createdAt":"<date>","updatedAt":"<date>"},{"total":null,"id":2,"tarea_id":1,"fecha_inicio":"<date>","fecha_fin":null,"estado":"EN_PROCESO","observaciones":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}]}
+GET /entregables/1  => 200 {"entregable":{"total":5,"id":1,"tarea_id":1,"fecha_inicio":"<date>","fecha_fin":null,"estado":"EN_PROCESO","observaciones":"o","status":"active","createdAt":"<date>","updatedAt":"<date>","tarea":{"id":1,"hito_id":2,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+GET /entregables/9999  => 404 {"message":"Entregable no encontrado"}
+GET /entregables/x  => 400 {"message":"El id debe ser un entero positivo"}
+PUT /entregables/1 {"tarea_id":1} => 200 {"entregable":{"total":null,"id":1,"tarea_id":1,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_PROCESO","observaciones":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PUT /entregables/1 {"tarea_id":1,"total":7,"estado":"ENTREGADO","observaciones":"z","fecha_fin":"2026-02-01"} => 200 {"entregable":{"total":7,"id":1,"tarea_id":1,"fecha_inicio":null,"fecha_fin":"<date>","estado":"ENTREGADO","observaciones":"z","status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PUT /entregables/1 {} => 400 {"message":"Error de validación","errors":["tarea_id es requerido y debe ser un entero positivo"]}
+PUT /entregables/9999 {"tarea_id":1} => 404 {"message":"Entregable no encontrado"}
+PATCH /entregables/1 {"total":9} => 200 {"entregable":{"total":9,"id":1,"tarea_id":1,"fecha_inicio":null,"fecha_fin":"<date>","estado":"ENTREGADO","observaciones":"z","status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PATCH /entregables/1 {"tarea_id":9999} => 404 {"message":"Tarea no encontrada"}
+PATCH /entregables/1 {"estado":"ZZ"} => 400 {"message":"Error de validación","errors":["Validation isIn on estado failed"]}
+PATCH /entregables/1 {"fecha_inicio":null} => 200 {"entregable":{"total":9,"id":1,"tarea_id":1,"fecha_inicio":null,"fecha_fin":"<date>","estado":"ENTREGADO","observaciones":"z","status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+POST /entregables {"tarea_id":1} => 201 {"entregable":{"total":null,"estado":"EN_PROCESO","status":"active","id":3,"tarea_id":1,"fecha_inicio":"<date>","updatedAt":"<date>","createdAt":"<date>"}}
+PATCH /entregables/3/deactivate  => 200 {"entregable":{"total":null,"id":3,"tarea_id":1,"fecha_inicio":"<date>","fecha_fin":null,"estado":"EN_PROCESO","observaciones":null,"status":"inactive","createdAt":"<date>","updatedAt":"<date>"}}
+DELETE /entregables/3  => 200 {"message":"Entregable eliminado"}
+DELETE /entregables/3  => 404 {"message":"Entregable no encontrado"}
+DELETE /tareas/1  => 409 {"message":"No se puede eliminar: la tarea tiene entregables asociados"}
+POST /version-entregables {"entregable_id":1,"total":3,"observaciones":"v"} => 201 {"version":{"total":3,"estado":"EN_REVISION","status":"active","id":1,"observaciones":"v","entregable_id":1,"numero_version":1,"updatedAt":"<date>","createdAt":"<date>"}}
+POST /version-entregables {"entregable_id":1} => 201 {"version":{"total":null,"estado":"EN_REVISION","status":"active","id":2,"entregable_id":1,"numero_version":2,"updatedAt":"<date>","createdAt":"<date>"}}
+POST /version-entregables {"entregable_id":1,"estado":"APROBADA"} => 400 {"message":"Error de validación","errors":["estado y numero_version los controla el sistema (recibido: estado)"]}
+POST /version-entregables {"entregable_id":1,"numero_version":9} => 400 {"message":"Error de validación","errors":["estado y numero_version los controla el sistema (recibido: numero_version)"]}
+POST /version-entregables {} => 400 {"message":"Error de validación","errors":["entregable_id es requerido y debe ser un entero positivo"]}
+POST /version-entregables {"entregable_id":9999} => 404 {"message":"Entregable no encontrado"}
+POST /version-entregables {"entregable_id":"x"} => 400 {"message":"Error de validación","errors":["entregable_id es requerido y debe ser un entero positivo"]}
+POST /version-entregables {"entregable_id":1,"total":-3} => 400 {"message":"Error de validación","errors":["Validation min on total failed"]}
+GET /version-entregables  => 200 {"versiones":[{"total":3,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":"v","status":"active","createdAt":"<date>","updatedAt":"<date>"},{"total":null,"id":2,"entregable_id":1,"numero_version":2,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}]}
+GET /version-entregables/1  => 200 {"version":{"total":3,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":"v","status":"active","createdAt":"<date>","updatedAt":"<date>","entregable":{"total":9,"id":1,"tarea_id":1,"fecha_inicio":null,"fecha_fin":"<date>","estado":"ENTREGADO","observaciones":"z","status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+GET /version-entregables/9999  => 404 {"message":"Versión de entregable no encontrada"}
+GET /version-entregables/x  => 400 {"message":"El id debe ser un entero positivo"}
+PUT /version-entregables/1 {"total":4} => 200 {"version":{"total":4,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PUT /version-entregables/1 {"entregable_id":1,"total":4} => 200 {"version":{"total":4,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PUT /version-entregables/1 {"entregable_id":9999} => 400 {"message":"Error de validación","errors":["entregable_id no se puede cambiar: una versión pertenece siempre al mismo entregable"]}
+PUT /version-entregables/1 {"estado":"APROBADA"} => 400 {"message":"Error de validación","errors":["estado y numero_version los controla el sistema (recibido: estado)"]}
+PUT /version-entregables/9999 {} => 404 {"message":"Versión de entregable no encontrada"}
+PATCH /version-entregables/1 {"observaciones":"pp"} => 200 {"version":{"total":4,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":"pp","status":"active","createdAt":"<date>","updatedAt":"<date>"}}
+PATCH /version-entregables/1 {"numero_version":3} => 400 {"message":"Error de validación","errors":["estado y numero_version los controla el sistema (recibido: numero_version)"]}
+PATCH /version-entregables/1 {"entregable_id":9999} => 400 {"message":"Error de validación","errors":["entregable_id no se puede cambiar: una versión pertenece siempre al mismo entregable"]}
+PATCH /version-entregables/1 {"total":-1} => 400 {"message":"Error de validación","errors":["Validation min on total failed"]}
+POST /version-entregables {"entregable_id":1} => 201 {"version":{"total":null,"estado":"EN_REVISION","status":"active","id":3,"entregable_id":1,"numero_version":3,"updatedAt":"<date>","createdAt":"<date>"}}
+DELETE /version-entregables/2  => 200 {"message":"Versión de entregable eliminada"}
+DELETE /version-entregables/2  => 404 {"message":"Versión de entregable no encontrada"}
+POST /version-entregables {"entregable_id":1} => 201 {"version":{"total":null,"estado":"EN_REVISION","status":"active","id":4,"entregable_id":1,"numero_version":4,"updatedAt":"<date>","createdAt":"<date>"}}
+PATCH /version-entregables/3/deactivate  => 200 {"version":{"total":null,"id":3,"entregable_id":1,"numero_version":3,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":null,"status":"inactive","createdAt":"<date>","updatedAt":"<date>"}}
+GET /version-entregables  => 200 {"versiones":[{"total":4,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":"pp","status":"active","createdAt":"<date>","updatedAt":"<date>"},{"total":null,"id":4,"entregable_id":1,"numero_version":4,"fecha_inicio":null,"fecha_fin":null,"estado":"EN_REVISION","observaciones":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}]}
+POST /aprobaciones {} => 400 {"message":"Error de validación","errors":["version_entregable_id es requerido y debe ser un entero positivo","aprobador_id es requerido y debe ser un entero positivo","estado debe ser uno de: APROBADA, RECHAZADA"]}
+POST /aprobaciones {"version_entregable_id":1,"aprobador_id":1,"estado":"PENDIENTE"} => 400 {"message":"Error de validación","errors":["estado debe ser uno de: APROBADA, RECHAZADA"]}
+POST /aprobaciones {"version_entregable_id":"x","aprobador_id":0,"estado":"APROBADA","comentario":5} => 400 {"message":"Error de validación","errors":["version_entregable_id es requerido y debe ser un entero positivo","aprobador_id es requerido y debe ser un entero positivo","comentario debe ser texto"]}
+POST /aprobaciones {"version_entregable_id":9999,"aprobador_id":1,"estado":"APROBADA"} => 404 {"message":"Versión de entregable no encontrada"}
+POST /aprobaciones {"version_entregable_id":1,"aprobador_id":1,"estado":"RECHAZADA","comentario":"no"} => 201 {"aprobacion":{"fecha":"2026-10-04T23:50:22.469Z","status":"active","id":1,"version_entregable_id":1,"estado":"RECHAZADA","aprobador_id":1,"comentario":"no","updatedAt":"<date>","createdAt":"<date>"},"hito_cerrado":false,"hito_id":2,"fecha_cierre":null}
+GET /version-entregables/1  => 200 {"version":{"total":4,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"RECHAZADA","observaciones":"pp","status":"active","createdAt":"<date>","updatedAt":"<date>","entregable":{"total":9,"id":1,"tarea_id":1,"fecha_inicio":null,"fecha_fin":"<date>","estado":"ENTREGADO","observaciones":"z","status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+GET /hitos/1  => 200 {"hito":{"id":1,"campania_id":1,"nombre":"H1","descripcion":null,"estado":"ABIERTO","fecha_cierre":null,"status":"active","createdAt":"<date>","updatedAt":"<date>","campania":{"id":1,"cliente_id":1,"nombre":"C","descripcion":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+POST /aprobaciones {"version_entregable_id":1,"aprobador_id":1,"estado":"APROBADA","comentario":"ok"} => 201 {"aprobacion":{"fecha":"2026-10-04T23:50:22.652Z","status":"active","id":2,"version_entregable_id":1,"estado":"APROBADA","aprobador_id":1,"comentario":"ok","updatedAt":"<date>","createdAt":"<date>"},"hito_cerrado":false,"hito_id":2,"fecha_cierre":null}
+GET /hitos/1  => 200 {"hito":{"id":1,"campania_id":1,"nombre":"H1","descripcion":null,"estado":"ABIERTO","fecha_cierre":null,"status":"active","createdAt":"<date>","updatedAt":"<date>","campania":{"id":1,"cliente_id":1,"nombre":"C","descripcion":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+PUT /version-entregables/1 {"total":1} => 409 {"message":"Una versión APROBADA no se puede modificar ni eliminar (RN-04)"}
+PATCH /version-entregables/1 {"total":1} => 409 {"message":"Una versión APROBADA no se puede modificar ni eliminar (RN-04)"}
+DELETE /version-entregables/1  => 409 {"message":"Una versión APROBADA no se puede modificar ni eliminar (RN-04)"}
+PATCH /version-entregables/1/deactivate  => 409 {"message":"Una versión APROBADA no se puede modificar ni eliminar (RN-04)"}
+POST /version-entregables {"entregable_id":1} => 201 {"version":{"total":null,"estado":"EN_REVISION","status":"active","id":5,"entregable_id":1,"numero_version":5,"updatedAt":"<date>","createdAt":"<date>"}}
+POST /aprobaciones {"version_entregable_id":1,"aprobador_id":1,"estado":"APROBADA"} => 201 {"aprobacion":{"fecha":"2026-10-04T23:50:23.046Z","status":"active","id":3,"version_entregable_id":1,"estado":"APROBADA","aprobador_id":1,"comentario":null,"updatedAt":"<date>","createdAt":"<date>"},"hito_cerrado":false,"hito_id":2,"fecha_cierre":null}
+GET /aprobaciones  => 200 {"aprobaciones":[{"id":1,"version_entregable_id":1,"estado":"RECHAZADA","aprobador_id":1,"comentario":"no","fecha":"2026-10-04T23:50:22.000Z","status":"active","createdAt":"<date>","updatedAt":"<date>"},{"id":2,"version_entregable_id":1,"estado":"APROBADA","aprobador_id":1,"comentario":"ok","fecha":"2026-10-04T23:50:22.000Z","status":"active","createdAt":"<date>","updatedAt":"<date>"},{"id":3,"version_entregable_id":1,"estado":"APROBADA","aprobador_id":1,"comentario":null,"fecha":"2026-10-04T23:50:23.000Z","status":"active","createdAt":"<date>","updatedAt":"<date>"}]}
+GET /aprobaciones/1  => 200 {"aprobacion":{"id":1,"version_entregable_id":1,"estado":"RECHAZADA","aprobador_id":1,"comentario":"no","fecha":"2026-10-04T23:50:22.000Z","status":"active","createdAt":"<date>","updatedAt":"<date>","version":{"total":4,"id":1,"entregable_id":1,"numero_version":1,"fecha_inicio":null,"fecha_fin":null,"estado":"APROBADA","observaciones":"pp","status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+GET /aprobaciones/9999  => 404 {"message":"Aprobación no encontrada"}
+GET /aprobaciones/x  => 400 {"message":"El id debe ser un entero positivo"}
+PUT /aprobaciones/1 {} => 404 <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot PUT /api/aprobaciones/1</pre>
+</body>
+</html>
+
+PATCH /aprobaciones/1 {} => 404 <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot PATCH /api/aprobaciones/1</pre>
+</body>
+</html>
+
+DELETE /aprobaciones/1  => 404 <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Error</title>
+</head>
+<body>
+<pre>Cannot DELETE /api/aprobaciones/1</pre>
+</body>
+</html>
+
+GET /tareas  => 200 {"tareas":[{"id":1,"hito_id":2,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>"}]}
+GET /tareas/1  => 200 {"tarea":{"id":1,"hito_id":2,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>","hito":{"id":2,"campania_id":1,"nombre":"H2","descripcion":null,"estado":"ABIERTO","fecha_cierre":null,"status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+GET /entregables/1  => 200 {"entregable":{"total":9,"id":1,"tarea_id":1,"fecha_inicio":null,"fecha_fin":"<date>","estado":"ENTREGADO","observaciones":"z","status":"active","createdAt":"<date>","updatedAt":"<date>","tarea":{"id":1,"hito_id":2,"nombre":"T2","descripcion":"p","status":"active","createdAt":"<date>","updatedAt":"<date>"}}}
+GET /docs.json  => 200 <big:22d76a2e48330df7e84c908c16e3f7fe>

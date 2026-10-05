@@ -1,4 +1,4 @@
-import { InferAttributes } from 'sequelize';
+import { InferAttributes, Transaction } from 'sequelize';
 import { guardDb } from '../../../shared/database/guard-db';
 import { Campania } from '../campanias/campania.model';
 import { Hito } from './hito.model';
@@ -16,6 +16,11 @@ export class HitosRepository {
     return Hito.findByPk(id);
   }
 
+  // Bloqueo de fila (SELECT ... FOR UPDATE): serializa aprobaciones concurrentes sobre el mismo hito.
+  public findByIdForUpdate(id: number, transaction: Transaction): Promise<Hito | null> {
+    return Hito.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
+  }
+
   public findByIdWithCampania(id: number): Promise<Hito | null> {
     return Hito.findByPk(id, { include: [{ model: Campania, as: 'campania' }] });
   }
@@ -24,8 +29,8 @@ export class HitosRepository {
     return guardDb(() => Hito.create(data as any), MENSAJES);
   }
 
-  public update(hito: Hito, data: Partial<InferAttributes<Hito>>): Promise<Hito> {
-    return guardDb(() => hito.update(data), MENSAJES);
+  public update(hito: Hito, data: Partial<InferAttributes<Hito>>, transaction?: Transaction): Promise<Hito> {
+    return guardDb(() => hito.update(data, { transaction }), MENSAJES);
   }
 
   public async delete(hito: Hito): Promise<void> {

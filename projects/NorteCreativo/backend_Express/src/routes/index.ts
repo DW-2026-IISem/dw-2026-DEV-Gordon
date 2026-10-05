@@ -2,10 +2,10 @@ import { Router, Request, Response } from 'express';
 import clienteRoutes from '../features/business/clientes/clientes.routes';
 import campaniaRoutes from '../features/business/campanias/campanias.routes';
 import hitoRoutes from '../features/business/hitos/hitos.routes';
-import tareaRoutes from '../features/business/tarea/tarea.routes';
-import entregableRoutes from '../features/business/entregable/entregable.routes';
-import aprobacionRoutes from '../features/business/aprobacion/aprobacion.routes';
-import versionEntregableRoutes from '../features/business/version-entregable/version-entregable.routes';
+import tareaRoutes from '../features/business/tareas/tareas.routes';
+import entregableRoutes from '../features/business/entregables/entregables.routes';
+import aprobacionRoutes from '../features/business/aprobaciones/aprobaciones.routes';
+import versionEntregableRoutes from '../features/business/version-entregables/version-entregables.routes';
 
 const router = Router();
 

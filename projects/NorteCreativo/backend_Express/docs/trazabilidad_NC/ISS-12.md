@@ -93,8 +93,8 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | paramId | AC-5 | ver docs/proceso.md, sección ISS - 12 | `curl -i localhost:3012/api/clientes/abc` |
 |       | compilación y arranque | AC-6 | ver docs/proceso.md, sección ISS - 12 | `npx tsc --noEmit && npm run db:seed && npm run dev` |
 
-**Commit (hash):** pendiente — `feat(iss-12): refactor por capas clientes campanias hitos` · `Refs #__`
-**Autoevaluación de AC:** pendiente
+**Commit (hash):** `feat(iss-12): refactor por capas clientes campanias hitos Refs #12`
+**Autoevaluación de AC:** Completado
 
 ---
 
@@ -104,7 +104,7 @@ Preguntas guía: «¿Qué responsabilidad perdió el controller y a dónde se fu
 
 | Fecha | Revisor | Actuación | AC revisados | Evidencia consultada | Hallazgo | Decisión |
 |-------|---------|-----------|--------------|----------------------|----------|----------|
-|       |         |           |              |                      |          |          |
+|       | Carlos Z | Revisor | OBJ, SPEC, REQ, AC | este archivo |          | pendiente |
 
 **Respuesta del autor (ajuste o justificación):**
 
@@ -119,7 +119,7 @@ run() es el try catch unico que heredan los controllers de basecontroller, antes
 con el mismo catch repetido siete veces por feature, ahora el metodo solo dice que hacer y run() atrapa
 cualquier error y lo manda a handleerror, que lo convierte en el codigo y el mensaje correctos, paramid()
 lee el id de la ruta y responde 400 si no es un entero positivo, asi no se repite la validacion en cada
-metodo y tampoco llega un abc a la base, findorfail() busca el registro y si no existe lanza el 404 en un solo
+metodo y tampoco llega un abc a la base, findorfail busca el registro y si no existe lanza el 404 en un solo
 lugar, antes cada metodo hacia su findbypk y su if para responder not found
 
 el repository es la unica capa que conoce sequelize porque ahi vive todo lo que depende del orm, el where, el

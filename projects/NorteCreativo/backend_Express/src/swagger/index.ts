@@ -3,10 +3,10 @@ import swaggerUi from 'swagger-ui-express';
 import { clienteSwagger } from '../features/business/clientes/cliente.swagger';
 import { campaniaSwagger } from '../features/business/campanias/campania.swagger';
 import { hitoSwagger } from '../features/business/hitos/hito.swagger';
-import { tareaSwagger } from '../features/business/tarea/tarea.swagger';
-import { entregableSwagger } from '../features/business/entregable/entregable.swagger';
-import { versionEntregableSwagger } from '../features/business/version-entregable/version-entregable.swagger';
-import { aprobacionSwagger } from '../features/business/aprobacion/aprobacion.swagger';
+import { tareaSwagger } from '../features/business/tareas/tarea.swagger';
+import { entregableSwagger } from '../features/business/entregables/entregable.swagger';
+import { versionEntregableSwagger } from '../features/business/version-entregables/version-entregable.swagger';
+import { aprobacionSwagger } from '../features/business/aprobaciones/aprobacion.swagger';
 import { SwaggerModule } from './types';
 
 // Para documentar un feature nuevo basta con agregar su módulo a esta lista.

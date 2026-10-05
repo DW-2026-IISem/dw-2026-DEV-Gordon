@@ -7,10 +7,10 @@ import { sequelize, testConnection } from '../database/db';
 import { setupSwagger } from '../swagger';
 import '../features/business/campanias/campania.associations';
 import '../features/business/hitos/hito.associations';
-import '../features/business/tarea/tarea.associations';
-import '../features/business/entregable/entregable.associations';
-import '../features/business/version-entregable/version-entregable.associations';
-import '../features/business/aprobacion/aprobacion.associations';
+import '../features/business/tareas/tarea.associations';
+import '../features/business/entregables/entregable.associations';
+import '../features/business/version-entregables/version-entregable.associations';
+import '../features/business/aprobaciones/aprobacion.associations';
 
 dotenv.config();
 
