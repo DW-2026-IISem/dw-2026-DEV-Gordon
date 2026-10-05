@@ -11,6 +11,13 @@ import '../features/business/tareas/tarea.associations';
 import '../features/business/entregables/entregable.associations';
 import '../features/business/version-entregables/version-entregable.associations';
 import '../features/business/aprobaciones/aprobacion.associations';
+import '../features/auth/users/user.model';
+import '../features/auth/roles/role.model';
+import '../features/auth/resources/resource.model';
+import '../features/auth/role-users/role-user.model';
+import '../features/auth/resource-roles/resource-role.model';
+import '../features/auth/refresh-tokens/refresh-token.model';
+import '../features/auth/rbac.associations';
 
 dotenv.config();
 

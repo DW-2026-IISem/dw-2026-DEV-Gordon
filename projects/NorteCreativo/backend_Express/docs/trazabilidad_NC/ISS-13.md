@@ -3,12 +3,12 @@
 # ISS-13 — Refactor por capas (B): tareas, entregables, version-entregables, aprobaciones
 
 **Naturaleza:** práctico
-**Issue GitHub:** `#__`
+**Issue GitHub:** `#13`
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
 **Revisor humano:** Carlos H. Zárate
 **Dependencias:** ISS-12 en **Hecho**
 **Página del docente:** https://tecnogua.com/academic/site/backend2026/manual/09-ISS-08-sale-product-sale/
-**Commit esperado:** `feat(iss-13): refactor por capas cadena de entregables y aprobaciones` con `Refs #__`
+**Commit esperado:** `feat(iss-13): refactor por capas cadena de entregables y aprobaciones Refs #13`
 
 ---
 
@@ -95,8 +95,8 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | versiones | AC-6 | ver docs/proceso.md, sección ISS - 13 | curls del ISS-10 (AC-1, AC-4, AC-5) |
 |       | compilación y Swagger | AC-7 | ver docs/proceso.md, sección ISS - 13 | `npx tsc --noEmit` + abrir `localhost:3012/api/docs` |
 
-**Commit (hash):** pendiente — `feat(iss-13): refactor por capas cadena de entregables y aprobaciones` · `Refs #__`
-**Autoevaluación de AC:** pendiente
+**Commit (hash):** `feat(iss-13): refactor por capas cadena de entregables y aprobaciones Refs #13`
+**Autoevaluación de AC:** Completado
 
 ---
 

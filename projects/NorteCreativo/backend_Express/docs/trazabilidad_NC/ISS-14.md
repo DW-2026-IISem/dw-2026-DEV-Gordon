@@ -3,12 +3,12 @@
 # ISS-14 — Auth base: seguridad compartida y modelos RBAC
 
 **Naturaleza:** práctico
-**Issue GitHub:** `#__`
+**Issue GitHub:** `#14`
 **Responsable (desarrollador):** Carlos H. Zárate (DEV-Gordon)
 **Revisor humano:** Carlos H. Zárate
 **Dependencias:** ISS-13 en **Hecho** (o ISS-11 si el docente no pide refactor)
 **Página del docente:** https://tecnogua.com/academic/site/backend2026/manual/11-ISS-09-auth-base/
-**Commit esperado:** `feat(iss-14): auth base modelos rbac y helpers` con `Refs #__`
+**Commit esperado:** `feat(iss-14): auth base modelos rbac y helpers Refs #14`
 
 ---
 
@@ -29,19 +29,19 @@
 - No existe entidad `Permission`: el permiso es la fila de `resource_roles`.
 
 **AC:**
-- [ ] **AC-1** `package.json` incluye `jsonwebtoken` y `bcryptjs`; `.env.example` tiene las 3 variables JWT sin el secreto real y `.env` no aparece en `git status`.
-- [ ] **AC-2** Al arrancar se crean las tablas `users`, `roles`, `resources`, `role_users`, `resource_roles` y `refresh_tokens`.
-- [ ] **AC-3** `SHOW CREATE TABLE` de `role_users` y `resource_roles` muestra las FK y el índice único compuesto.
-- [ ] **AC-4** Un token firmado con `jwt.ts` se verifica bien, y uno alterado o vencido falla.
-- [ ] **AC-5** `hash` y `verify` de `password.ts` funcionan: la contraseña correcta da `true` y una incorrecta `false`.
-- [ ] **AC-6** `npx tsc --noEmit` sin errores.
+- [x] **AC-1** `package.json` incluye `jsonwebtoken` y `bcryptjs`; `.env.example` tiene las 3 variables JWT sin el secreto real y `.env` no aparece en `git status`.
+- [x] **AC-2** Al arrancar se crean las tablas `users`, `roles`, `resources`, `role_users`, `resource_roles` y `refresh_tokens`.
+- [x] **AC-3** `SHOW CREATE TABLE` de `role_users` y `resource_roles` muestra las FK y el índice único compuesto.
+- [x] **AC-4** Un token firmado con `jwt.ts` se verifica bien, y uno alterado o vencido falla.
+- [x] **AC-5** `hash` y `verify` de `password.ts` funcionan: la contraseña correcta da `true` y una incorrecta `false`.
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
 
 **Checklist interno (IA, En curso):**
-- [ ] dependencias y .env
-- [ ] shared/auth
-- [ ] 6 modelos
-- [ ] rbac.associations
-- [ ] índices únicos
+- [x] dependencias y .env
+- [x] shared/auth
+- [x] 6 modelos
+- [x] rbac.associations
+- [x] índices únicos
 
 ---
 
@@ -55,11 +55,12 @@
 
 ## 3. IA usada
 
-**Herramienta / modelo:** Claude Code - modelo (completar)
+**Herramienta / modelo:** Claude Code - Sonnet 5.5
 
-**Fecha:** (pendiente)
+**Fecha:** 3/10/26
 
 **Prompt enviado**:
+
 
 ```text
 Naturaleza: PRACTICO. Eres asistente SOLO de ISS-14, no del backend entero.
@@ -93,8 +94,8 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 |       | jwt y password | AC-4, AC-5 | ver docs/proceso.md, sección ISS - 14 | `npx ts-node scripts/check-auth-base.ts` |
 |       | compilación | AC-6 | ver docs/proceso.md, sección ISS - 14 | `npx tsc --noEmit` |
 
-**Commit (hash):** pendiente — `feat(iss-14): auth base modelos rbac y helpers` · `Refs #__`
-**Autoevaluación de AC:** pendiente
+**Commit (hash):** `feat(iss-14): auth base modelos rbac y helpers Refs #14`
+**Autoevaluación de AC:** completado
 
 ---
 
@@ -108,10 +109,16 @@ Preguntas guía: «¿Por qué el permiso es una fila de `resource_roles` y no un
 
 **Respuesta del autor (ajuste o justificación):**
 
+el permiso es una fila de resource_roles y no una entidad permission porque un recurso ya es method mas path, o sea ya describe exactamente la accion que se quiere proteger, y la fila de resource_roles ya dice que rol puede usar ese recurso, esa fila es el permiso, una tabla permission en medio no agregaria ningun dato nuevo, solo seria otra tabla que repite lo que ya dice resources, y habria que mantener un join mas en cada consulta, ademas el indice unico (role_id, resource_id) garantiza que un rol no tenga el mismo permiso dos veces, y quitarle un permiso a un rol es borrar una sola fila
+
+iss, aud, exp y jti sirven para que el token no se pueda usar en cualquier lado ni para siempre, iss dice quien emitio el token, o sea mi backend, aud dice para quien esta hecho, o sea para esta api, asi si llega un token firmado con el mismo secreto pero hecho para otro servicio se rechaza, exp es la fecha de vencimiento, un token robado deja de servir cuando vence, y jti es un identificador unico de cada token, sirve para poder reconocerlo y revocarlo, por ejemplo con los refresh tokens que se guardan en la tabla refresh_tokens, sin jti no habria como decir este token en especifico ya no vale
+
+el secreto va solo en .env porque el jwt_secret es lo que permite firmar tokens, quien lo tenga puede fabricar un token valido con el rol que quiera, incluso admin, y entrar sin contraseña, si estuviera escrito en el codigo se iria al repositorio y quedaria en el historial de git aunque despues se borre, por eso .env esta en .gitignore y en .env.example solo queda la variable sin valor, asi quien clone el proyecto sabe que la tiene que crear pero nunca ve el mio, ademas asi se puede cambiar el secreto en cada entorno, desarrollo y produccion, sin tocar una linea de codigo
+
 ---
 
 ## 6. Gate
 
-**Estado:** pendiente
-**Conclusión:**
+**Estado:** completado
+**Conclusión:** completado
 **Trazabilidad final:**

@@ -1087,12 +1087,12 @@ ahora probamos que compile y que sagger muestre los 7 tags
 ### AC
 
 **AC:**
-- [ ] **AC-1** `package.json` incluye `jsonwebtoken` y `bcryptjs`; `.env.example` tiene las 3 variables JWT sin el secreto real y `.env` no aparece en `git status`.
-- [ ] **AC-2** Al arrancar se crean las tablas `users`, `roles`, `resources`, `role_users`, `resource_roles` y `refresh_tokens`.
-- [ ] **AC-3** `SHOW CREATE TABLE` de `role_users` y `resource_roles` muestra las FK y el índice único compuesto.
-- [ ] **AC-4** Un token firmado con `jwt.ts` se verifica bien, y uno alterado o vencido falla.
-- [ ] **AC-5** `hash` y `verify` de `password.ts` funcionan: la contraseña correcta da `true` y una incorrecta `false`.
-- [ ] **AC-6** `npx tsc --noEmit` sin errores.
+- [x] **AC-1** `package.json` incluye `jsonwebtoken` y `bcryptjs`; `.env.example` tiene las 3 variables JWT sin el secreto real y `.env` no aparece en `git status`.
+- [x] **AC-2** Al arrancar se crean las tablas `users`, `roles`, `resources`, `role_users`, `resource_roles` y `refresh_tokens`.
+- [x] **AC-3** `SHOW CREATE TABLE` de `role_users` y `resource_roles` muestra las FK y el índice único compuesto.
+- [x] **AC-4** Un token firmado con `jwt.ts` se verifica bien, y uno alterado o vencido falla.
+- [x] **AC-5** `hash` y `verify` de `password.ts` funcionan: la contraseña correcta da `true` y una incorrecta `false`.
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
 
 ### Procedimiento
 
@@ -1119,3 +1119,39 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 ```
 
 Salida:
+
+![alt text](images/proceso-1791164799895.png)
+![alt text](images/proceso-1791164806262.png)
+
+probamos y vemos que arranque 
+
+![alt text](images/proceso-1791165009458.png)
+
+ahora revisamos el ac1 y que el env no salga en el git, y que los datos de jwt aparezcan en el env example rellenados con ejemplo.
+
+![alt text](images/proceso-1791165071081.png)
+
+Ahora miramos las 6 tablas de la base de datos creadas para el auth rbac del proyecto
+
+``` bash
+docker exec -it nc-mysql mysql -uroot -p'NorteCreativo2026*' norte_creativo_express -e "SHOW TABLES;"
+```
+
+![alt text](images/proceso-1791165249242.png)
+
+Ahora miramos el ac3 al fk e indice con unico compuesto
+
+![alt text](images/proceso-1791165288860.png)
+
+![alt text](images/proceso-1791165318602.png)
+
+![alt text](images/proceso-1791165331728.png)
+
+Ahora vemos el ac4 y el ac5 que el token se verifique bien y que uno alterado falle, tambien vemos los hash y verify funcionen, aca se usa el script para check el auth
+
+![alt text](images/proceso-1791165784816.png)
+
+ahora vemos que compile
+
+![alt text](images/proceso-1791165839853.png)
+
