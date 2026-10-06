@@ -8,6 +8,8 @@ import aprobacionRoutes from '../features/business/aprobaciones/aprobaciones.rou
 import usuariosRoutes from '../features/auth/users/users.routes';
 import rolesRoutes from '../features/auth/roles/roles.routes';
 import recursosRoutes from '../features/auth/resources/resources.routes';
+import roleUsersRoutes from '../features/auth/role-users/role-users.routes';
+import resourceRolesRoutes from '../features/auth/resource-roles/resource-roles.routes';
 import versionEntregableRoutes from '../features/business/version-entregables/version-entregables.routes';
 
 const router = Router();
@@ -26,5 +28,7 @@ router.use('/aprobaciones', aprobacionRoutes);
 router.use('/usuarios', usuariosRoutes);
 router.use('/roles', rolesRoutes);
 router.use('/recursos', recursosRoutes);
+router.use('/asignaciones-rol', roleUsersRoutes);
+router.use('/concesiones-rol', resourceRolesRoutes);
 
 export default router;

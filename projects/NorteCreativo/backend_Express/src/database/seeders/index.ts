@@ -8,6 +8,8 @@ import { seedVersionEntregables } from '../../features/business/version-entregab
 import { seedUsers } from '../../features/auth/users/users.seeder';
 import { seedRoles } from '../../features/auth/roles/roles.seeder';
 import { seedResources } from '../../features/auth/resources/resources.seeder';
+import { seedRoleUsers } from '../../features/auth/role-users/role-users.seeder';
+import { seedResourceRoles } from '../../features/auth/resource-roles/resource-roles.seeder';
 import '../../features/auth/users/user.model';
 import '../../features/auth/roles/role.model';
 import '../../features/auth/resources/resource.model';
@@ -42,6 +44,8 @@ export class SeedersRunner {
       await seedUsers();
       await seedRoles();
       await seedResources();
+      await seedRoleUsers();
+      await seedResourceRoles();
       console.log('Seeders finalizados');
     } finally {
       await sequelize.close();

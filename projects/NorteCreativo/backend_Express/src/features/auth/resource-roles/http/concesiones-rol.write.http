@@ -1,0 +1,26 @@
+### Concesiones de rol — escritura (SIN AUTH temporal)
+@baseUrl = http://localhost:3012/api
+
+### Conceder -> 201 la primera vez; 409 si ya está activa; 200 si estaba inactiva (se reactiva, misma fila)
+POST {{baseUrl}}/concesiones-rol
+Content-Type: application/json
+
+{
+  "role_id": 5,
+  "resource_id": 20
+}
+
+### Rol o recurso inexistente/inactivo -> 404
+POST {{baseUrl}}/concesiones-rol
+Content-Type: application/json
+
+{
+  "role_id": 999,
+  "resource_id": 1
+}
+
+### Revocar (borrado lógico) -> 200, status inactive (409 si ya estaba inactiva)
+PATCH {{baseUrl}}/concesiones-rol/1/deactivate
+
+### Reactivar -> 200, status active (409 si ya estaba activa)
+PATCH {{baseUrl}}/concesiones-rol/1/reactivate

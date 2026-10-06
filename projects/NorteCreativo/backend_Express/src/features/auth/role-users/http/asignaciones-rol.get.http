@@ -1,0 +1,8 @@
+### Asignaciones de rol — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+@baseUrl = http://localhost:3012/api
+
+### Listar asignaciones activas -> 200 { asignaciones } (con resumen de usuario sin password y de rol)
+GET {{baseUrl}}/asignaciones-rol
+
+### Una asignación -> 200 { asignacion } (404 si no existe; 400 si el id no es entero positivo)
+GET {{baseUrl}}/asignaciones-rol/1

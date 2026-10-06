@@ -1,0 +1,17 @@
+### Concesiones de rol — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+@baseUrl = http://localhost:3012/api
+
+### Todas las concesiones activas -> 200 { concesiones }
+GET {{baseUrl}}/concesiones-rol
+
+### ¿Qué concede el rol 2 (CUENTAS)? -> solo las de ese rol
+GET {{baseUrl}}/concesiones-rol?role_id=2
+
+### ¿Qué roles conceden el recurso 1? -> filtro por recurso
+GET {{baseUrl}}/concesiones-rol?resource_id=1
+
+### Filtro inválido -> 400
+GET {{baseUrl}}/concesiones-rol?role_id=abc
+
+### Una concesión -> 200 { concesion }
+GET {{baseUrl}}/concesiones-rol/1

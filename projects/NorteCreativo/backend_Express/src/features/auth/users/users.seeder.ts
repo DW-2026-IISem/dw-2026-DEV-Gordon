@@ -1,7 +1,7 @@
 import { User } from './user.model';
 
 // Usuarios de LABORATORIO (uno por rol de Norte Creativo). Las contraseñas están documentadas en el README
-// y NO deben usarse fuera de un entorno de práctica. Los roles se asignan en ISS-17.
+// y NO deben usarse fuera de un entorno de práctica. Los roles se asignan en role-users.seeder.ts (ISS-17).
 const USUARIOS_LAB = [
   { username: 'admin', email: 'admin@norte-creativo.example', password: 'Admin123!' },
   { username: 'cuentas', email: 'cuentas@norte-creativo.example', password: 'Cuentas123!' },

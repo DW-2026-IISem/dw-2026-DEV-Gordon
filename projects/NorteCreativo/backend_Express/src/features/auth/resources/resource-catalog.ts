@@ -17,8 +17,7 @@ const crud = (base: string, singular: string, plural: string): CatalogResource[]
   { method: 'PATCH', path: `${base}/:id/deactivate`, description: `Desactivar ${singular} (borrado lógico)` },
 ];
 
-// Asignaciones (role_users) y concesiones (resource_roles): sus endpoints se construyen en ISS-17 y el catálogo
-// los reserva desde ya. check-resource-catalog.ts los marca como "previstos" hasta que existan sus rutas.
+// Asignaciones (role_users) y concesiones (resource_roles): asignar/conceder, retirar/revocar (lógico) y reactivar.
 const asignacionYConcesion = (base: string, singular: string, plural: string): CatalogResource[] => [
   { method: 'GET', path: base, description: `Listar ${plural} activas` },
   { method: 'POST', path: base, description: `Crear ${singular}` },
@@ -26,9 +25,6 @@ const asignacionYConcesion = (base: string, singular: string, plural: string): C
   { method: 'PATCH', path: `${base}/:id/deactivate`, description: `Desactivar ${singular}` },
   { method: 'PATCH', path: `${base}/:id/reactivate`, description: `Reactivar ${singular}` },
 ];
-
-// Rutas base de los features que aún no tienen endpoints (ISS-17).
-export const RUTAS_PREVISTAS = ['/api/asignaciones', '/api/concesiones'] as const;
 
 // Un recurso por cada endpoint protegible. Orden determinista. Quedan fuera por ser abiertos:
 // GET /api/health y /api/docs (+ docs.json); la sesión (login/refresh/logout) se define en ISS-19.
@@ -47,6 +43,6 @@ export const RESOURCE_CATALOG: CatalogResource[] = [
   ...crud('/api/usuarios', 'usuario', 'usuarios'),
   ...crud('/api/roles', 'rol', 'roles'),
   ...crud('/api/recursos', 'recurso', 'recursos'),
-  ...asignacionYConcesion('/api/asignaciones', 'asignación de rol', 'asignaciones de rol'),
-  ...asignacionYConcesion('/api/concesiones', 'concesión de recurso', 'concesiones de recurso'),
+  ...asignacionYConcesion('/api/asignaciones-rol', 'asignación de rol', 'asignaciones de rol'),
+  ...asignacionYConcesion('/api/concesiones-rol', 'concesión de recurso', 'concesiones de recurso'),
 ];

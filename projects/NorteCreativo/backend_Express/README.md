@@ -38,10 +38,12 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 | Usuarios | `/api/usuarios` | CRUD + `PATCH /:id/deactivate` (la contraseña se hashea con bcrypt y nunca se devuelve; `username` y `email` únicos → `409`) |
 | Roles | `/api/roles` | CRUD + `PATCH /:id/deactivate` (nombre único en mayúsculas → `409`) |
 | Recursos | `/api/recursos` | CRUD + `PATCH /:id/deactivate` (`(method, path)` único → `409`; el path es un patrón con `:id`) |
+| Asignaciones de rol | `/api/asignaciones-rol` | `GET`, `GET /:id`, `POST` (asignar; si estaba inactiva la reactiva), `PATCH /:id/deactivate` (retirar, lógico), `PATCH /:id/reactivate` |
+| Concesiones de rol | `/api/concesiones-rol` | `GET` (filtros `?role_id=` y `?resource_id=`), `GET /:id`, `POST` (conceder; si estaba inactiva la reactiva), `PATCH /:id/deactivate` (revocar, lógico), `PATCH /:id/reactivate` |
 
 ## Usuarios de laboratorio
 
-`npm run db:seed` siembra (de forma idempotente, por `username`) un usuario por cada rol de Norte Creativo. Son **solo para práctica en local**; no uses estas contraseñas en ningún entorno real. Todavía no tienen roles asignados (ISS-17) y `/api/usuarios` aún no está protegido (ISS-18 e ISS-21).
+`npm run db:seed` siembra (de forma idempotente, por `username`) un usuario por cada rol de Norte Creativo. Son **solo para práctica en local**; no uses estas contraseñas en ningún entorno real. Cada uno recibe su rol con el seeder (ver la matriz de concesiones). Las rutas aún no están protegidas (ISS-18 e ISS-21).
 
 | username | email | contraseña de laboratorio |
 |---|---|---|
@@ -58,13 +60,34 @@ En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la de
 `npm run db:seed` siembra, de forma determinista y reconciliadora (reejecutarlo no cambia los conteos):
 
 - **5 roles:** `ADMIN`, `CUENTAS`, `CREATIVO`, `CLIENTE_APROBADOR`, `FINANZAS`.
-- **76 recursos** (`src/features/auth/resources/resource-catalog.ts`): un `(method, path)` por endpoint de negocio y de administración de seguridad. Quedan fuera los abiertos (`/api/health`, `/api/docs`). Los de `/api/asignaciones` y `/api/concesiones` (10) están reservados y sus endpoints se construyen en ISS-17.
+- **76 recursos** (`src/features/auth/resources/resource-catalog.ts`): un `(method, path)` por endpoint de negocio y de administración de seguridad. Quedan fuera los abiertos (`/api/health`, `/api/docs`).
+- **5 asignaciones** (un usuario de laboratorio por rol) y las **concesiones** de la matriz de abajo.
 
-Un rol o un recurso por sí solos **no conceden nada**: el permiso es la fila de `resource_roles` (ISS-17). Para comprobar que el catálogo cubre todas las rutas reales:
+Un rol o un recurso por sí solos **no conceden nada**: el permiso es la fila de `resource_roles` (concesión). Para comprobar que el catálogo cubre todas las rutas reales:
 
 ```bash
 npx ts-node scripts/check-resource-catalog.ts
 ```
+
+## Matriz de concesiones por rol
+
+Decisión de diseño a partir de los actores del SDD; está expresada sobre `resource-catalog.ts` en `src/features/auth/resource-roles/role-matrix.ts` y la aplica el seeder con `reconcileRole` (transaccional e idempotente: reejecutar no duplica filas y deja inactivo lo que salga de la matriz).
+
+Leyenda: **L** lectura (`GET` listado y `GET /:id`) · **C** crear (`POST`) · **U** actualizar (`PUT` y `PATCH /:id`) · **D** eliminar (`DELETE` y `PATCH /:id/deactivate`) · `—` sin acceso.
+
+| Recurso | ADMIN | CUENTAS | CREATIVO | CLIENTE_APROBADOR | FINANZAS |
+|---|---|---|---|---|---|
+| clientes | LCUD | L | — | — | L |
+| campañas | LCUD | LCUD | L | L | L |
+| hitos | LCUD | LCUD | L | L | L |
+| tareas | LCUD | LCUD | L | — | — |
+| entregables | LCUD | L | LCU | L | — |
+| version-entregables | LCUD | L | LCU | L | — |
+| aprobaciones | L C | L | — | L C | — |
+| usuarios, roles, recursos, asignaciones-rol, concesiones-rol | LCUD (en `asignaciones-rol` y `concesiones-rol`: L, C, retirar/revocar y reactivar) | — | — | — | — |
+| **Concesiones activas** | **76** | **29** | **16** | **11** | **6** |
+
+Usuarios de laboratorio → rol: `admin` → ADMIN, `cuentas` → CUENTAS, `creativo` → CREATIVO, `aprobador` → CLIENTE_APROBADOR, `finanzas` → FINANZAS.
 
 ## CerrarHito: cómo funciona
 

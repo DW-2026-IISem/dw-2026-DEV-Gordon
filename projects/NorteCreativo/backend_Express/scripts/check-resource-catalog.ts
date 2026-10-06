@@ -2,7 +2,7 @@
 // Uso: npx ts-node scripts/check-resource-catalog.ts
 import fs from 'fs';
 import path from 'path';
-import { RESOURCE_CATALOG, RUTAS_PREVISTAS } from '../src/features/auth/resources/resource-catalog';
+import { RESOURCE_CATALOG } from '../src/features/auth/resources/resource-catalog';
 
 const SRC = path.resolve(__dirname, '../src');
 const indice = fs.readFileSync(path.join(SRC, 'routes/index.ts'), 'utf8');
@@ -27,13 +27,10 @@ const catalogo = new Set(RESOURCE_CATALOG.map((r) => `${r.method} ${r.path}`));
 const duplicados = RESOURCE_CATALOG.length - catalogo.size;
 const faltan = [...reales].filter((k) => !catalogo.has(k)).sort();
 const sobran = [...catalogo].filter((k) => !reales.has(k)).sort();
-const previstos = sobran.filter((k) => RUTAS_PREVISTAS.some((p) => k.split(' ')[1].startsWith(p)));
-const huerfanos = sobran.filter((k) => !previstos.includes(k));
+const huerfanos = sobran;
 
 console.log(`Endpoints reales (rutas):     ${reales.size}`);
 console.log(`Entradas en el catálogo:      ${RESOURCE_CATALOG.length}`);
-console.log(`  con endpoint real:          ${RESOURCE_CATALOG.length - previstos.length}`);
-console.log(`  previstos (ISS-17):         ${previstos.length}  ${RUTAS_PREVISTAS.join(', ')}`);
 if (faltan.length) console.log(`FALTAN en el catálogo:\n  ${faltan.join('\n  ')}`);
 if (huerfanos.length) console.log(`En el catálogo SIN endpoint real:\n  ${huerfanos.join('\n  ')}`);
 if (duplicados) console.log(`Entradas duplicadas: ${duplicados}`);

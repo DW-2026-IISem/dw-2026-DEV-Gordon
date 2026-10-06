@@ -10,10 +10,12 @@ import { aprobacionSwagger } from '../features/business/aprobaciones/aprobacion.
 import { usersSwagger } from '../features/auth/users/users.swagger';
 import { rolesSwagger } from '../features/auth/roles/roles.swagger';
 import { resourcesSwagger } from '../features/auth/resources/resources.swagger';
+import { roleUsersSwagger } from '../features/auth/role-users/role-users.swagger';
+import { resourceRolesSwagger } from '../features/auth/resource-roles/resource-roles.swagger';
 import { SwaggerModule } from './types';
 
 // Para documentar un feature nuevo basta con agregar su módulo a esta lista.
-const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger, tareaSwagger, entregableSwagger, versionEntregableSwagger, aprobacionSwagger, usersSwagger, rolesSwagger, resourcesSwagger];
+const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger, tareaSwagger, entregableSwagger, versionEntregableSwagger, aprobacionSwagger, usersSwagger, rolesSwagger, resourcesSwagger, roleUsersSwagger, resourceRolesSwagger];
 
 const buildSpec = () => ({
   openapi: '3.0.3',

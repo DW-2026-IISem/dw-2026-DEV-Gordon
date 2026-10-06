@@ -1297,3 +1297,135 @@ verificamos que compila
 
 ![alt text](images/proceso-1791169921254.png)
 
+## ISS - 17
+
+### OBJ
+
+**OBJ:** Al finalizar, cada usuario tendrá su rol y cada rol sus concesiones según la matriz de Norte Creativo, con asignar, retirar y reactivar.
+
+### AC
+
+**AC:**
+- [x] **AC-1** `npm run db:seed` deja 5 asignaciones (una por usuario) y reejecutarlo no duplica.
+- [x] **AC-2** El número de concesiones por rol coincide con la matriz.
+- [x] **AC-3** Retirar una asignación la deja `inactive` y reasignarla la reactiva sin crear otra fila.
+- [x] **AC-4** `GET /api/concesiones-rol?role_id=<id>` lista las concesiones de ese rol.
+- [x] **AC-5** Una asignación o concesión repetida no crea duplicados (índice único).
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-17, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-17.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Construye role-users (/api/asignaciones-rol) y resource-roles (/api/concesiones-rol) del docente en src/features/auth,
+con asignar, retirar (logico), reactivar sin duplicar filas y reconcileRole.
+Seeders: cada usuario sembrado (admin, cuentas, creativo, aprobador, finanzas) recibe su rol; cada rol recibe exactamente las
+concesiones de esta matriz (expresada sobre resource-catalog.ts):
+ADMIN: todo. CUENTAS: clientes lectura; campanias, hitos y tareas CRUD; entregables, version-entregables y aprobaciones lectura.
+CREATIVO: campanias, hitos y tareas lectura; entregables y version-entregables crear, leer y actualizar.
+CLIENTE_APROBADOR: campanias, hitos, entregables y version-entregables lectura; aprobaciones POST y GET.
+FINANZAS: clientes, campanias e hitos lectura.
+Agrega la matriz como tabla al README del backend.
+
+NO crees middlewares (ISS-18). Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+salida:
+
+![alt text](images/proceso-1791251719206.png)
+
+![alt text](images/proceso-1791251731143.png)
+
+probamos que compile
+
+![alt text](images/proceso-1791251995918.png)
+
+comprobamos las tablas y las rutas
+
+![alt text](images/proceso-1791252092362.png)
+
+![alt text](images/proceso-1791252182681.png)
+
+para el ac1 vemos que haya asignaciones activas sin duplicar nada
+
+![alt text](images/proceso-1791252432481.png)
+
+![alt text](images/proceso-1791252439486.png)
+
+dos seeds dejaron 5 asignaciones, una por usuario, sin duplicar.
+
+ahora vemos el ac2, las conseciones por rol
+
+![alt text](images/proceso-1791252555669.png)
+
+no concuerdan por lo que recurrimos a un nuevo prompt donde mas o menos intuimos que pasa, hay discrepancias por filas obsoletas que el seeder no borro 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-16/ISS-17, no del backend entero.
+
+Verifica antes de realizar cualquier cambio, espera a mi peticion de implementar para aplicar la correccion si es cierta.
+
+Problema el seeder de resources no es reconciliador. Quedaron en la tabla resources 10 filas obsoletas (ids 67-76, paths /api/asignaciones* y /api/concesiones*) que ya no estan en resource-catalog.ts, cuyos paths correctos son /api/asignaciones-rol* y /api/concesiones-rol*. Hoy resources tiene 86 filas y el catalogo 76.
+
+Corrige el seeder de resources para que, ademas de insertar y actualizar, ELIMINE (o retire) las filas cuyo (method, path) no este en resource-catalog.ts, y que al hacerlo tambien limpie sus filas en resource_roles. Debe quedar idempotente. No uses force: true ni sync destructivo. No toques otros archivos fuera de este seeder y su servicio. NO hagas commit ni push.
+
+Al final entrega: archivos tocados; los comandos exactos para verificar que resources quede igual al catalogo y que correrlo dos veces no cambie nada.
+
+```
+
+salida:
+
+![alt text](images/proceso-1791253450932.png)
+
+elegimos la opcion de eliminar para asi dejar resources igual que el catalogo 
+
+![alt text](images/proceso-1791253635297.png)
+
+Ahora finalmente coincide, se origino por una mala implementacion del iss16
+
+![alt text](images/proceso-1791253704585.png)
+
+Ahora comprobamos el ac3 donde se debe retirar y reactivar sin crear otras filas
+
+![alt text](images/proceso-1791253976290.png)
+
+Nos muestra status = inactive 
+
+![alt text](images/proceso-1791254123327.png)
+
+Ahora vemos los ac4 de filtros por rol
+
+![alt text](images/proceso-1791254275394.png)
+
+![alt text](images/proceso-1791254772594.png)
+
+Ahora analisamos el ac5, que no debe tener duplicados
+
+![alt text](images/proceso-1791255684006.png)
+![alt text](images/proceso-1791255710931.png)
+
+una sola fila cada una
+
+![alt text](images/proceso-1791255746372.png)
+
+indices unicos compuestos
+
+![alt text](images/proceso-1791255800327.png)
+
+llaves foraneas de los roles
+
+![alt text](images/proceso-1791255820519.png)
+
+ahora probamos que compila sin errores
+
+![alt text](images/proceso-1791255946283.png)

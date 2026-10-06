@@ -1,0 +1,34 @@
+### Asignaciones de rol — escritura (SIN AUTH temporal)
+@baseUrl = http://localhost:3012/api
+
+### Asignar -> 201 la primera vez; 409 si ya está activa; 200 si estaba inactiva (se reactiva, misma fila)
+POST {{baseUrl}}/asignaciones-rol
+Content-Type: application/json
+
+{
+  "user_id": 1,
+  "role_id": 2
+}
+
+### Usuario o rol inexistente/inactivo -> 404
+POST {{baseUrl}}/asignaciones-rol
+Content-Type: application/json
+
+{
+  "user_id": 999,
+  "role_id": 1
+}
+
+### Ids inválidos -> 400
+POST {{baseUrl}}/asignaciones-rol
+Content-Type: application/json
+
+{
+  "user_id": "x"
+}
+
+### Retirar (borrado lógico) -> 200, status inactive (409 si ya estaba inactiva)
+PATCH {{baseUrl}}/asignaciones-rol/6/deactivate
+
+### Reactivar -> 200, status active (409 si ya estaba activa)
+PATCH {{baseUrl}}/asignaciones-rol/6/reactivate
