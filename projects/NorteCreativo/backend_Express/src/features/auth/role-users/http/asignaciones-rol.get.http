@@ -1,8 +1,13 @@
-### Asignaciones de rol — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+### Asignaciones de rol — lectura (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
+### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
+### (usa 'finanzas' u otro username para probar el 403).
+@token = PEGA_AQUI_EL_TOKEN
 
 ### Listar asignaciones activas -> 200 { asignaciones } (con resumen de usuario sin password y de rol)
 GET {{baseUrl}}/asignaciones-rol
+Authorization: Bearer {{token}}
 
 ### Una asignación -> 200 { asignacion } (404 si no existe; 400 si el id no es entero positivo)
 GET {{baseUrl}}/asignaciones-rol/1
+Authorization: Bearer {{token}}

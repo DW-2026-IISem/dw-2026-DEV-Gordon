@@ -4,7 +4,8 @@ import { Resource } from '../resources/resource.model';
 import { Role } from '../roles/role.model';
 import '../rbac.associations';
 import { ResourceRole } from './resource-role.model';
-import { ListResourceRolesDto } from './dto';
+import { EffectivePermissionDto, ListResourceRolesDto } from './dto';
+import { RoleUser } from '../role-users/role-user.model';
 
 const MENSAJES = {
   unique: 'La concesión ya existe',
@@ -37,6 +38,39 @@ export class ResourceRolesRepository {
   // Todas las concesiones del rol (activas e inactivas): base de reconcileRole.
   public findAllByRole(roleId: number, transaction?: Transaction): Promise<ResourceRole[]> {
     return ResourceRole.findAll({ where: { role_id: roleId }, transaction });
+  }
+
+  // Cadena completa con status 'active' en CADA eslabón: users -> role_users -> roles -> resource_roles -> resources.
+  // (El usuario activo lo valida authenticate.) Se consulta en cada petición, sin caché.
+  public async findEffectiveForUser(userId: number): Promise<EffectivePermissionDto[]> {
+    const filas = await ResourceRole.findAll({
+      attributes: ['id', 'role_id', 'resource_id'],
+      where: { status: 'active' },
+      include: [
+        {
+          model: Role,
+          as: 'role',
+          attributes: ['id', 'name'],
+          required: true,
+          where: { status: 'active' },
+          include: [{ model: RoleUser, as: 'roleUsers', attributes: [], required: true, where: { user_id: userId, status: 'active' } }],
+        },
+        { model: Resource, as: 'resource', attributes: ['id', 'method', 'path'], required: true, where: { status: 'active' } },
+      ],
+    });
+    return filas.map((f) => {
+      const plano = f.toJSON() as unknown as {
+        role: { id: number; name: string };
+        resource: { id: number; method: string; path: string };
+      };
+      return {
+        resource_id: plano.resource.id,
+        method: plano.resource.method,
+        path: plano.resource.path,
+        role_id: plano.role.id,
+        role_name: plano.role.name,
+      };
+    });
   }
 
   public create(data: Partial<InferAttributes<ResourceRole>>): Promise<ResourceRole> {

@@ -30,19 +30,19 @@
 - La matriz es una decisión de diseño a partir de los actores del SDD (§3); registrarla en `proceso.md` y en el SDD.
 
 **AC:**
-- [ ] **AC-1** `npm run db:seed` deja 5 asignaciones (una por usuario) y reejecutarlo no duplica.
-- [ ] **AC-2** El número de concesiones por rol coincide con la matriz.
-- [ ] **AC-3** Retirar una asignación la deja `inactive` y reasignarla la reactiva sin crear otra fila.
-- [ ] **AC-4** `GET /api/concesiones-rol?role_id=<id>` lista las concesiones de ese rol.
-- [ ] **AC-5** Una asignación o concesión repetida no crea duplicados (índice único).
-- [ ] **AC-6** `npx tsc --noEmit` sin errores.
+- [x] **AC-1** `npm run db:seed` deja 5 asignaciones (una por usuario) y reejecutarlo no duplica.
+- [x] **AC-2** El número de concesiones por rol coincide con la matriz.
+- [x] **AC-3** Retirar una asignación la deja `inactive` y reasignarla la reactiva sin crear otra fila.
+- [x] **AC-4** `GET /api/concesiones-rol?role_id=<id>` lista las concesiones de ese rol.
+- [x] **AC-5** Una asignación o concesión repetida no crea duplicados (índice único).
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
 
 **Checklist interno (IA, En curso):**
-- [ ] role-users por capas
-- [ ] resource-roles por capas
-- [ ] reactivar sin duplicar
-- [ ] reconcileRole
-- [ ] seeders con la matriz
+- [x] role-users por capas
+- [x] resource-roles por capas
+- [x] reactivar sin duplicar
+- [x] reconcileRole
+- [x] seeders con la matriz
 
 ---
 
@@ -56,9 +56,9 @@
 
 ## 3. IA usada
 
-**Herramienta / modelo:** Claude Code - modelo (completar)
+**Herramienta / modelo:** Claude Code - Sonnet 5.5
 
-**Fecha:** (pendiente)
+**Fecha:** 3/10/26
 
 **Prompt enviado**:
 

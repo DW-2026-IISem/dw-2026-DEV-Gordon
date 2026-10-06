@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { STATUS_ROLE } from './role.model';
 
-const SIN_AUTH = 'SIN AUTH (temporal): este endpoint no requiere autenticación hasta ISS-18/ISS-21.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -26,17 +27,17 @@ const duplicated = jsonResponse('El nombre de rol ya está en uso', 'RolError');
 
 export const rolesSwagger: SwaggerModule = {
   tags: [{ name: 'Roles', description: `Roles de Norte Creativo. Un rol por sí solo no concede nada: los permisos son concesiones (ISS-17). ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/roles': {
       get: {
         tags: ['Roles'],
-        summary: 'Listar roles activos (SIN AUTH)',
+        summary: 'Listar roles activos (JWT + RBAC)',
         description: SIN_AUTH,
         responses: { '200': jsonResponse('Listado de roles activos', 'RolList') },
       },
       post: {
         tags: ['Roles'],
-        summary: 'Crear rol (SIN AUTH)',
+        summary: 'Crear rol (JWT + RBAC)',
         description: `El nombre se guarda en mayúsculas y es único. ${SIN_AUTH}`,
         requestBody: jsonBody('RolInput', 'Datos del rol'),
         responses: { '201': jsonResponse('Rol creado', 'RolResponse'), '400': badRequest, '409': duplicated },
@@ -45,14 +46,14 @@ export const rolesSwagger: SwaggerModule = {
     '/api/roles/{id}': {
       get: {
         tags: ['Roles'],
-        summary: 'Obtener un rol por id (SIN AUTH)',
+        summary: 'Obtener un rol por id (JWT + RBAC)',
         description: SIN_AUTH,
         parameters: [idParam],
         responses: { '200': jsonResponse('Rol encontrado', 'RolResponse'), '400': badRequest, '404': notFound },
       },
       put: {
         tags: ['Roles'],
-        summary: 'Reemplazar un rol (SIN AUTH)',
+        summary: 'Reemplazar un rol (JWT + RBAC)',
         description: `name es obligatorio; description omitida queda en null. status se ignora. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('RolUpdate', 'name y description'),
@@ -60,7 +61,7 @@ export const rolesSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Roles'],
-        summary: 'Actualizar campos de un rol (SIN AUTH)',
+        summary: 'Actualizar campos de un rol (JWT + RBAC)',
         description: `Modifica solo los campos enviados. status se ignora. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('RolPatch', 'Campos a modificar'),
@@ -68,7 +69,7 @@ export const rolesSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Roles'],
-        summary: 'Borrado físico de un rol (SIN AUTH)',
+        summary: 'Borrado físico de un rol (JWT + RBAC)',
         description: SIN_AUTH,
         parameters: [idParam],
         responses: {
@@ -82,13 +83,13 @@ export const rolesSwagger: SwaggerModule = {
     '/api/roles/{id}/deactivate': {
       patch: {
         tags: ['Roles'],
-        summary: 'Borrado lógico de un rol (SIN AUTH)',
+        summary: 'Borrado lógico de un rol (JWT + RBAC)',
         description: `Cambia status a "inactive"; deja de aparecer en el listado. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: { '200': jsonResponse('Rol desactivado', 'RolResponse'), '400': badRequest, '404': notFound },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Rol: {

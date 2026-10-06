@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { METODOS_HTTP, STATUS_RESOURCE } from './resource.model';
 
-const SIN_AUTH = 'SIN AUTH (temporal): este endpoint no requiere autenticación hasta ISS-18/ISS-21.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -26,17 +27,17 @@ const duplicated = jsonResponse('Ya existe un recurso con ese method y path', 'R
 
 export const resourcesSwagger: SwaggerModule = {
   tags: [{ name: 'Recursos', description: `Catálogo de recursos: cada recurso es una operación HTTP (method, path con :id). Un recurso por sí solo no concede nada (ISS-17). ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/recursos': {
       get: {
         tags: ['Recursos'],
-        summary: 'Listar recursos activos (SIN AUTH)',
+        summary: 'Listar recursos activos (JWT + RBAC)',
         description: SIN_AUTH,
         responses: { '200': jsonResponse('Listado de recursos activos', 'RecursoList') },
       },
       post: {
         tags: ['Recursos'],
-        summary: 'Crear recurso (SIN AUTH)',
+        summary: 'Crear recurso (JWT + RBAC)',
         description: `method en mayúsculas y path canónico (sin query ni barra final); el par (method, path) es único. ${SIN_AUTH}`,
         requestBody: jsonBody('RecursoInput', 'Datos del recurso'),
         responses: { '201': jsonResponse('Recurso creado', 'RecursoResponse'), '400': badRequest, '409': duplicated },
@@ -45,14 +46,14 @@ export const resourcesSwagger: SwaggerModule = {
     '/api/recursos/{id}': {
       get: {
         tags: ['Recursos'],
-        summary: 'Obtener un recurso por id (SIN AUTH)',
+        summary: 'Obtener un recurso por id (JWT + RBAC)',
         description: SIN_AUTH,
         parameters: [idParam],
         responses: { '200': jsonResponse('Recurso encontrado', 'RecursoResponse'), '400': badRequest, '404': notFound },
       },
       put: {
         tags: ['Recursos'],
-        summary: 'Reemplazar un recurso (SIN AUTH)',
+        summary: 'Reemplazar un recurso (JWT + RBAC)',
         description: `method y path son obligatorios; description omitida queda en null. status se ignora. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('RecursoUpdate', 'method, path y description'),
@@ -60,7 +61,7 @@ export const resourcesSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Recursos'],
-        summary: 'Actualizar campos de un recurso (SIN AUTH)',
+        summary: 'Actualizar campos de un recurso (JWT + RBAC)',
         description: `Modifica solo los campos enviados. status se ignora. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('RecursoPatch', 'Campos a modificar'),
@@ -68,7 +69,7 @@ export const resourcesSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Recursos'],
-        summary: 'Borrado físico de un recurso (SIN AUTH)',
+        summary: 'Borrado físico de un recurso (JWT + RBAC)',
         description: SIN_AUTH,
         parameters: [idParam],
         responses: {
@@ -82,13 +83,13 @@ export const resourcesSwagger: SwaggerModule = {
     '/api/recursos/{id}/deactivate': {
       patch: {
         tags: ['Recursos'],
-        summary: 'Borrado lógico de un recurso (SIN AUTH)',
+        summary: 'Borrado lógico de un recurso (JWT + RBAC)',
         description: `Cambia status a "inactive"; deja de aparecer en el listado. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: { '200': jsonResponse('Recurso desactivado', 'RecursoResponse'), '400': badRequest, '404': notFound },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Recurso: {

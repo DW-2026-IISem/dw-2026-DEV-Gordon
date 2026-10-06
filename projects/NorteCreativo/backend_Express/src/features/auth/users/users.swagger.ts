@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { STATUS_USER } from './user.model';
 
-const SIN_AUTH = 'SIN AUTH (temporal): este endpoint no requiere autenticación hasta ISS-18/ISS-21.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -28,17 +29,17 @@ const duplicated = jsonResponse('username o email ya en uso', 'UsuarioError');
 
 export const usersSwagger: SwaggerModule = {
   tags: [{ name: 'Usuarios', description: `Administración de usuarios. La contraseña se hashea con bcrypt y nunca se devuelve. ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/usuarios': {
       get: {
         tags: ['Usuarios'],
-        summary: 'Listar usuarios activos (SIN AUTH)',
+        summary: 'Listar usuarios activos (JWT + RBAC)',
         description: `Devuelve solo los usuarios con status "active", sin password. ${SIN_AUTH}`,
         responses: { '200': jsonResponse('Listado de usuarios activos', 'UsuarioList') },
       },
       post: {
         tags: ['Usuarios'],
-        summary: 'Crear usuario (SIN AUTH)',
+        summary: 'Crear usuario (JWT + RBAC)',
         description: `Nace con status "active" salvo que se envíe otro. password: 8 a 72 caracteres. ${SIN_AUTH}`,
         requestBody: jsonBody('UsuarioInput', 'Datos del usuario'),
         responses: {
@@ -51,14 +52,14 @@ export const usersSwagger: SwaggerModule = {
     '/api/usuarios/{id}': {
       get: {
         tags: ['Usuarios'],
-        summary: 'Obtener un usuario por id (SIN AUTH)',
+        summary: 'Obtener un usuario por id (JWT + RBAC)',
         description: `Un usuario inactivo responde 404. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: { '200': jsonResponse('Usuario encontrado', 'UsuarioResponse'), '400': badRequest, '404': notFound },
       },
       put: {
         tags: ['Usuarios'],
-        summary: 'Reemplazar la identidad de un usuario (SIN AUTH)',
+        summary: 'Reemplazar la identidad de un usuario (JWT + RBAC)',
         description: `username y email son obligatorios. password y status se ignoran. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('UsuarioUpdate', 'username y email'),
@@ -71,7 +72,7 @@ export const usersSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Usuarios'],
-        summary: 'Actualizar campos de un usuario (SIN AUTH)',
+        summary: 'Actualizar campos de un usuario (JWT + RBAC)',
         description: `Modifica solo username y/o email. password y status se ignoran. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('UsuarioPatch', 'Campos a modificar'),
@@ -84,7 +85,7 @@ export const usersSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Usuarios'],
-        summary: 'Borrado físico de un usuario (SIN AUTH)',
+        summary: 'Borrado físico de un usuario (JWT + RBAC)',
         description: `Elimina la fila de users. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -98,13 +99,13 @@ export const usersSwagger: SwaggerModule = {
     '/api/usuarios/{id}/deactivate': {
       patch: {
         tags: ['Usuarios'],
-        summary: 'Borrado lógico de un usuario (SIN AUTH)',
+        summary: 'Borrado lógico de un usuario (JWT + RBAC)',
         description: `Cambia status a "inactive"; deja de aparecer en el listado. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: { '200': jsonResponse('Usuario desactivado', 'UsuarioResponse'), '400': badRequest, '404': notFound },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Usuario: {

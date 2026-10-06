@@ -8,7 +8,7 @@ Cliente → Campaña → Hito → Tarea → Entregable → VersionEntregable →
 
 Cada versión de un entregable se aprueba o se rechaza. Cuando **todos** los entregables de un hito tienen su **última versión** `APROBADA`, el hito se cierra solo (`estado: CERRADO`, `fecha_cierre`) dentro de una única transacción. **Ningún endpoint cierra un hito a mano**: `estado` y `fecha_cierre` en el body de `POST/PUT/PATCH /api/hitos` responden `400`.
 
-Todos los endpoints son **SIN AUTH** (no hay autenticación en este backend).
+Las rutas de **administración de seguridad** (`usuarios`, `roles`, `recursos`, `asignaciones-rol`, `concesiones-rol`) exigen **JWT + RBAC** (ver «Acceso a la API»). Las rutas de **negocio** siguen **SIN AUTH** hasta ISS-21.
 
 ## Requisitos y arranque
 
@@ -54,6 +54,26 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 | `finanzas` | `finanzas@norte-creativo.example` | `Finanzas123!` |
 
 En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la devuelve.
+
+## Acceso a la API (3 modalidades)
+
+| Modalidad | Middlewares | Exige | Error |
+|---|---|---|---|
+| **OPEN** | — | nada | — |
+| **JWT** | `authenticate` | token válido y usuario activo | `401` |
+| **JWT + RBAC** | `authenticate` + `authorize` | token + concesión activa para el `(method, path)` | `401` / `403` |
+
+- Hoy en **JWT + RBAC**: `/api/usuarios`, `/api/roles`, `/api/recursos`, `/api/asignaciones-rol` y `/api/concesiones-rol`.
+- Hoy **OPEN**: `/api/health`, `/api/docs` y `/api/docs.json`, y todavía las rutas de negocio (se protegen en ISS-21). El login se construye después; por ahora el token se firma con el script de desarrollo.
+- `authenticate` (`src/features/auth/access/`): exige `Authorization: Bearer <token>`, verifica el JWT (HS256, `iss`, `aud`, `exp`) y **revalida el usuario en la base** en cada petición (inexistente o inactivo → `401`).
+- `authorize`: **deny by default**. Consulta en cada petición, **sin caché**, la cadena `users → role_users → roles → resource_roles → resources` con `status = active` en cada eslabón y compara con el patrón (`/api/usuarios/:id` casa con `/api/usuarios/5`). Sin concesión → `403`. Por eso dar o retirar una concesión (o un rol, o una asignación) surte efecto en la **siguiente petición**, sin reiniciar el servidor.
+
+Token de desarrollo (**solo pruebas locales**; lee `JWT_SECRET` del `.env` y consulta la base):
+
+```bash
+npx ts-node scripts/dev-token.ts admin        # imprime el access token; prueba también finanzas, cuentas, creativo, aprobador
+curl -i -H "Authorization: Bearer <token>" http://localhost:3012/api/usuarios
+```
 
 ## Roles y catálogo de recursos
 

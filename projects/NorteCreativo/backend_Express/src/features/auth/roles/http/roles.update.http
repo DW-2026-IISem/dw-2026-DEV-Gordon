@@ -1,8 +1,12 @@
-### Roles — actualización (SIN AUTH temporal). status se ignora.
+### Roles — actualización (JWT + RBAC: requiere token). status se ignora.
 @baseUrl = http://localhost:3012/api
+### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
+### (usa 'finanzas' u otro username para probar el 403).
+@token = PEGA_AQUI_EL_TOKEN
 
 ### PUT: name obligatorio -> 200
 PUT {{baseUrl}}/roles/6
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -12,6 +16,7 @@ Content-Type: application/json
 
 ### PATCH parcial -> 200 (409 si el nombre ya lo usa otro rol)
 PATCH {{baseUrl}}/roles/6
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {

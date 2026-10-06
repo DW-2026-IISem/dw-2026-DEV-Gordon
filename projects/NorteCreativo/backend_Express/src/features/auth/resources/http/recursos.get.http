@@ -1,8 +1,13 @@
-### Recursos — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+### Recursos — lectura (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
+### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
+### (usa 'finanzas' u otro username para probar el 403).
+@token = PEGA_AQUI_EL_TOKEN
 
 ### Listar recursos activos -> 200 { recursos } (catálogo completo tras db:seed)
 GET {{baseUrl}}/recursos
+Authorization: Bearer {{token}}
 
 ### Un recurso -> 200 { recurso }
 GET {{baseUrl}}/recursos/1
+Authorization: Bearer {{token}}

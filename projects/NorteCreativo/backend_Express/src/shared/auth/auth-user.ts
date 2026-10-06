@@ -1,10 +1,11 @@
 import { Request } from 'express';
 import { AppError } from '../errors/app-error';
 
-// Identidad resuelta por el middleware de autenticación (se construye en un issue posterior).
+// Identidad resuelta por el middleware authenticate: se carga desde la BD (el token solo trae sub, username y jti).
 export interface AuthUser {
   id: number;
   username: string;
+  email: string;
   jti: string;
 }
 

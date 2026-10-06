@@ -1429,3 +1429,83 @@ llaves foraneas de los roles
 ahora probamos que compila sin errores
 
 ![alt text](images/proceso-1791255946283.png)
+
+
+## ISS - 18
+
+### OBJ
+
+**OBJ:** Al finalizar, cada ruta podrá declararse OPEN, JWT o JWT + RBAC, y sin concesión explícita el acceso se niega con 403.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Sin token, `GET /api/usuarios` responde 401.
+- [x] **AC-2** Con un token mal formado o alterado responde 401.
+- [x] **AC-3** Con un token válido de `finanzas` (sin concesión sobre usuarios) responde 403.
+- [x] **AC-4** Con un token válido de `admin` responde 200.
+- [x] **AC-5** Dar o retirar una concesión con `/api/concesiones-rol` cambia el resultado en la siguiente petición, sin reiniciar el servidor.
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-18, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-18.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Construye los middlewares authenticate y authorize del docente en src/features/auth/access y aplica las 3 modalidades:
+protege con authenticate + authorize las rutas de usuarios, roles, recursos, asignaciones-rol y concesiones-rol.
+authorize: deny by default (403), consulta la matriz en cada peticion, sin cache.
+Crea scripts/dev-token.ts que imprima un access token valido para un username dado (admin, finanzas, etc.), usando el helper jwt;
+solo para pruebas locales, lee el secreto del .env.
+
+NO protejas todavia las rutas de negocio (ISS-21). Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+salida:
+
+![alt text](images/proceso-1791258088896.png)
+
+![alt text](images/proceso-1791258100620.png)
+
+probamos que arranque el servidor 
+
+![alt text](images/proceso-1791258001617.png)
+
+ahora probamos el ac 1, de entrar sin token y que responda 401
+
+![alt text](images/proceso-1791258130658.png)
+
+quiere decir que esta sin autorizacion
+
+ahora el ac2, haciendo con un token mal formado o alterado debe generar el mismo error 401
+
+![alt text](images/proceso-1791258169139.png)
+
+ac3, tokenm valido de finanzas responde 403
+
+![alt text](images/proceso-1791258256431.png)
+
+ahora ac4, responde un token valido a admin con el codigo 200
+
+![alt text](images/proceso-1791258408783.png)
+
+
+ahora el ac5, es de tres pasos y se hacen sin reiniciar el servidor, la primera debe dar 403,
+
+![alt text](images/proceso-1791258948065.png)
+
+
+
+verificamos que compila 
+
+![alt text](images/proceso-1791258844827.png)
+

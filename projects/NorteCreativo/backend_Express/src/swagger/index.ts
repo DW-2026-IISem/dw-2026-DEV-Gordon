@@ -12,6 +12,7 @@ import { rolesSwagger } from '../features/auth/roles/roles.swagger';
 import { resourcesSwagger } from '../features/auth/resources/resources.swagger';
 import { roleUsersSwagger } from '../features/auth/role-users/role-users.swagger';
 import { resourceRolesSwagger } from '../features/auth/resource-roles/resource-roles.swagger';
+import { bearerSecurityScheme } from '../shared/http/swagger-security';
 import { SwaggerModule } from './types';
 
 // Para documentar un feature nuevo basta con agregar su módulo a esta lista.
@@ -22,12 +23,14 @@ const buildSpec = () => ({
   info: {
     title: 'Norte Creativo API',
     version: '1.0.0',
-    description: 'API REST de Norte Creativo (Express + TypeScript). Endpoints documentados SIN AUTH.',
+    description:
+      'API REST de Norte Creativo (Express + TypeScript). Modalidades de acceso: OPEN (sin credencial), JWT y JWT + RBAC. Hoy están protegidos (JWT + RBAC) usuarios, roles, recursos, asignaciones-rol y concesiones-rol; el negocio sigue SIN AUTH hasta ISS-21.',
   },
   servers: [{ url: 'http://localhost:3012', description: 'Servidor local' }],
   tags: modules.flatMap((m) => m.tags),
   paths: Object.assign({}, ...modules.map((m) => m.paths)),
   components: {
+    securitySchemes: { bearerAuth: bearerSecurityScheme },
     schemas: Object.assign({}, ...modules.map((m) => m.components.schemas)),
   },
 });

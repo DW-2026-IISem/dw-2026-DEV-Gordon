@@ -1,8 +1,13 @@
-### Roles — lectura (SIN AUTH temporal; se protege en ISS-18/ISS-21)
+### Roles — lectura (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
+### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
+### (usa 'finanzas' u otro username para probar el 403).
+@token = PEGA_AQUI_EL_TOKEN
 
 ### Listar roles activos -> 200 { roles }
 GET {{baseUrl}}/roles
+Authorization: Bearer {{token}}
 
 ### Un rol -> 200 { rol } (404 si no existe; 400 si el id no es entero positivo)
 GET {{baseUrl}}/roles/1
+Authorization: Bearer {{token}}
