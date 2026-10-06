@@ -23,13 +23,17 @@ for (const m of indice.matchAll(/router\.use\('([^']+)',\s*(\w+)\)/g)) {
   }
 }
 
+// Rutas fuera del catálogo por no ser RBAC: /api/sesiones es modalidad JWT (solo authenticate).
+const FUERA_DEL_CATALOGO = ['/api/sesiones'];
+for (const k of [...reales]) if (FUERA_DEL_CATALOGO.some((p) => k.split(' ')[1].startsWith(p))) reales.delete(k);
+
 const catalogo = new Set(RESOURCE_CATALOG.map((r) => `${r.method} ${r.path}`));
 const duplicados = RESOURCE_CATALOG.length - catalogo.size;
 const faltan = [...reales].filter((k) => !catalogo.has(k)).sort();
 const sobran = [...catalogo].filter((k) => !reales.has(k)).sort();
 const huerfanos = sobran;
 
-console.log(`Endpoints reales (rutas):     ${reales.size}`);
+console.log(`Endpoints reales (rutas RBAC): ${reales.size}   (excluidos por ser JWT/OPEN: ${FUERA_DEL_CATALOGO.join(', ')})`);
 console.log(`Entradas en el catálogo:      ${RESOURCE_CATALOG.length}`);
 if (faltan.length) console.log(`FALTAN en el catálogo:\n  ${faltan.join('\n  ')}`);
 if (huerfanos.length) console.log(`En el catálogo SIN endpoint real:\n  ${huerfanos.join('\n  ')}`);

@@ -21,6 +21,20 @@ export const forbiddenResponse = {
   },
 };
 
+// Modalidad JWT (solo authenticate): security bearerAuth + respuesta 401, sin 403.
+export function autenticarPaths(paths: Record<string, Record<string, unknown>>): Record<string, unknown> {
+  const resultado: Record<string, unknown> = {};
+  for (const [ruta, operaciones] of Object.entries(paths)) {
+    const nuevas: Record<string, unknown> = {};
+    for (const [metodo, operacion] of Object.entries(operaciones)) {
+      const op = operacion as Operacion;
+      nuevas[metodo] = { ...op, security: [{ bearerAuth: [] }], responses: { ...op.responses, '401': unauthorizedResponse } };
+    }
+    resultado[ruta] = nuevas;
+  }
+  return resultado;
+}
+
 type Operacion = { responses?: Record<string, unknown>; [clave: string]: unknown };
 
 // Marca TODAS las operaciones de los paths como JWT + RBAC: security bearerAuth + respuestas 401 y 403.

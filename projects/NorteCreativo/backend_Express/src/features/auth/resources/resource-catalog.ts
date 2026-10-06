@@ -27,7 +27,7 @@ const asignacionYConcesion = (base: string, singular: string, plural: string): C
 ];
 
 // Un recurso por cada endpoint protegible. Orden determinista. Quedan fuera por ser abiertos:
-// GET /api/health y /api/docs (+ docs.json); la sesión (login/refresh/logout) se define en ISS-19.
+// GET /api/health y /api/docs (+ docs.json); /api/sesiones (modalidad JWT: cada usuario solo ve las suyas, sin RBAC) y, más adelante, login/refresh/logout (abiertas).
 export const RESOURCE_CATALOG: CatalogResource[] = [
   // --- negocio ---
   ...crud('/api/clientes', 'cliente', 'clientes'),

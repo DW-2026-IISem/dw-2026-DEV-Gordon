@@ -40,6 +40,7 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 | Recursos | `/api/recursos` | CRUD + `PATCH /:id/deactivate` (`(method, path)` único → `409`; el path es un patrón con `:id`) |
 | Asignaciones de rol | `/api/asignaciones-rol` | `GET`, `GET /:id`, `POST` (asignar; si estaba inactiva la reactiva), `PATCH /:id/deactivate` (retirar, lógico), `PATCH /:id/reactivate` |
 | Concesiones de rol | `/api/concesiones-rol` | `GET` (filtros `?role_id=` y `?resource_id=`), `GET /:id`, `POST` (conceder; si estaba inactiva la reactiva), `PATCH /:id/deactivate` (revocar, lógico), `PATCH /:id/reactivate` |
+| Sesiones | `/api/sesiones` | **Modalidad JWT** (solo token): `GET`, `GET /:id`, `PATCH /:id/deactivate`, `PATCH /deactivate-all`, `DELETE`. Cada usuario ve y revoca **solo sus sesiones** (una ajena responde `404`) |
 
 ## Usuarios de laboratorio
 
@@ -64,6 +65,7 @@ En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la de
 | **JWT + RBAC** | `authenticate` + `authorize` | token + concesión activa para el `(method, path)` | `401` / `403` |
 
 - Hoy en **JWT + RBAC**: `/api/usuarios`, `/api/roles`, `/api/recursos`, `/api/asignaciones-rol` y `/api/concesiones-rol`.
+- Hoy en **JWT** (solo `authenticate`): `/api/sesiones`, siempre filtrado por el usuario del token. Quedan fuera del catálogo de recursos porque no pasan por RBAC.
 - Hoy **OPEN**: `/api/health`, `/api/docs` y `/api/docs.json`, y todavía las rutas de negocio (se protegen en ISS-21). El login se construye después; por ahora el token se firma con el script de desarrollo.
 - `authenticate` (`src/features/auth/access/`): exige `Authorization: Bearer <token>`, verifica el JWT (HS256, `iss`, `aud`, `exp`) y **revalida el usuario en la base** en cada petición (inexistente o inactivo → `401`).
 - `authorize`: **deny by default**. Consulta en cada petición, **sin caché**, la cadena `users → role_users → roles → resource_roles → resources` con `status = active` en cada eslabón y compara con el patrón (`/api/usuarios/:id` casa con `/api/usuarios/5`). Sin concesión → `403`. Por eso dar o retirar una concesión (o un rol, o una asignación) surte efecto en la **siguiente petición**, sin reiniciar el servidor.
@@ -74,6 +76,18 @@ Token de desarrollo (**solo pruebas locales**; lee `JWT_SECRET` del `.env` y con
 npx ts-node scripts/dev-token.ts admin        # imprime el access token; prueba también finanzas, cuentas, creativo, aprobador
 curl -i -H "Authorization: Bearer <token>" http://localhost:3012/api/usuarios
 ```
+
+## Sesiones (refresh tokens)
+
+El refresh token es **opaco** (64 bytes aleatorios) y en la base solo se guarda su **SHA-256** (`refresh_tokens.token_hash`): el valor en claro se entrega una única vez al emitirlo. Cada inicio de sesión crea una **familia** (`family_id`); cada rotación invalida el token usado y emite uno nuevo de la misma familia. Si se **reutiliza** un token ya rotado o revocado (posible robo), se revoca la **familia completa**. La rotación y el reuso están en `RefreshTokensService` y los usará el login (ISS-20); mientras tanto se prueban con los scripts:
+
+```bash
+npx ts-node scripts/dev-session.ts finanzas 3     # crea 3 sesiones de prueba y muestra el refresh token en claro y su hash
+npx ts-node scripts/check-refresh-rotation.ts     # prueba emisión, rotación, reuso, vencido y concurrencia
+```
+
+> **Si la tabla `refresh_tokens` ya existía** (creada en ISS-14), `sync()` no le añade las columnas nuevas `family_id` y `device_info`. Con la tabla vacía:
+> `ALTER TABLE refresh_tokens ADD COLUMN family_id CHAR(36) NOT NULL AFTER user_id, ADD COLUMN device_info VARCHAR(255) NULL AFTER revoked_at, ADD INDEX ix_refresh_tokens_family (family_id);`
 
 ## Roles y catálogo de recursos
 

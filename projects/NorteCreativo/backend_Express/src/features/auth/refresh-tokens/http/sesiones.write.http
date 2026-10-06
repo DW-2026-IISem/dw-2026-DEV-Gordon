@@ -1,0 +1,17 @@
+### Sesiones propias — revocar y limpiar (modalidad JWT: solo token, sin RBAC)
+@baseUrl = http://localhost:3012/api
+@token = PEGA_AQUI_EL_TOKEN
+
+### OJO: sustituye el id por el de una sesión TUYA (GET {{baseUrl}}/sesiones). Una ajena responde 404.
+
+### Revocar una sesión -> 200 { message, sesion } con status inactive (409 si ya estaba revocada)
+PATCH {{baseUrl}}/sesiones/1/deactivate
+Authorization: Bearer {{token}}
+
+### Revocar TODAS mis sesiones -> 200 { message, revocadas }
+PATCH {{baseUrl}}/sesiones/deactivate-all
+Authorization: Bearer {{token}}
+
+### Eliminar mis sesiones ya revocadas o vencidas (borrado físico) -> 200 { message, eliminadas }
+DELETE {{baseUrl}}/sesiones
+Authorization: Bearer {{token}}

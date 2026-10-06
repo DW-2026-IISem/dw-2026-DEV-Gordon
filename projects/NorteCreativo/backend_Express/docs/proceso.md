@@ -1503,9 +1503,72 @@ ahora el ac5, es de tres pasos y se hacen sin reiniciar el servidor, la primera 
 
 ![alt text](images/proceso-1791258948065.png)
 
-
-
 verificamos que compila 
 
 ![alt text](images/proceso-1791258844827.png)
+
+## ISS - 19
+
+### OBJ
+
+**OBJ:** Al finalizar, las sesiones se guardarán como refresh tokens opacos y hasheados que el propio usuario puede listar y revocar.
+
+### AC
+
+**AC:**
+- [x] **AC-1** En la tabla `refresh_tokens` no hay ningún token en texto plano, solo hashes.
+- [x] **AC-2** `GET /api/sesiones` con token de un usuario lista solo sus sesiones.
+- [x] **AC-3** `PATCH /api/sesiones/:id/deactivate` revoca esa sesión.
+- [x] **AC-4** `PATCH /api/sesiones/deactivate-all` revoca todas las sesiones del usuario.
+- [x] **AC-5** Pedir la sesión de otro usuario responde 404.
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-18, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-18.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Construye los middlewares authenticate y authorize del docente en src/features/auth/access y aplica las 3 modalidades:
+protege con authenticate + authorize las rutas de usuarios, roles, recursos, asignaciones-rol y concesiones-rol.
+authorize: deny by default (403), consulta la matriz en cada peticion, sin cache.
+Crea scripts/dev-token.ts que imprima un access token valido para un username dado (admin, finanzas, etc.), usando el helper jwt;
+solo para pruebas locales, lee el secreto del .env.
+
+NO protejas todavia las rutas de negocio (ISS-21). Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+salida:
+
+![alt text](images/proceso-1791310158023.png)
+
+![alt text](images/proceso-1791310430623.png)
+
+para los ac debemos preparar 2 usuarios con sesiones
+
+![alt text](images/proceso-1791311019243.png)
+
+![alt text](images/proceso-1791311028677.png)
+
+generamos los tokens, duran 15 minutos siendo validos y com
+
+![alt text](images/proceso-1791311450389.png)
+
+![alt text](images/proceso-1791311428156.png)
+
+en el ac2 vemos que tenemos 3 sesiones, un solo user que es el 6, 0 apariciones de token hash y el 401 sin token
+
+![alt text](images/proceso-1791311897352.png)
+
+Ahora vemos el ac3 donde debe dar codigo 200 con estado inactivo,
+
+PENDIENTE AC3-4-5-6
 
