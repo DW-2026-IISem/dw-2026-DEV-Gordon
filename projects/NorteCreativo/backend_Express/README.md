@@ -41,6 +41,7 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 | Asignaciones de rol | `/api/asignaciones-rol` | `GET`, `GET /:id`, `POST` (asignar; si estaba inactiva la reactiva), `PATCH /:id/deactivate` (retirar, lógico), `PATCH /:id/reactivate` |
 | Concesiones de rol | `/api/concesiones-rol` | `GET` (filtros `?role_id=` y `?resource_id=`), `GET /:id`, `POST` (conceder; si estaba inactiva la reactiva), `PATCH /:id/deactivate` (revocar, lógico), `PATCH /:id/reactivate` |
 | Sesiones | `/api/sesiones` | **Modalidad JWT** (solo token): `GET`, `GET /:id`, `PATCH /:id/deactivate`, `PATCH /deactivate-all`, `DELETE`. Cada usuario ve y revoca **solo sus sesiones** (una ajena responde `404`) |
+| Autenticación | `/api/sesion`, `/api/permisos` | **OPEN**: `POST /api/sesion/login`, `POST /api/sesion/refresh` (rotación), `POST /api/sesion/logout`. **JWT**: `GET /api/sesion/perfil` (usuario + roles) y `GET /api/permisos` (concesiones efectivas) |
 
 ## Usuarios de laboratorio
 
@@ -66,7 +67,8 @@ En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la de
 
 - Hoy en **JWT + RBAC**: `/api/usuarios`, `/api/roles`, `/api/recursos`, `/api/asignaciones-rol` y `/api/concesiones-rol`.
 - Hoy en **JWT** (solo `authenticate`): `/api/sesiones`, siempre filtrado por el usuario del token. Quedan fuera del catálogo de recursos porque no pasan por RBAC.
-- Hoy **OPEN**: `/api/health`, `/api/docs` y `/api/docs.json`, y todavía las rutas de negocio (se protegen en ISS-21). El login se construye después; por ahora el token se firma con el script de desarrollo.
+- Hoy **OPEN**: `POST /api/sesion/login`, `/refresh` y `/logout`, `/api/health`, `/api/docs` y `/api/docs.json`, y todavía las rutas de negocio (se protegen en ISS-21).
+- Hoy en **JWT**: además de `/api/sesiones`, `GET /api/sesion/perfil` y `GET /api/permisos`.
 - `authenticate` (`src/features/auth/access/`): exige `Authorization: Bearer <token>`, verifica el JWT (HS256, `iss`, `aud`, `exp`) y **revalida el usuario en la base** en cada petición (inexistente o inactivo → `401`).
 - `authorize`: **deny by default**. Consulta en cada petición, **sin caché**, la cadena `users → role_users → roles → resource_roles → resources` con `status = active` en cada eslabón y compara con el patrón (`/api/usuarios/:id` casa con `/api/usuarios/5`). Sin concesión → `403`. Por eso dar o retirar una concesión (o un rol, o una asignación) surte efecto en la **siguiente petición**, sin reiniciar el servidor.
 
@@ -88,6 +90,30 @@ npx ts-node scripts/check-refresh-rotation.ts     # prueba emisión, rotación, 
 
 > **Si la tabla `refresh_tokens` ya existía** (creada en ISS-14), `sync()` no le añade las columnas nuevas `family_id` y `device_info`. Con la tabla vacía:
 > `ALTER TABLE refresh_tokens ADD COLUMN family_id CHAR(36) NOT NULL AFTER user_id, ADD COLUMN device_info VARCHAR(255) NULL AFTER revoked_at, ADD INDEX ix_refresh_tokens_family (family_id);`
+
+## Iniciar sesión (login, refresh, logout, perfil y permisos)
+
+```bash
+# 1) Login: identifier = username o email (sin distinguir mayúsculas)
+curl -s -X POST http://localhost:3012/api/sesion/login -H "Content-Type: application/json" -d '{"identifier":"admin","password":"Admin123!"}'
+# -> { access_token, token_type: "Bearer", expires_in, refresh_token, refresh_expires_in }
+
+# 2) Perfil (usuario + roles) y permisos efectivos con el access_token
+curl -s http://localhost:3012/api/sesion/perfil -H "Authorization: Bearer <access_token>"
+curl -s http://localhost:3012/api/permisos      -H "Authorization: Bearer <access_token>"
+
+# 3) Renovar (rotación) y cerrar sesión con el refresh_token
+curl -s -X POST http://localhost:3012/api/sesion/refresh -H "Content-Type: application/json" -d '{"refresh_token":"<refresh_token>"}'
+curl -s -X POST http://localhost:3012/api/sesion/logout  -H "Content-Type: application/json" -d '{"refresh_token":"<refresh_token>"}'
+```
+
+- **Credenciales inválidas → 401 `Credenciales inválidas`**, idéntico si la contraseña es incorrecta, el usuario no existe o está `inactive` (no se revela cuál fue). Se verifica siempre una contraseña —la real o una ficticia— para no distinguir por tiempo de respuesta.
+- **Refresh con rotación:** cada `refresh` invalida el token usado y entrega un par nuevo de la misma familia. Reusar un refresh ya rotado responde **401** y **revoca la familia completa**, incluido el token legítimo más reciente (señal de posible robo). Un refresh vencido, desconocido o de un usuario ya inactivo también responde 401.
+- **Logout** es idempotente (un token desconocido o ya cerrado también responde `200`); después, ese refresh responde 401.
+- El **access token** (JWT, 15 min) abre las rutas JWT y JWT + RBAC; el **refresh token** es opaco, dura 7 días y en la base solo queda su SHA-256 (con el `User-Agent` como `device_info`).
+- **Aún sin límite de intentos fallidos** ni bloqueo de cuenta: queda fuera de este issue.
+
+Evidencia de los AC en un solo comando (con el servidor corriendo): `bash scripts/evidencia-iss20.sh`.
 
 ## Roles y catálogo de recursos
 

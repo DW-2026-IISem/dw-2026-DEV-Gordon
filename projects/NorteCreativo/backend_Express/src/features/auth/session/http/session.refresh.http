@@ -1,0 +1,28 @@
+### Sesión — refresh con rotación y logout (OPEN: la credencial va en el body)
+@baseUrl = http://localhost:3012/api
+### Pega el refresh_token que devolvió el login (o el último refresh)
+@refresh = PEGA_AQUI_EL_REFRESH_TOKEN
+
+### Refresh -> 200 con un par NUEVO; el refresh enviado queda invalidado
+POST {{baseUrl}}/sesion/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh}}"
+}
+
+### Reusar el MISMO refresh otra vez -> 401 "Refresh token ya usado" y se revoca toda la familia
+POST {{baseUrl}}/sesion/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh}}"
+}
+
+### Logout -> 200 { message } (idempotente); después ese refresh ya no sirve (401)
+POST {{baseUrl}}/sesion/logout
+Content-Type: application/json
+
+{
+  "refresh_token": "{{refresh}}"
+}

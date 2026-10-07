@@ -1572,3 +1572,62 @@ Ahora vemos el ac3 donde debe dar codigo 200 con estado inactivo,
 
 PENDIENTE AC3-4-5-6
 
+## ISS - 20
+
+### OBJ
+
+**OBJ:** Al finalizar, un usuario podrá iniciar sesión, renovar y cerrar su sesión, y consultar su perfil y sus permisos.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Login de `admin` con contraseña correcta responde 200 con `access_token` y `refresh_token`.
+- [x] **AC-2** Login con contraseña mala y con usuario inexistente responde 401 con el **mismo** mensaje.
+- [x] **AC-3** `POST /api/sesion/refresh` entrega un par nuevo, y reusar el refresh anterior responde 401.
+- [x] **AC-4** Después de `logout`, el refresh token ya no sirve (401).
+- [x] **AC-5** `GET /api/sesion/perfil` devuelve el usuario y sus roles, y `GET /api/permisos` sus concesiones; sin token, 401.
+- [x] **AC-6** `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-20, no del backend entero.
+
+Implementa los AC de docs/trazabilidad_NC/ISS-20.md en projects/NorteCreativo/backend_Express.
+Aplica el patron por capas (capas HTTP -> Controller -> Service -> Repository -> Model, DTOs por operacion, BaseController.run/paramId,
+AppError, findOrFail) adaptado a Norte Creativo.
+Puerto 3012, base norte_creativo_express, rutas en español como el docente.
+
+Construye el feature session del docente en src/features/auth/session:
+OPEN: POST /api/sesion/login (identifier = username o email + password), POST /api/sesion/refresh (rotacion), POST /api/sesion/logout.
+JWT: GET /api/sesion/perfil (usuario + roles) y GET /api/permisos (concesiones efectivas).
+Credenciales invalidas -> 401 con el mismo mensaje exista o no el usuario. Usuario inactive no inicia sesion.
+Reuso de un refresh ya rotado -> 401 y revocacion segun el docente. Registra rutas y swagger (las OPEN con security: []).
+
+NO protejas todavia las rutas de negocio (ISS-21). Prohibido: NestJS, force: true, secretos en el codigo (JWT_SECRET solo en .env; .env.example sin valores), cambiar el puerto 3012 o la base norte_creativo_express. NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+salida:
+
+![alt text](images/proceso-1791341828184.png)
+
+![alt text](images/proceso-1791341838383.png)
+
+
+Para la comprobacion de ACs, se me estan presentando muchos problemas con la terminal, desde el iss anterior no puedo validarlos todos porque ocurren errores en el tipeo de los datos o la legivilidad de esto, parece es un problema con la terminal de windows y no lo he logrado solucionar, he decido usar el mismo agente de ia que compruebe los ac y que me genere secciones con la salida que la terminal le da a el para realizar la comprobacion del ac y yo verificar que realmente usa los ids o comandos que deberia usar segun el iss.
+
+ac 1
+![alt text](images/proceso-1791342487574.png)
+
+![alt text](images/proceso-1791342496490.png)
+
+![alt text](images/proceso-1791342507534.png)
+
+![alt text](images/proceso-1791342557837.png)
+
+![alt text](images/proceso-1791342566323.png)
+

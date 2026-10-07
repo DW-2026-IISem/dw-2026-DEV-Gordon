@@ -1,0 +1,46 @@
+### Sesión — login (OPEN: no lleva token)
+@baseUrl = http://localhost:3012/api
+
+### Login con username -> 200 { access_token, token_type, expires_in, refresh_token, refresh_expires_in }
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+### Login con email (sin distinguir mayúsculas) -> 200
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "ADMIN@norte-creativo.example",
+  "password": "Admin123!"
+}
+
+### Contraseña incorrecta -> 401 "Credenciales inválidas"
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "mala"
+}
+
+### Usuario inexistente -> 401 con EL MISMO mensaje
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "no-existe",
+  "password": "Admin123!"
+}
+
+### Faltan campos -> 400
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin"
+}

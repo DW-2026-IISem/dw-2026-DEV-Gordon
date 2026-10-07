@@ -19,6 +19,12 @@ export class UsersRepository {
     return User.findByPk(id, { attributes: SIN_PASSWORD });
   }
 
+  // Login: busca por username O email (ya normalizado a minúsculas) e INCLUYE el hash de password.
+  // Es la única lectura que lo trae: nunca debe salir de la capa de servicio.
+  public findByIdentifierWithPassword(identifier: string): Promise<User | null> {
+    return User.findOne({ where: { [Op.or]: [{ username: identifier }, { email: identifier }] } });
+  }
+
   // Usuarios que ya usan ese username o ese email (se excluye al propio al editar).
   public findConflicts(username: string | undefined, email: string | undefined, excludeId?: number): Promise<User[]> {
     const condiciones = [];

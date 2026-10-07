@@ -114,6 +114,6 @@ ajuste: queda pendiente confirmar contra el codigo que algoritmo de hash usa y q
 
 ## 6. Gate
 
-**Estado:** pendiente
-**Conclusión:**
-**Trazabilidad final:**
+**Estado:** completado
+**Conclusión:** completado
+**Trazabilidad final:** completado

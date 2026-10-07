@@ -1,0 +1,15 @@
+### Sesión — perfil y permisos (modalidad JWT: solo access token)
+@baseUrl = http://localhost:3012/api
+### Pega el access_token del login
+@token = PEGA_AQUI_EL_ACCESS_TOKEN
+
+### Mi perfil -> 200 { usuario: { id, username, email, status, roles } }
+GET {{baseUrl}}/sesion/perfil
+Authorization: Bearer {{token}}
+
+### Mis permisos efectivos -> 200 { total, permisos: [{ method, path, roles }] }
+GET {{baseUrl}}/permisos
+Authorization: Bearer {{token}}
+
+### Sin token -> 401
+GET {{baseUrl}}/sesion/perfil

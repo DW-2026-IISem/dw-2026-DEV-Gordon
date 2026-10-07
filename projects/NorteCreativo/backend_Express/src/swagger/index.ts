@@ -14,10 +14,11 @@ import { roleUsersSwagger } from '../features/auth/role-users/role-users.swagger
 import { resourceRolesSwagger } from '../features/auth/resource-roles/resource-roles.swagger';
 import { bearerSecurityScheme } from '../shared/http/swagger-security';
 import { sesionesSwagger } from '../features/auth/refresh-tokens/refresh-tokens.swagger';
+import { sessionSwagger } from '../features/auth/session/session.swagger';
 import { SwaggerModule } from './types';
 
 // Para documentar un feature nuevo basta con agregar su módulo a esta lista.
-const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger, tareaSwagger, entregableSwagger, versionEntregableSwagger, aprobacionSwagger, usersSwagger, rolesSwagger, resourcesSwagger, roleUsersSwagger, resourceRolesSwagger, sesionesSwagger];
+const modules: SwaggerModule[] = [clienteSwagger, campaniaSwagger, hitoSwagger, tareaSwagger, entregableSwagger, versionEntregableSwagger, aprobacionSwagger, usersSwagger, rolesSwagger, resourcesSwagger, roleUsersSwagger, resourceRolesSwagger, sesionesSwagger, sessionSwagger];
 
 const buildSpec = () => ({
   openapi: '3.0.3',
@@ -25,7 +26,7 @@ const buildSpec = () => ({
     title: 'Norte Creativo API',
     version: '1.0.0',
     description:
-      'API REST de Norte Creativo (Express + TypeScript). Modalidades de acceso: OPEN (sin credencial), JWT y JWT + RBAC. Hoy: JWT + RBAC en usuarios, roles, recursos, asignaciones-rol y concesiones-rol; solo JWT en sesiones (las propias); el negocio sigue SIN AUTH hasta ISS-21.',
+      'API REST de Norte Creativo (Express + TypeScript). Modalidades de acceso: OPEN (sin credencial), JWT y JWT + RBAC. Hoy: JWT + RBAC en usuarios, roles, recursos, asignaciones-rol y concesiones-rol; solo JWT en sesiones, perfil y permisos propios; OPEN en login, refresh y logout; el negocio sigue SIN AUTH hasta ISS-21.',
   },
   servers: [{ url: 'http://localhost:3012', description: 'Servidor local' }],
   tags: modules.flatMap((m) => m.tags),

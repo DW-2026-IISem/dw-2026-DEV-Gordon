@@ -11,6 +11,7 @@ import recursosRoutes from '../features/auth/resources/resources.routes';
 import roleUsersRoutes from '../features/auth/role-users/role-users.routes';
 import resourceRolesRoutes from '../features/auth/resource-roles/resource-roles.routes';
 import sesionesRoutes from '../features/auth/refresh-tokens/refresh-tokens.routes';
+import sessionRoutes, { permisosRouter } from '../features/auth/session/session.routes';
 import versionEntregableRoutes from '../features/business/version-entregables/version-entregables.routes';
 
 const router = Router();
@@ -32,5 +33,7 @@ router.use('/recursos', recursosRoutes);
 router.use('/asignaciones-rol', roleUsersRoutes);
 router.use('/concesiones-rol', resourceRolesRoutes);
 router.use('/sesiones', sesionesRoutes);
+router.use('/sesion', sessionRoutes);
+router.use('/permisos', permisosRouter);
 
 export default router;

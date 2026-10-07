@@ -23,8 +23,8 @@ for (const m of indice.matchAll(/router\.use\('([^']+)',\s*(\w+)\)/g)) {
   }
 }
 
-// Rutas fuera del catálogo por no ser RBAC: /api/sesiones es modalidad JWT (solo authenticate).
-const FUERA_DEL_CATALOGO = ['/api/sesiones'];
+// Rutas fuera del catálogo por no ser RBAC: /api/sesion* (login/refresh/logout OPEN; perfil y sesiones JWT) y /api/permisos (JWT).
+const FUERA_DEL_CATALOGO = ['/api/sesion', '/api/permisos'];
 for (const k of [...reales]) if (FUERA_DEL_CATALOGO.some((p) => k.split(' ')[1].startsWith(p))) reales.delete(k);
 
 const catalogo = new Set(RESOURCE_CATALOG.map((r) => `${r.method} ${r.path}`));
