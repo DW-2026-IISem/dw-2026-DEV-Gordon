@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { requireAuthUser } from '../../../shared/auth/auth-user';
 import { BaseController } from '../../../shared/http/base-controller';
 import { AprobacionesService } from './aprobaciones.service';
 import { toCreateAprobacionDto } from './dto';
@@ -20,10 +21,10 @@ export class AprobacionesController extends BaseController {
     });
   }
 
-  // CerrarHito: la transacción vive en el service.
+  // CerrarHito: la transacción vive en el service. RN-05: aprobador_id = el usuario del token.
   public async create(req: Request, res: Response): Promise<void> {
     await this.run(res, async () => {
-      res.status(201).json(await this.service.create(toCreateAprobacionDto(req.body)));
+      res.status(201).json(await this.service.create(toCreateAprobacionDto(req.body), requireAuthUser(req).id));
     });
   }
 }

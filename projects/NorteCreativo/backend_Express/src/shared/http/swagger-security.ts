@@ -28,12 +28,16 @@ export function autenticarPaths(paths: Record<string, Record<string, unknown>>):
     const nuevas: Record<string, unknown> = {};
     for (const [metodo, operacion] of Object.entries(operaciones)) {
       const op = operacion as Operacion;
-      nuevas[metodo] = { ...op, security: [{ bearerAuth: [] }], responses: { ...op.responses, '401': unauthorizedResponse } };
+      nuevas[metodo] = { ...op, security: [{ bearerAuth: [] }], responses: { ...op.responses, '401': unauthorizedRef } };
     }
     resultado[ruta] = nuevas;
   }
   return resultado;
 }
+
+// Referencias a components.responses (declaradas una sola vez en swagger/index.ts).
+const unauthorizedRef = { $ref: '#/components/responses/Unauthorized' };
+const forbiddenRef = { $ref: '#/components/responses/Forbidden' };
 
 type Operacion = { responses?: Record<string, unknown>; [clave: string]: unknown };
 
@@ -47,7 +51,7 @@ export function protegerPaths(paths: Record<string, Record<string, unknown>>): R
       nuevas[metodo] = {
         ...op,
         security: [{ bearerAuth: [] }],
-        responses: { ...op.responses, '401': unauthorizedResponse, '403': forbiddenResponse },
+        responses: { ...op.responses, '401': unauthorizedRef, '403': forbiddenRef },
       };
     }
     resultado[ruta] = nuevas;

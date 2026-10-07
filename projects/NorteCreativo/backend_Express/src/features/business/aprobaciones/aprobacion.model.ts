@@ -35,10 +35,13 @@ Aprobacion.init(
       allowNull: false,
       validate: { isIn: [[...ESTADOS_APROBACION]] },
     },
-    // Sin FK: todavía no existe una tabla de usuarios.
+    // RN-05: el aprobador es el usuario autenticado que registra la aprobación.
     aprobador_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: { model: 'users', key: 'id' },
+      onDelete: 'RESTRICT',
+      onUpdate: 'CASCADE',
     },
     comentario: {
       type: DataTypes.TEXT,

@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { ESTADOS_HITO, STATUS_HITO } from './hito.model';
 
-const SIN_AUTH = 'SIN AUTH: este endpoint no requiere autenticación.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -32,17 +33,17 @@ const conflicto = jsonResponse('RN-08: la campaña está inactiva', 'Error');
 // Los schemas Error, ValidationError, Message y Campania los aportan los módulos de cliente y campaña.
 export const hitoSwagger: SwaggerModule = {
   tags: [{ name: 'Hitos', description: `CRUD de hitos de una campaña activa con reglas de estado. ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/hitos': {
       get: {
         tags: ['Hitos'],
-        summary: 'Listar hitos activos (SIN AUTH)',
+        summary: 'Listar hitos activos (JWT + RBAC)',
         description: `Devuelve solo los hitos con status "active". ${SIN_AUTH}`,
         responses: { '200': jsonResponse('Listado de hitos activos', 'HitoList') },
       },
       post: {
         tags: ['Hitos'],
-        summary: 'Crear hito (SIN AUTH)',
+        summary: 'Crear hito (JWT + RBAC)',
         description: `La campaña debe existir (404) y estar activa (409, RN-08). El hito siempre nace ABIERTO con fecha_cierre null; enviar estado o fecha_cierre responde 400 (el estado solo lo cambia una aprobación). ${SIN_AUTH}`,
         requestBody: jsonBody('HitoInput', 'Datos del hito'),
         responses: {
@@ -56,7 +57,7 @@ export const hitoSwagger: SwaggerModule = {
     '/api/hitos/{id}': {
       get: {
         tags: ['Hitos'],
-        summary: 'Obtener un hito con su campaña (SIN AUTH)',
+        summary: 'Obtener un hito con su campaña (JWT + RBAC)',
         description: `Incluye la campaña asociada en la propiedad "campania". ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -67,7 +68,7 @@ export const hitoSwagger: SwaggerModule = {
       },
       put: {
         tags: ['Hitos'],
-        summary: 'Reemplazar un hito (SIN AUTH)',
+        summary: 'Reemplazar un hito (JWT + RBAC)',
         description: `campania_id y nombre son obligatorios; descripcion omitida queda en null y status omitido en "active". estado y fecha_cierre no se pueden enviar (400): el estado del hito solo lo cambia una aprobación. La campaña debe existir (404) y estar activa (409). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('HitoInput', 'Representación completa del hito'),
@@ -80,7 +81,7 @@ export const hitoSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Hitos'],
-        summary: 'Actualizar campos de un hito (SIN AUTH)',
+        summary: 'Actualizar campos de un hito (JWT + RBAC)',
         description: `Modifica solo los campos enviados. estado o fecha_cierre en el body responden 400: el estado del hito solo lo cambia una aprobación (CerrarHito). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('HitoPatch', 'Campos a modificar'),
@@ -93,7 +94,7 @@ export const hitoSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Hitos'],
-        summary: 'Borrado físico de un hito (SIN AUTH)',
+        summary: 'Borrado físico de un hito (JWT + RBAC)',
         description: `Elimina la fila de la tabla hitos. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -107,7 +108,7 @@ export const hitoSwagger: SwaggerModule = {
     '/api/hitos/{id}/deactivate': {
       patch: {
         tags: ['Hitos'],
-        summary: 'Borrado lógico de un hito (SIN AUTH)',
+        summary: 'Borrado lógico de un hito (JWT + RBAC)',
         description: `Cambia status a "inactive"; el hito deja de aparecer en el listado. No modifica el estado de negocio. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -117,7 +118,7 @@ export const hitoSwagger: SwaggerModule = {
         },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Hito: {

@@ -1,63 +1,147 @@
-### Aprobación — creación / CerrarHito (SIN AUTH: ningún endpoint exige token)
+### Aprobación — creación / CerrarHito (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "cuentas",
+  "password": "Cuentas123!"
+}
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "creativo",
+  "password": "Creativo123!"
+}
+
+###
+
+# @name loginAprobador
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "aprobador",
+  "password": "Aprobador123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### RECHAZADA -> 201, hito_cerrado false (el hito sigue ABIERTO)
 POST {{baseUrl}}/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.access_token}}
 Content-Type: application/json
 
 {
   "version_entregable_id": 1,
   "estado": "RECHAZADA",
-  "aprobador_id": 1,
   "comentario": "Falta ajustar los colores"
 }
 
 ### APROBADA -> 201; hito_cerrado true solo si TODOS los entregables del hito tienen su última versión APROBADA
 POST {{baseUrl}}/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.access_token}}
 Content-Type: application/json
 
 {
   "version_entregable_id": 1,
   "estado": "APROBADA",
-  "aprobador_id": 1,
   "comentario": "Cumple con el brief"
 }
 
 ### Hito ya CERRADO -> 409 (RN-06), nada cambia
 POST {{baseUrl}}/aprobaciones
-Content-Type: application/json
-
-{
-  "version_entregable_id": 1,
-  "estado": "APROBADA",
-  "aprobador_id": 1
-}
-
-### Versión inexistente -> 404
-POST {{baseUrl}}/aprobaciones
-Content-Type: application/json
-
-{
-  "version_entregable_id": 999999,
-  "estado": "APROBADA",
-  "aprobador_id": 1
-}
-
-### Estado inválido (solo APROBADA o RECHAZADA) -> 400
-POST {{baseUrl}}/aprobaciones
-Content-Type: application/json
-
-{
-  "version_entregable_id": 1,
-  "estado": "QUIZAS",
-  "aprobador_id": 1
-}
-
-### Falta aprobador_id -> 400
-POST {{baseUrl}}/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.access_token}}
 Content-Type: application/json
 
 {
   "version_entregable_id": 1,
   "estado": "APROBADA"
 }
+
+### Versión inexistente -> 404
+POST {{baseUrl}}/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "version_entregable_id": 999999,
+  "estado": "APROBADA"
+}
+
+### Estado inválido (solo APROBADA o RECHAZADA) -> 400
+POST {{baseUrl}}/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "version_entregable_id": 1,
+  "estado": "QUIZAS"
+}
+
+### Falta aprobador_id -> 400
+POST {{baseUrl}}/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "version_entregable_id": 1,
+  "estado": "APROBADA"
+}
+
+### ===== RN-05: quién puede aprobar y quién es el aprobador =====
+### creativo NO tiene concedido POST /aprobaciones -> 403
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+Authorization: Bearer {{loginCreativo.response.body.access_token}}
+
+{ "version_entregable_id": 1, "estado": "RECHAZADA" }
+
+### admin tampoco: solo CLIENTE_APROBADOR aprueba -> 403
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+{ "version_entregable_id": 1, "estado": "RECHAZADA" }
+
+### aprobador_id en el body -> 400 (el aprobador sale SIEMPRE del token)
+POST {{baseUrl}}/aprobaciones
+Content-Type: application/json
+Authorization: Bearer {{loginAprobador.response.body.access_token}}
+
+{ "version_entregable_id": 1, "estado": "RECHAZADA", "aprobador_id": 1 }

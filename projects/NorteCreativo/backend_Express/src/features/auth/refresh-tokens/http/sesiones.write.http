@@ -1,17 +1,44 @@
 ### Sesiones propias — revocar y limpiar (modalidad JWT: solo token, sin RBAC)
 @baseUrl = http://localhost:3012/api
-@token = PEGA_AQUI_EL_TOKEN
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### OJO: sustituye el id por el de una sesión TUYA (GET {{baseUrl}}/sesiones). Una ajena responde 404.
 
 ### Revocar una sesión -> 200 { message, sesion } con status inactive (409 si ya estaba revocada)
 PATCH {{baseUrl}}/sesiones/1/deactivate
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Revocar TODAS mis sesiones -> 200 { message, revocadas }
 PATCH {{baseUrl}}/sesiones/deactivate-all
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Eliminar mis sesiones ya revocadas o vencidas (borrado físico) -> 200 { message, eliminadas }
 DELETE {{baseUrl}}/sesiones
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}

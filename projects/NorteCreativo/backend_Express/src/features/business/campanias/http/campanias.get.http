@@ -1,11 +1,90 @@
-### Campaña — consultas (SIN AUTH: ningún endpoint exige token)
+### Campaña — consultas (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "cuentas",
+  "password": "Cuentas123!"
+}
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "creativo",
+  "password": "Creativo123!"
+}
+
+###
+
+# @name loginAprobador
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "aprobador",
+  "password": "Aprobador123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### Listar campañas activas
 GET {{baseUrl}}/campanias
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Obtener una campaña por id (incluye su cliente)
 GET {{baseUrl}}/campanias/1
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Id inexistente -> 404
 GET {{baseUrl}}/campanias/999999
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+### ===== RBAC por rol =====
+### creativo lee campañas -> 200
+GET {{baseUrl}}/campanias
+Authorization: Bearer {{loginCreativo.response.body.access_token}}
+
+### creativo NO puede crear campañas -> 403
+POST {{baseUrl}}/campanias
+Content-Type: application/json
+Authorization: Bearer {{loginCreativo.response.body.access_token}}
+
+{ "cliente_id": 1, "nombre": "x" }
+
+### sin token -> 401
+GET {{baseUrl}}/campanias

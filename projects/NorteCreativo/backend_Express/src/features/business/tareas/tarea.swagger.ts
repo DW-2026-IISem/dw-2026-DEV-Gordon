@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { STATUS_TAREA } from './tarea.model';
 
-const SIN_AUTH = 'SIN AUTH: este endpoint no requiere autenticación.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -30,17 +31,17 @@ const tareaOHitoNotFound = jsonResponse('Tarea o hito no encontrado', 'Error');
 // Los schemas Error, ValidationError, Message y Hito los aportan los módulos de cliente y hito.
 export const tareaSwagger: SwaggerModule = {
   tags: [{ name: 'Tareas', description: `CRUD de tareas de un hito existente. ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/tareas': {
       get: {
         tags: ['Tareas'],
-        summary: 'Listar tareas activas (SIN AUTH)',
+        summary: 'Listar tareas activas (JWT + RBAC)',
         description: `Devuelve solo las tareas con status "active". ${SIN_AUTH}`,
         responses: { '200': jsonResponse('Listado de tareas activas', 'TareaList') },
       },
       post: {
         tags: ['Tareas'],
-        summary: 'Crear tarea (SIN AUTH)',
+        summary: 'Crear tarea (JWT + RBAC)',
         description: `El hito debe existir (404). ${SIN_AUTH}`,
         requestBody: jsonBody('TareaInput', 'Datos de la tarea'),
         responses: {
@@ -53,7 +54,7 @@ export const tareaSwagger: SwaggerModule = {
     '/api/tareas/{id}': {
       get: {
         tags: ['Tareas'],
-        summary: 'Obtener una tarea con su hito (SIN AUTH)',
+        summary: 'Obtener una tarea con su hito (JWT + RBAC)',
         description: `Incluye el hito asociado en la propiedad "hito". ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -64,7 +65,7 @@ export const tareaSwagger: SwaggerModule = {
       },
       put: {
         tags: ['Tareas'],
-        summary: 'Reemplazar una tarea completa (SIN AUTH)',
+        summary: 'Reemplazar una tarea completa (JWT + RBAC)',
         description: `hito_id y nombre son obligatorios; descripcion omitida queda en null y status omitido en "active". El hito debe existir (404). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('TareaInput', 'Representación completa de la tarea'),
@@ -76,7 +77,7 @@ export const tareaSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Tareas'],
-        summary: 'Actualizar campos de una tarea (SIN AUTH)',
+        summary: 'Actualizar campos de una tarea (JWT + RBAC)',
         description: `Modifica solo los campos enviados; si se envía hito_id se valida su existencia. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('TareaPatch', 'Campos a modificar'),
@@ -88,7 +89,7 @@ export const tareaSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Tareas'],
-        summary: 'Borrado físico de una tarea (SIN AUTH)',
+        summary: 'Borrado físico de una tarea (JWT + RBAC)',
         description: `Elimina la fila de la tabla tareas. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -102,7 +103,7 @@ export const tareaSwagger: SwaggerModule = {
     '/api/tareas/{id}/deactivate': {
       patch: {
         tags: ['Tareas'],
-        summary: 'Borrado lógico de una tarea (SIN AUTH)',
+        summary: 'Borrado lógico de una tarea (JWT + RBAC)',
         description: `Cambia status a "inactive"; la tarea deja de aparecer en el listado. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -112,7 +113,7 @@ export const tareaSwagger: SwaggerModule = {
         },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Tarea: {

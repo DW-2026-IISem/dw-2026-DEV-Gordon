@@ -1,12 +1,37 @@
 ### Roles — creación (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
-### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
-### (usa 'finanzas' u otro username para probar el 403).
-@token = PEGA_AQUI_EL_TOKEN
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### Crear rol -> 201 (el nombre se guarda en mayúsculas)
 POST {{baseUrl}}/roles
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 Content-Type: application/json
 
 {
@@ -16,7 +41,7 @@ Content-Type: application/json
 
 ### Nombre repetido (sin distinguir mayúsculas) -> 409
 POST {{baseUrl}}/roles
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 Content-Type: application/json
 
 {
@@ -25,7 +50,7 @@ Content-Type: application/json
 
 ### Sin nombre -> 400
 POST {{baseUrl}}/roles
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 Content-Type: application/json
 
 {

@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { ESTADOS_CLIENTE, TIPOS_DOCUMENTO } from './cliente.model';
 
-const SIN_AUTH = 'SIN AUTH: este endpoint no requiere autenticación.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -30,17 +31,17 @@ const duplicated = errorResponse('numero_documento ya registrado');
 
 export const clienteSwagger: SwaggerModule = {
   tags: [{ name: 'Clientes', description: `CRUD de clientes de Norte Creativo. ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/clientes': {
       get: {
         tags: ['Clientes'],
-        summary: 'Listar clientes activos (SIN AUTH)',
+        summary: 'Listar clientes activos (JWT + RBAC)',
         description: `Devuelve solo los clientes con status "active". ${SIN_AUTH}`,
         responses: { '200': jsonResponse('Listado de clientes activos', 'ClienteList') },
       },
       post: {
         tags: ['Clientes'],
-        summary: 'Crear cliente (SIN AUTH)',
+        summary: 'Crear cliente (JWT + RBAC)',
         description: SIN_AUTH,
         requestBody: jsonBody('ClienteInput', 'Datos del cliente'),
         responses: {
@@ -53,7 +54,7 @@ export const clienteSwagger: SwaggerModule = {
     '/api/clientes/{id}': {
       get: {
         tags: ['Clientes'],
-        summary: 'Obtener un cliente por id (SIN AUTH)',
+        summary: 'Obtener un cliente por id (JWT + RBAC)',
         description: SIN_AUTH,
         parameters: [idParam],
         responses: {
@@ -64,7 +65,7 @@ export const clienteSwagger: SwaggerModule = {
       },
       put: {
         tags: ['Clientes'],
-        summary: 'Reemplazar un cliente completo (SIN AUTH)',
+        summary: 'Reemplazar un cliente completo (JWT + RBAC)',
         description: `Reemplaza el recurso: tipo_documento, numero_documento y nombre son obligatorios; telefono y email omitidos quedan en null y status omitido queda en "active". ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('ClienteInput', 'Representación completa del cliente'),
@@ -77,7 +78,7 @@ export const clienteSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Clientes'],
-        summary: 'Actualizar campos de un cliente (SIN AUTH)',
+        summary: 'Actualizar campos de un cliente (JWT + RBAC)',
         description: `Modifica solo los campos enviados. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('ClientePatch', 'Campos a modificar'),
@@ -90,7 +91,7 @@ export const clienteSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Clientes'],
-        summary: 'Borrado físico de un cliente (SIN AUTH)',
+        summary: 'Borrado físico de un cliente (JWT + RBAC)',
         description: `Elimina la fila de la tabla clientes. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -104,7 +105,7 @@ export const clienteSwagger: SwaggerModule = {
     '/api/clientes/{id}/deactivate': {
       patch: {
         tags: ['Clientes'],
-        summary: 'Borrado lógico de un cliente (SIN AUTH)',
+        summary: 'Borrado lógico de un cliente (JWT + RBAC)',
         description: `Cambia status a "inactive"; el cliente deja de aparecer en el listado. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -114,7 +115,7 @@ export const clienteSwagger: SwaggerModule = {
         },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Cliente: {

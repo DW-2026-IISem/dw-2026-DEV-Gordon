@@ -12,7 +12,7 @@ import { rolesSwagger } from '../features/auth/roles/roles.swagger';
 import { resourcesSwagger } from '../features/auth/resources/resources.swagger';
 import { roleUsersSwagger } from '../features/auth/role-users/role-users.swagger';
 import { resourceRolesSwagger } from '../features/auth/resource-roles/resource-roles.swagger';
-import { bearerSecurityScheme } from '../shared/http/swagger-security';
+import { bearerSecurityScheme, forbiddenResponse, unauthorizedResponse } from '../shared/http/swagger-security';
 import { sesionesSwagger } from '../features/auth/refresh-tokens/refresh-tokens.swagger';
 import { sessionSwagger } from '../features/auth/session/session.swagger';
 import { SwaggerModule } from './types';
@@ -26,13 +26,17 @@ const buildSpec = () => ({
     title: 'Norte Creativo API',
     version: '1.0.0',
     description:
-      'API REST de Norte Creativo (Express + TypeScript). Modalidades de acceso: OPEN (sin credencial), JWT y JWT + RBAC. Hoy: JWT + RBAC en usuarios, roles, recursos, asignaciones-rol y concesiones-rol; solo JWT en sesiones, perfil y permisos propios; OPEN en login, refresh y logout; el negocio sigue SIN AUTH hasta ISS-21.',
+      'API REST de Norte Creativo (Express + TypeScript). Modalidades de acceso: OPEN (login, refresh y logout, con security: []), JWT (perfil, permisos y sesiones propias) y JWT + RBAC (todo el negocio y la administración de seguridad). Pulsa Authorize e ingresa el access_token del login.',
   },
+  // Secure by default: toda operación exige bearerAuth salvo las OPEN, que lo anulan con security: [].
+  security: [{ bearerAuth: [] }],
   servers: [{ url: 'http://localhost:3012', description: 'Servidor local' }],
   tags: modules.flatMap((m) => m.tags),
   paths: Object.assign({}, ...modules.map((m) => m.paths)),
   components: {
     securitySchemes: { bearerAuth: bearerSecurityScheme },
+    // Respuestas reutilizables: las operaciones las referencian con $ref.
+    responses: { Unauthorized: unauthorizedResponse, Forbidden: forbiddenResponse },
     schemas: Object.assign({}, ...modules.map((m) => m.components.schemas)),
   },
 });

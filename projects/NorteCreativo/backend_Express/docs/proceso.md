@@ -1631,3 +1631,46 @@ ac 1
 
 ![alt text](images/proceso-1791342566323.png)
 
+## ISS - 21
+
+### OBJ
+
+**OBJ:** Al finalizar, todo el negocio de Norte Creativo exigirá token y concesión, la RN-05 se cumplirá de verdad y el backend quedará completo según el DoD del docente.
+
+### AC
+
+**AC:**
+- [x] **AC-1** Sin token, `GET /api/clientes` responde 401.
+- [x] **AC-2** `creativo` haciendo `POST /api/aprobaciones` responde 403, y `aprobador` responde 201 con su propio id como `aprobador_id`.
+- [x] **AC-3** Enviar `aprobador_id` en el body responde 400.
+- [x] **AC-4** `finanzas` puede leer clientes (200) pero no crearlos (403).
+- [x] **AC-5** Swagger muestra el botón Authorize, y login/refresh/logout aparecen sin candado.
+- [x] **AC-6** Un cuerpo JSON mal formado responde 400 en JSON, sin HTML ni rutas del servidor.
+- [x] **AC-7** `npm run db:seed` siembra primero seguridad y después negocio, sin errores.
+- [x] **AC-8** `bash scripts/smoke-rbac.sh` termina en verde y `npx tsc --noEmit` sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+la rn-05 dice que quien aprueba es el cliente aprobador y que la aprobacion queda a nombre de quien la hizo, ahora se cumple en dos partes, la primera es el permiso, solo el rol cliente_aprobador tiene concedido el post a aprobaciones en la matriz, entonces creativo y los demas reciben 403 en authorize, y la segunda es la identidad, el aprobador_id ya no lo manda el cliente, sale del usuario que authenticate dejo en la peticion a partir del token, y la columna es una fk a users, por eso aprobador_id no puede venir en el body, si viniera, cualquiera con permiso de aprobar podria aprobar a nombre de otro usuario y la aprobacion dejaria de ser prueba de quien la hizo, por eso si llega en el body se rechaza con 400 en vez de ignorarlo en silencio, asi el error se ve y no queda una aprobacion que parece de una persona y es de otra
+
+una peticion de post a aprobaciones entra por express y pasa primero por authenticate, que revisa el token y si falta o esta vencido responde 401, despues pasa por authorize, que busca una concesion activa de post /api/aprobaciones para los roles del usuario y si no hay responde 403, ya con permiso llega al controller, que valida el body con el dto de creacion, rechaza aprobador_id con 400 y toma el id del usuario autenticado, el controller llama al service, el service llama al repository y este registra la aprobacion y evalua el cierre del hito dentro de una sola transaccion, de modo que o se guardan la aprobacion y, si corresponde, el cierre del hito, o no se guarda nada, y al final el controller devuelve 201 con la aprobacion, si algo falla en el camino el errorHandling lo convierte en json con el codigo que corresponde y sin stack
+
+lo que queda fuera del rbac por endpoint es el ownership, o sea que el rbac solo responde si este rol puede llamar este endpoint, no si este usuario puede tocar este registro, entonces un cliente aprobador puede aprobar versiones de cualquier campaña y no solo de las de su cliente, y tampoco hay asignacion de tareas para limitar que creativo ve o edita, esto se documento como limitacion porque el alcance de este issue es rbac por endpoint segun el docente, y para cubrirlo habria que agregar una relacion entre usuarios y clientes o tareas y chequearla en cada service, que es otro diseño y otro issue, dejarlo escrito evita que parezca que el sistema ya aisla los datos por cliente cuando no lo hace
+
+ajuste: queda pendiente confirmar en el codigo que aprobador_id se rechaza con 400 antes de llegar al service y que el cierre del hito va en la misma transaccion que la aprobacion
+```
+
+salida:
+![alt text](images/proceso-1791345276352.png)
+![alt text](images/proceso-1791345285028.png)
+
+acs
+
+![alt text](images/proceso-1791345977114.png)
+
+![alt text](images/proceso-1791345997363.png)
+
+![alt text](images/proceso-1791346016719.png)

@@ -1,13 +1,43 @@
 ### Recursos — lectura (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
-### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
-### (usa 'finanzas' u otro username para probar el 403).
-@token = PEGA_AQUI_EL_TOKEN
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### Listar recursos activos -> 200 { recursos } (catálogo completo tras db:seed)
 GET {{baseUrl}}/recursos
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Un recurso -> 200 { recurso }
 GET {{baseUrl}}/recursos/1
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+### ===== RBAC por rol =====
+### finanzas NO tiene concesión sobre la administración de seguridad -> 403
+GET {{baseUrl}}/recursos
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}

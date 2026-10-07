@@ -3,6 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import routes from '../routes';
+import { bodyErrorHandler } from '../shared/http/body-error-handler';
 import { sequelize, testConnection } from '../database/db';
 import { setupSwagger } from '../swagger';
 import '../features/business/campanias/campania.associations';
@@ -33,6 +34,7 @@ export class App {
     this.middlewares();
     this.docs();
     this.routes();
+    this.errorHandling();
     void this.dbConnection();
   }
 
@@ -53,6 +55,11 @@ export class App {
 
   private routes(): void {
     this.app.use('/api', routes);
+  }
+
+  // Va al final: captura lo que fallan los middlewares y las rutas (JSON mal formado -> 400 en JSON, sin stack).
+  private errorHandling(): void {
+    this.app.use(bodyErrorHandler);
   }
 
   private async dbConnection(): Promise<void> {

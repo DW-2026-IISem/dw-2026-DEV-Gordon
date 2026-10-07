@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { ESTADOS_CAMPANIA } from './campania.model';
 
-const SIN_AUTH = 'SIN AUTH: este endpoint no requiere autenticación.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -30,17 +31,17 @@ const clienteInactivo = jsonResponse('El cliente está inactivo: no se crea camp
 // Los schemas Error, ValidationError, Message y Cliente los aporta el módulo de cliente.
 export const campaniaSwagger: SwaggerModule = {
   tags: [{ name: 'Campañas', description: `CRUD de campañas asociadas a un cliente activo. ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/campanias': {
       get: {
         tags: ['Campañas'],
-        summary: 'Listar campañas activas (SIN AUTH)',
+        summary: 'Listar campañas activas (JWT + RBAC)',
         description: `Devuelve solo las campañas con status "active". ${SIN_AUTH}`,
         responses: { '200': jsonResponse('Listado de campañas activas', 'CampaniaList') },
       },
       post: {
         tags: ['Campañas'],
-        summary: 'Crear campaña (SIN AUTH)',
+        summary: 'Crear campaña (JWT + RBAC)',
         description: `El cliente debe existir (404) y estar activo (409). ${SIN_AUTH}`,
         requestBody: jsonBody('CampaniaInput', 'Datos de la campaña'),
         responses: {
@@ -54,7 +55,7 @@ export const campaniaSwagger: SwaggerModule = {
     '/api/campanias/{id}': {
       get: {
         tags: ['Campañas'],
-        summary: 'Obtener una campaña con su cliente (SIN AUTH)',
+        summary: 'Obtener una campaña con su cliente (JWT + RBAC)',
         description: `Incluye el cliente asociado en la propiedad "cliente". ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -65,7 +66,7 @@ export const campaniaSwagger: SwaggerModule = {
       },
       put: {
         tags: ['Campañas'],
-        summary: 'Reemplazar una campaña completa (SIN AUTH)',
+        summary: 'Reemplazar una campaña completa (JWT + RBAC)',
         description: `cliente_id y nombre son obligatorios; descripcion omitida queda en null y status omitido en "active". El cliente debe existir (404) y estar activo (409). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('CampaniaInput', 'Representación completa de la campaña'),
@@ -78,7 +79,7 @@ export const campaniaSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Campañas'],
-        summary: 'Actualizar campos de una campaña (SIN AUTH)',
+        summary: 'Actualizar campos de una campaña (JWT + RBAC)',
         description: `Modifica solo los campos enviados; si se envía cliente_id se valida igual que en la creación. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('CampaniaPatch', 'Campos a modificar'),
@@ -91,7 +92,7 @@ export const campaniaSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Campañas'],
-        summary: 'Borrado físico de una campaña (SIN AUTH)',
+        summary: 'Borrado físico de una campaña (JWT + RBAC)',
         description: `Elimina la fila de la tabla campanias. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -105,7 +106,7 @@ export const campaniaSwagger: SwaggerModule = {
     '/api/campanias/{id}/deactivate': {
       patch: {
         tags: ['Campañas'],
-        summary: 'Borrado lógico de una campaña (SIN AUTH)',
+        summary: 'Borrado lógico de una campaña (JWT + RBAC)',
         description: `Cambia status a "inactive"; la campaña deja de aparecer en el listado. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -115,7 +116,7 @@ export const campaniaSwagger: SwaggerModule = {
         },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Campania: {

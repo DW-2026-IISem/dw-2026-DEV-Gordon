@@ -90,7 +90,7 @@ curl -s -w "\nHTTP %{http_code}\n" http://localhost:3012/api/sesion/perfil
 curl -s -w "\nHTTP %{http_code}\n" http://localhost:3012/api/permisos
 ```
 
-**Esperado:** perfil `HTTP 200` con `username":"admin"` y `roles` con `ADMIN`, sin `password`; permisos `"total":76` para `admin` (6 para `finanzas`); los dos últimos `HTTP 401`.
+**Esperado:** perfil `HTTP 200` con `username":"admin"` y `roles` con `ADMIN`, sin `password`; permisos `"total":75` para `admin` (76 recursos menos `POST /api/aprobaciones`, que solo tiene `CLIENTE_APROBADOR`) (6 para `finanzas`); los dos últimos `HTTP 401`.
 
 ### AC-6 — `npx tsc --noEmit` sin errores
 

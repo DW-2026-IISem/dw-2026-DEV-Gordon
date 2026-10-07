@@ -38,12 +38,14 @@ export class AprobacionesService {
     return toAprobacionResponse(aprobacion);
   }
 
-  private validar(body: CreateAprobacionDto): { versionId: number; aprobadorId: number; veredicto: (typeof VEREDICTOS)[number]; comentario: string | null } {
+  private validar(body: CreateAprobacionDto): { versionId: number; veredicto: (typeof VEREDICTOS)[number]; comentario: string | null } {
+    // RN-05: el aprobador es SIEMPRE el usuario autenticado; enviarlo en el body es un error del cliente.
+    if (Object.prototype.hasOwnProperty.call(body, 'aprobador_id')) {
+      throw new AppError(400, 'Error de validación', ['aprobador_id no se acepta en el body: lo toma el sistema del usuario autenticado (RN-05)']);
+    }
     const errores: string[] = [];
     const versionId = entero(body.version_entregable_id);
-    const aprobadorId = entero(body.aprobador_id);
     if (versionId === null) errores.push('version_entregable_id es requerido y debe ser un entero positivo');
-    if (aprobadorId === null) errores.push('aprobador_id es requerido y debe ser un entero positivo');
     if (typeof body.estado !== 'string' || !(VEREDICTOS as readonly string[]).includes(body.estado)) {
       errores.push(`estado debe ser uno de: ${VEREDICTOS.join(', ')}`);
     }
@@ -53,7 +55,6 @@ export class AprobacionesService {
     if (errores.length > 0) throw new AppError(400, 'Error de validación', errores);
     return {
       versionId: versionId!,
-      aprobadorId: aprobadorId!,
       veredicto: body.estado as (typeof VEREDICTOS)[number],
       comentario: typeof body.comentario === 'string' ? body.comentario : null,
     };
@@ -61,8 +62,9 @@ export class AprobacionesService {
 
   // CerrarHito: registra el veredicto y, si todos los entregables del hito quedan APROBADOS, cierra el hito.
   // Todo ocurre en una sola transacción (withTransaction); cualquier error revierte todo.
-  public async create(body: CreateAprobacionDto): Promise<CerrarHitoResponseDto> {
-    const { versionId, aprobadorId, veredicto, comentario } = this.validar(body);
+  // aprobadorId lo pone el controller desde req.auth (RN-05); nunca viene del body.
+  public async create(body: CreateAprobacionDto, aprobadorId: number): Promise<CerrarHitoResponseDto> {
+    const { versionId, veredicto, comentario } = this.validar(body);
 
     return withTransaction(async (t) => {
       const version = await this.versiones.findById(versionId, t);

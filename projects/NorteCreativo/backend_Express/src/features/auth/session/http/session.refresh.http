@@ -1,28 +1,58 @@
 ### Sesión — refresh con rotación y logout (OPEN: la credencial va en el body)
 @baseUrl = http://localhost:3012/api
-### Pega el refresh_token que devolvió el login (o el último refresh)
-@refresh = PEGA_AQUI_EL_REFRESH_TOKEN
 
-### Refresh -> 200 con un par NUEVO; el refresh enviado queda invalidado
+### ===== Login (envía primero esta petición; su refresh_token alimenta las de abajo) =====
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+### Refresh -> 200 con un par NUEVO; el refresh del login queda invalidado
 POST {{baseUrl}}/sesion/refresh
 Content-Type: application/json
 
 {
-  "refresh_token": "{{refresh}}"
+  "refresh_token": "{{loginAdmin.response.body.refresh_token}}"
 }
 
-### Reusar el MISMO refresh otra vez -> 401 "Refresh token ya usado" y se revoca toda la familia
+### Reusar el MISMO refresh del login -> 401 "Refresh token ya usado" y se revoca toda la familia
 POST {{baseUrl}}/sesion/refresh
 Content-Type: application/json
 
 {
-  "refresh_token": "{{refresh}}"
+  "refresh_token": "{{loginAdmin.response.body.refresh_token}}"
 }
 
-### Logout -> 200 { message } (idempotente); después ese refresh ya no sirve (401)
+###
+
+### ===== Logout: otro login para cerrar su sesión =====
+# @name loginParaLogout
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+### Logout -> 200 { message } (idempotente)
 POST {{baseUrl}}/sesion/logout
 Content-Type: application/json
 
 {
-  "refresh_token": "{{refresh}}"
+  "refresh_token": "{{loginParaLogout.response.body.refresh_token}}"
+}
+
+### Después del logout ese refresh ya no sirve -> 401
+POST {{baseUrl}}/sesion/refresh
+Content-Type: application/json
+
+{
+  "refresh_token": "{{loginParaLogout.response.body.refresh_token}}"
 }

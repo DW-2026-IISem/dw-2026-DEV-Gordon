@@ -1,11 +1,87 @@
-### Versión de entregable — consultas (SIN AUTH: ningún endpoint exige token)
+### Versión de entregable — consultas (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "cuentas",
+  "password": "Cuentas123!"
+}
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "creativo",
+  "password": "Creativo123!"
+}
+
+###
+
+# @name loginAprobador
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "aprobador",
+  "password": "Aprobador123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### Listar versiones activas
 GET {{baseUrl}}/version-entregables
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Obtener una versión por id (incluye su entregable)
 GET {{baseUrl}}/version-entregables/1
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Id inexistente -> 404
 GET {{baseUrl}}/version-entregables/999999
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+### ===== RBAC por rol =====
+### creativo lee versiones -> 200
+GET {{baseUrl}}/version-entregables
+Authorization: Bearer {{loginCreativo.response.body.access_token}}
+
+### finanzas NO tiene concesión sobre versiones -> 403
+GET {{baseUrl}}/version-entregables
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+
+### sin token -> 401
+GET {{baseUrl}}/version-entregables

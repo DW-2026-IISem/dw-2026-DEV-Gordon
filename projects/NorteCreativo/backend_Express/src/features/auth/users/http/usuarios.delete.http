@@ -1,13 +1,38 @@
 ### Usuarios — borrado (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
-### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
-### (usa 'finanzas' u otro username para probar el 403).
-@token = PEGA_AQUI_EL_TOKEN
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### Borrado lógico -> 200, status inactive (deja de salir en el listado)
 PATCH {{baseUrl}}/usuarios/2/deactivate
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Borrado físico -> 200 { message, id } (409 si tiene roles o sesiones asociados; 404 si no existe)
 DELETE {{baseUrl}}/usuarios/2
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}

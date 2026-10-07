@@ -1,12 +1,37 @@
 ### Usuarios — actualización (JWT + RBAC: requiere token). password y status se ignoran.
 @baseUrl = http://localhost:3012/api
-### Token de desarrollo: ejecuta  npx ts-node scripts/dev-token.ts admin  y pega aquí el resultado
-### (usa 'finanzas' u otro username para probar el 403).
-@token = PEGA_AQUI_EL_TOKEN
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### PUT: username y email obligatorios -> 200
 PUT {{baseUrl}}/usuarios/1
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 Content-Type: application/json
 
 {
@@ -16,7 +41,7 @@ Content-Type: application/json
 
 ### PUT sin email -> 400
 PUT {{baseUrl}}/usuarios/1
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 Content-Type: application/json
 
 {
@@ -25,7 +50,7 @@ Content-Type: application/json
 
 ### PATCH parcial -> 200 (409 si el email ya lo usa otro usuario)
 PATCH {{baseUrl}}/usuarios/1
-Authorization: Bearer {{token}}
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 Content-Type: application/json
 
 {

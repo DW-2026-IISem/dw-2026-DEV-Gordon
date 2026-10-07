@@ -8,7 +8,7 @@ Cliente → Campaña → Hito → Tarea → Entregable → VersionEntregable →
 
 Cada versión de un entregable se aprueba o se rechaza. Cuando **todos** los entregables de un hito tienen su **última versión** `APROBADA`, el hito se cierra solo (`estado: CERRADO`, `fecha_cierre`) dentro de una única transacción. **Ningún endpoint cierra un hito a mano**: `estado` y `fecha_cierre` en el body de `POST/PUT/PATCH /api/hitos` responden `400`.
 
-Las rutas de **administración de seguridad** (`usuarios`, `roles`, `recursos`, `asignaciones-rol`, `concesiones-rol`) exigen **JWT + RBAC** (ver «Acceso a la API»). Las rutas de **negocio** siguen **SIN AUTH** hasta ISS-21.
+Todas las rutas de **negocio** (`clientes`, `campanias`, `hitos`, `tareas`, `entregables`, `version-entregables`, `aprobaciones`) y de **administración de seguridad** (`usuarios`, `roles`, `recursos`, `asignaciones-rol`, `concesiones-rol`) exigen **JWT + RBAC**: token válido y una concesión activa para ese `(method, path)` (ver «Acceso a la API»). Solo el login, el refresh, el logout, `/api/health` y la documentación son abiertas.
 
 ## Requisitos y arranque
 
@@ -65,10 +65,10 @@ En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la de
 | **JWT** | `authenticate` | token válido y usuario activo | `401` |
 | **JWT + RBAC** | `authenticate` + `authorize` | token + concesión activa para el `(method, path)` | `401` / `403` |
 
-- Hoy en **JWT + RBAC**: `/api/usuarios`, `/api/roles`, `/api/recursos`, `/api/asignaciones-rol` y `/api/concesiones-rol`.
+- **JWT + RBAC** (`authenticate` + `authorize`): todo el negocio (`/api/clientes`, `/api/campanias`, `/api/hitos`, `/api/tareas`, `/api/entregables`, `/api/version-entregables`, `/api/aprobaciones`) y la administración de seguridad (`/api/usuarios`, `/api/roles`, `/api/recursos`, `/api/asignaciones-rol`, `/api/concesiones-rol`).
 - Hoy en **JWT** (solo `authenticate`): `/api/sesiones`, siempre filtrado por el usuario del token. Quedan fuera del catálogo de recursos porque no pasan por RBAC.
-- Hoy **OPEN**: `POST /api/sesion/login`, `/refresh` y `/logout`, `/api/health`, `/api/docs` y `/api/docs.json`, y todavía las rutas de negocio (se protegen en ISS-21).
-- Hoy en **JWT**: además de `/api/sesiones`, `GET /api/sesion/perfil` y `GET /api/permisos`.
+- **OPEN**: `POST /api/sesion/login`, `/refresh` y `/logout`, `/api/health`, `/api/docs` y `/api/docs.json`.
+- **JWT**: además de `/api/sesiones`, `GET /api/sesion/perfil` y `GET /api/permisos`.
 - `authenticate` (`src/features/auth/access/`): exige `Authorization: Bearer <token>`, verifica el JWT (HS256, `iss`, `aud`, `exp`) y **revalida el usuario en la base** en cada petición (inexistente o inactivo → `401`).
 - `authorize`: **deny by default**. Consulta en cada petición, **sin caché**, la cadena `users → role_users → roles → resource_roles → resources` con `status = active` en cada eslabón y compara con el patrón (`/api/usuarios/:id` casa con `/api/usuarios/5`). Sin concesión → `403`. Por eso dar o retirar una concesión (o un rol, o una asignación) surte efecto en la **siguiente petición**, sin reiniciar el servidor.
 
@@ -143,15 +143,53 @@ Leyenda: **L** lectura (`GET` listado y `GET /:id`) · **C** crear (`POST`) · *
 | tareas | LCUD | LCUD | L | — | — |
 | entregables | LCUD | L | LCU | L | — |
 | version-entregables | LCUD | L | LCU | L | — |
-| aprobaciones | L C | L | — | L C | — |
+| aprobaciones | L | L | — | L C | — |
 | usuarios, roles, recursos, asignaciones-rol, concesiones-rol | LCUD (en `asignaciones-rol` y `concesiones-rol`: L, C, retirar/revocar y reactivar) | — | — | — | — |
-| **Concesiones activas** | **76** | **29** | **16** | **11** | **6** |
+| **Concesiones activas** | **75** | **29** | **16** | **11** | **6** |
+
+**RN-05 (solo el cliente aprueba):** `POST /api/aprobaciones` lo tiene concedido **únicamente `CLIENTE_APROBADOR`**; por eso `ADMIN` (que por lo demás lo tiene todo) son 75 de los 76 recursos. El `aprobador_id` **nunca viene del body**: se toma del usuario autenticado (enviarlo responde `400`) y es una FK a `users`.
 
 Usuarios de laboratorio → rol: `admin` → ADMIN, `cuentas` → CUENTAS, `creativo` → CREATIVO, `aprobador` → CLIENTE_APROBADOR, `finanzas` → FINANZAS.
 
+## Credenciales de laboratorio
+
+Solo para práctica en local (se siembran con `npm run db:seed`; no las uses en ningún entorno real):
+
+| username | contraseña | rol | puede, por ejemplo… |
+|---|---|---|---|
+| `admin` | `Admin123!` | `ADMIN` | todo el negocio y la administración de seguridad, salvo aprobar |
+| `cuentas` | `Cuentas123!` | `CUENTAS` | clientes (L); campañas, hitos y tareas (CRUD); resto en lectura |
+| `creativo` | `Creativo123!` | `CREATIVO` | entregables y versiones (crear, leer, actualizar); lo demás en lectura |
+| `aprobador` | `Aprobador123!` | `CLIENTE_APROBADOR` | lectura y **registrar aprobaciones** |
+| `finanzas` | `Finanzas123!` | `FINANZAS` | solo lectura de clientes, campañas e hitos |
+
+Los archivos `.http` de cada feature traen un login por rol (`# @name loginAdmin`, `loginFinanzas`…): envía primero el login del rol que quieras y las peticiones siguientes reutilizan su `access_token`.
+
+## Smoke test de RBAC
+
+```bash
+bash scripts/smoke-rbac.sh        # con el servidor corriendo y la base sembrada; termina con código 0 si TODO pasa, 1 si algo falla
+```
+
+Prueba las 3 modalidades (OPEN: login; JWT: perfil y permisos; JWT + RBAC: 200 y 403 por rol), la RN-05 (el rol que no es `CLIENTE_APROBADOR` recibe `403`, `aprobador_id` en el body da `400` y el `aprobador_id` guardado es el del token) y el `400` en JSON ante un cuerpo mal formado. Crea una cadena de prueba y la desactiva al terminar; la aprobación de prueba queda registrada (las aprobaciones no se borran).
+
+## Errores del cuerpo de la petición
+
+Un JSON mal formado responde `400 {"message":"El cuerpo de la petición no es un JSON válido"}` y un cuerpo demasiado grande `413`, siempre en JSON y **sin stack trace ni rutas del servidor** (`src/shared/http/body-error-handler.ts`, registrado después de las rutas).
+
+## Limitaciones conocidas
+
+- **Sin ownership:** el RBAC es **por endpoint**. Un `CLIENTE_APROBADOR` puede aprobar cualquier versión y ver todas las campañas, no solo las suyas; no hay reglas de «es dueño del recurso».
+- **Sin `AsignacionTarea`:** no se modela qué usuario trabaja en qué tarea.
+- **Sin límite de intentos de login** ni bloqueo de cuenta.
+
+> **Si ya tenías la base creada** antes de la RN-05, `sync()` no añade la llave foránea de `aprobaciones.aprobador_id`. Con los datos actuales (todos los `aprobador_id` apuntan a usuarios existentes):
+> `ALTER TABLE aprobaciones ADD CONSTRAINT fk_aprobaciones_aprobador FOREIGN KEY (aprobador_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE;`
+> y luego `npm run db:seed` para que `ADMIN` pierda la concesión de `POST /api/aprobaciones`.
+
 ## CerrarHito: cómo funciona
 
-`POST /api/aprobaciones` con `{ "version_entregable_id", "estado": "APROBADA" | "RECHAZADA", "aprobador_id", "comentario"? }` ejecuta, en **una sola transacción**:
+`POST /api/aprobaciones` (solo `CLIENTE_APROBADOR`) con `{ "version_entregable_id", "estado": "APROBADA" | "RECHAZADA", "comentario"? }` —el aprobador es el usuario del token— ejecuta, en **una sola transacción**:
 
 1. Busca versión → entregable → tarea → hito (`404` si la versión no existe). El hito se lee con `LOCK.UPDATE` para serializar aprobaciones concurrentes.
 2. Si el hito no está `ABIERTO` → `409` (RN-06).
@@ -164,38 +202,46 @@ Respuesta `201`: `{ aprobacion, hito_cerrado, hito_id, fecha_cierre }`.
 
 ## Libreto de la demo
 
-Con el servidor levantado y una base **vacía** (los ids valen `1` porque son los primeros registros de cada tabla; si no, sustitúyelos por los que devuelva cada respuesta).
+Con el servidor levantado y una base **vacía** de datos de negocio (los ids valen `1` porque son los primeros registros de cada tabla; si no, sustitúyelos por los que devuelva cada respuesta). Las rutas exigen token: `admin` prepara los datos y `aprobador` (rol `CLIENTE_APROBADOR`) es el único que puede aprobar o rechazar.
 
 ```bash
 B=http://localhost:3012/api
 H='Content-Type: application/json'
 
-# 1. cliente -> campaña -> hito -> tarea -> entregable
-curl -s -X POST $B/clientes   -H "$H" -d '{"tipo_documento":"NIT","numero_documento":"900123","nombre":"Cafe Andino","email":"contacto@cafeandino.com"}'
-curl -s -X POST $B/campanias  -H "$H" -d '{"cliente_id":1,"nombre":"Lanzamiento otoño"}'
-curl -s -X POST $B/hitos      -H "$H" -d '{"campania_id":1,"nombre":"Piezas de redes"}'
-curl -s -X POST $B/tareas     -H "$H" -d '{"hito_id":1,"nombre":"Diseñar banner"}'
-curl -s -X POST $B/entregables -H "$H" -d '{"tarea_id":1,"total":1500}'
+# 0. login por rol (access_token)
+ADMIN=$(curl -s -X POST $B/sesion/login -H "$H" -d '{"identifier":"admin","password":"Admin123!"}' | node -pe "JSON.parse(require('fs').readFileSync(0)).access_token")
+APROB=$(curl -s -X POST $B/sesion/login -H "$H" -d '{"identifier":"aprobador","password":"Aprobador123!"}' | node -pe "JSON.parse(require('fs').readFileSync(0)).access_token")
+
+# 1. cliente -> campaña -> hito -> tarea -> entregable (admin)
+curl -s -X POST $B/clientes   -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"tipo_documento":"NIT","numero_documento":"900123","nombre":"Cafe Andino","email":"contacto@cafeandino.com"}'
+curl -s -X POST $B/campanias  -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"cliente_id":1,"nombre":"Lanzamiento otoño"}'
+curl -s -X POST $B/hitos      -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"campania_id":1,"nombre":"Piezas de redes"}'
+curl -s -X POST $B/tareas     -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"hito_id":1,"nombre":"Diseñar banner"}'
+curl -s -X POST $B/entregables -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"tarea_id":1,"total":1500}'
 
 # 2. version 1 (nace EN_REVISION)
-curl -s -X POST $B/version-entregables -H "$H" -d '{"entregable_id":1}'
+curl -s -X POST $B/version-entregables -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"entregable_id":1}'
 
-# 3. RECHAZADA -> 201, hito_cerrado:false; el hito sigue ABIERTO
-curl -s -X POST $B/aprobaciones -H "$H" -d '{"version_entregable_id":1,"estado":"RECHAZADA","aprobador_id":1,"comentario":"Ajustar colores"}'
-curl -s $B/hitos/1                    # estado: ABIERTO
+# 3. RECHAZADA por el aprobador -> 201, hito_cerrado:false; el hito sigue ABIERTO. aprobador_id = el usuario del token
+curl -s -X POST $B/aprobaciones -H "$H" -H "Authorization: Bearer $APROB" -d '{"version_entregable_id":1,"estado":"RECHAZADA","comentario":"Ajustar colores"}'
+curl -s $B/hitos/1 -H "Authorization: Bearer $ADMIN"        # estado: ABIERTO
 
 # 4. version 2 (numero_version 2, EN_REVISION)
-curl -s -X POST $B/version-entregables -H "$H" -d '{"entregable_id":1}'
+curl -s -X POST $B/version-entregables -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"entregable_id":1}'
 
 # 5. APROBADA -> 201, hito_cerrado:true; el hito queda CERRADO con fecha_cierre
-curl -s -X POST $B/aprobaciones -H "$H" -d '{"version_entregable_id":2,"estado":"APROBADA","aprobador_id":1,"comentario":"Cumple el brief"}'
-curl -s $B/hitos/1                    # estado: CERRADO
+curl -s -X POST $B/aprobaciones -H "$H" -H "Authorization: Bearer $APROB" -d '{"version_entregable_id":2,"estado":"APROBADA","comentario":"Cumple el brief"}'
+curl -s $B/hitos/1 -H "Authorization: Bearer $ADMIN"        # estado: CERRADO
 
 # 6. nueva aprobacion sobre ese hito -> 409 (RN-06), nada cambia
-curl -s -i -X POST $B/aprobaciones -H "$H" -d '{"version_entregable_id":2,"estado":"APROBADA","aprobador_id":1}'
+curl -s -i -X POST $B/aprobaciones -H "$H" -H "Authorization: Bearer $APROB" -d '{"version_entregable_id":2,"estado":"APROBADA"}'
+
+# RN-05: enviar aprobador_id en el body -> 400; aprobar con otro rol (incluido admin) -> 403
+curl -s -i -X POST $B/aprobaciones -H "$H" -H "Authorization: Bearer $APROB" -d '{"version_entregable_id":2,"estado":"APROBADA","aprobador_id":1}'
+curl -s -i -X POST $B/aprobaciones -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"version_entregable_id":2,"estado":"APROBADA"}'
 
 # Extra: nadie cierra un hito a mano -> 400
-curl -s -i -X PATCH $B/hitos/1 -H "$H" -d '{"estado":"CERRADO"}'
+curl -s -i -X PATCH $B/hitos/1 -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"estado":"CERRADO"}'
 ```
 
 Para ver que un hito con varios entregables **no** se cierra hasta que todos estén aprobados, crea un segundo entregable en la misma tarea (o en otra del mismo hito) con su versión 1 y aprueba solo una de las dos: la respuesta trae `hito_cerrado: false`.

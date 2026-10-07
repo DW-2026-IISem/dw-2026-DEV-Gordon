@@ -22,7 +22,7 @@ interface Regla {
   operaciones: Operacion[];
 }
 
-// ADMIN no tiene reglas: recibe TODO el catálogo.
+// ADMIN no tiene reglas: recibe TODO el catálogo salvo OPERACIONES_SOLO_DE_ROL (ver abajo).
 export const MATRIZ_ROLES: Record<string, Regla[] | 'TODO'> = {
   ADMIN: 'TODO',
   CUENTAS: [
@@ -55,12 +55,22 @@ export const MATRIZ_ROLES: Record<string, Regla[] | 'TODO'> = {
   ],
 };
 
+// RN-05: aprobar es una decisión del lado del cliente. POST /api/aprobaciones lo tiene concedido SOLO
+// CLIENTE_APROBADOR: ni siquiera ADMIN (que por lo demás lo tiene todo) puede registrar aprobaciones.
+const OPERACIONES_SOLO_DE_ROL: Record<string, { method: string; path: string }[]> = {
+  CLIENTE_APROBADOR: [{ method: 'POST', path: '/api/aprobaciones' }],
+};
+const reservada = (r: CatalogResource, roleName: string): boolean =>
+  Object.entries(OPERACIONES_SOLO_DE_ROL).some(
+    ([rol, ops]) => rol !== roleName && ops.some((o) => o.method === r.method && o.path === r.path)
+  );
+
 // Recursos del catálogo que corresponden a un rol. Falla si una regla apunta a una operación que no está en el
 // catálogo (así la matriz y el catálogo no pueden divergir en silencio).
 export function recursosDelRol(roleName: string): CatalogResource[] {
   const reglas = MATRIZ_ROLES[roleName];
   if (!reglas) throw new Error(`Rol sin entrada en la matriz: ${roleName}`);
-  if (reglas === 'TODO') return [...RESOURCE_CATALOG];
+  if (reglas === 'TODO') return RESOURCE_CATALOG.filter((r) => !reservada(r, roleName));
 
   const resultado: CatalogResource[] = [];
   for (const { base, operaciones } of reglas) {

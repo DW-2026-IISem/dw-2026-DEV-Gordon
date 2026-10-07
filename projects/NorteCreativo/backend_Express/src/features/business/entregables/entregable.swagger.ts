@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { ESTADOS_ENTREGABLE, STATUS_ENTREGABLE } from './entregable.model';
 
-const SIN_AUTH = 'SIN AUTH: este endpoint no requiere autenticación.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -30,17 +31,17 @@ const entregableOTareaNotFound = jsonResponse('Entregable o tarea no encontrado'
 // Los schemas Error, ValidationError, Message y Tarea los aportan los módulos de cliente y tarea.
 export const entregableSwagger: SwaggerModule = {
   tags: [{ name: 'Entregables', description: `CRUD de entregables de una tarea existente. ${SIN_AUTH}` }],
-  paths: {
+  paths: protegerPaths({
     '/api/entregables': {
       get: {
         tags: ['Entregables'],
-        summary: 'Listar entregables activos (SIN AUTH)',
+        summary: 'Listar entregables activos (JWT + RBAC)',
         description: `Devuelve solo los entregables con status "active". ${SIN_AUTH}`,
         responses: { '200': jsonResponse('Listado de entregables activos', 'EntregableList') },
       },
       post: {
         tags: ['Entregables'],
-        summary: 'Crear entregable (SIN AUTH)',
+        summary: 'Crear entregable (JWT + RBAC)',
         description: `La tarea debe existir (404). Si no se envía fecha_inicio se asigna la fecha actual; estado por defecto EN_PROCESO. ${SIN_AUTH}`,
         requestBody: jsonBody('EntregableInput', 'Datos del entregable'),
         responses: {
@@ -53,7 +54,7 @@ export const entregableSwagger: SwaggerModule = {
     '/api/entregables/{id}': {
       get: {
         tags: ['Entregables'],
-        summary: 'Obtener un entregable con su tarea (SIN AUTH)',
+        summary: 'Obtener un entregable con su tarea (JWT + RBAC)',
         description: `Incluye la tarea asociada en la propiedad "tarea". ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -64,7 +65,7 @@ export const entregableSwagger: SwaggerModule = {
       },
       put: {
         tags: ['Entregables'],
-        summary: 'Reemplazar un entregable completo (SIN AUTH)',
+        summary: 'Reemplazar un entregable completo (JWT + RBAC)',
         description: `tarea_id es obligatorio; los campos opcionales omitidos quedan en null, estado en "EN_PROCESO" y status en "active". La tarea debe existir (404). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('EntregableInput', 'Representación completa del entregable'),
@@ -76,7 +77,7 @@ export const entregableSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Entregables'],
-        summary: 'Actualizar campos de un entregable (SIN AUTH)',
+        summary: 'Actualizar campos de un entregable (JWT + RBAC)',
         description: `Modifica solo los campos enviados; si se envía tarea_id se valida su existencia. ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('EntregablePatch', 'Campos a modificar'),
@@ -88,7 +89,7 @@ export const entregableSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Entregables'],
-        summary: 'Borrado físico de un entregable (SIN AUTH)',
+        summary: 'Borrado físico de un entregable (JWT + RBAC)',
         description: `Elimina la fila de la tabla entregables. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -102,7 +103,7 @@ export const entregableSwagger: SwaggerModule = {
     '/api/entregables/{id}/deactivate': {
       patch: {
         tags: ['Entregables'],
-        summary: 'Borrado lógico de un entregable (SIN AUTH)',
+        summary: 'Borrado lógico de un entregable (JWT + RBAC)',
         description: `Cambia status a "inactive"; el entregable deja de aparecer en el listado. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -112,7 +113,7 @@ export const entregableSwagger: SwaggerModule = {
         },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       Entregable: {

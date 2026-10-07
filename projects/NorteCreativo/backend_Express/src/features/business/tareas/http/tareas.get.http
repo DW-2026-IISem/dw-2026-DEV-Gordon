@@ -1,11 +1,94 @@
-### Tarea — consultas (SIN AUTH: ningún endpoint exige token)
+### Tarea — consultas (JWT + RBAC: requiere token)
 @baseUrl = http://localhost:3012/api
+
+### ===== Login por rol (usuarios de laboratorio del seed; ver README) =====
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: clientes (L), campañas/hitos/tareas (CRUD) · creativo: entregables y versiones (C/R/U)
+### aprobador (CLIENTE_APROBADOR): lectura + POST /aprobaciones · finanzas: clientes, campañas e hitos (L)
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "admin",
+  "password": "Admin123!"
+}
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "cuentas",
+  "password": "Cuentas123!"
+}
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "creativo",
+  "password": "Creativo123!"
+}
+
+###
+
+# @name loginAprobador
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "aprobador",
+  "password": "Aprobador123!"
+}
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{
+  "identifier": "finanzas",
+  "password": "Finanzas123!"
+}
+
+###
+
 
 ### Listar tareas activas
 GET {{baseUrl}}/tareas
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Obtener una tarea por id (incluye su hito)
 GET {{baseUrl}}/tareas/1
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
 
 ### Id inexistente -> 404
 GET {{baseUrl}}/tareas/999999
+Authorization: Bearer {{loginAdmin.response.body.access_token}}
+
+### ===== RBAC por rol =====
+### creativo lee tareas -> 200
+GET {{baseUrl}}/tareas
+Authorization: Bearer {{loginCreativo.response.body.access_token}}
+
+### creativo NO puede crear tareas -> 403
+POST {{baseUrl}}/tareas
+Content-Type: application/json
+Authorization: Bearer {{loginCreativo.response.body.access_token}}
+
+{ "hito_id": 1, "nombre": "x" }
+
+### finanzas NO tiene concesión sobre tareas -> 403
+GET {{baseUrl}}/tareas
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+
+### sin token -> 401
+GET {{baseUrl}}/tareas

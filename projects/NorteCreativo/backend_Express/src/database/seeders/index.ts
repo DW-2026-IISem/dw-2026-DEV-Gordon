@@ -35,17 +35,19 @@ export class SeedersRunner {
 
     try {
       await sequelize.sync();
+      // 1) Seguridad: roles -> recursos -> usuarios -> asignaciones -> concesiones (el sistema queda autenticable).
+      await seedRoles();
+      await seedResources();
+      await seedUsers();
+      await seedRoleUsers();
+      await seedResourceRoles();
+      // 2) Negocio.
       await seedClientes(counts.clientes);
       await seedCampanias(counts.campanias);
       await seedHitos(counts.hitos);
       await seedTareas(counts.tareas);
       await seedEntregables(counts.entregables);
       await seedVersionEntregables();
-      await seedUsers();
-      await seedRoles();
-      await seedResources();
-      await seedRoleUsers();
-      await seedResourceRoles();
       console.log('Seeders finalizados');
     } finally {
       await sequelize.close();

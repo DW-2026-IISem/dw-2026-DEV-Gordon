@@ -1,7 +1,8 @@
 import { SwaggerModule } from '../../../swagger/types';
+import { protegerPaths } from '../../../shared/http/swagger-security';
 import { ESTADOS_VERSION, STATUS_VERSION } from './version-entregable.model';
 
-const SIN_AUTH = 'SIN AUTH: este endpoint no requiere autenticación.';
+const SIN_AUTH = "JWT + RBAC: requiere 'Authorization: Bearer <token>' y una concesión activa para esta operación (401 sin token válido, 403 sin concesión).";
 
 const jsonBody = (schema: string, description: string) => ({
   required: true,
@@ -38,17 +39,17 @@ export const versionEntregableSwagger: SwaggerModule = {
       description: `Versiones numeradas de un entregable. numero_version y estado los controla el sistema. ${SIN_AUTH}`,
     },
   ],
-  paths: {
+  paths: protegerPaths({
     '/api/version-entregables': {
       get: {
         tags: ['Versiones de entregable'],
-        summary: 'Listar versiones activas (SIN AUTH)',
+        summary: 'Listar versiones activas (JWT + RBAC)',
         description: `Devuelve solo las versiones con status "active". ${SIN_AUTH}`,
         responses: { '200': jsonResponse('Listado de versiones activas', 'VersionEntregableList') },
       },
       post: {
         tags: ['Versiones de entregable'],
-        summary: 'Crear versión de entregable (SIN AUTH)',
+        summary: 'Crear versión de entregable (JWT + RBAC)',
         description: `numero_version es automático (cantidad de versiones del entregable + 1) y el estado nace EN_REVISION. Enviar estado o numero_version responde 400. El entregable debe existir (404) y su hito no puede estar CERRADO (409, RN-06). ${SIN_AUTH}`,
         requestBody: jsonBody('VersionEntregableInput', 'Datos de la versión'),
         responses: {
@@ -62,7 +63,7 @@ export const versionEntregableSwagger: SwaggerModule = {
     '/api/version-entregables/{id}': {
       get: {
         tags: ['Versiones de entregable'],
-        summary: 'Obtener una versión con su entregable (SIN AUTH)',
+        summary: 'Obtener una versión con su entregable (JWT + RBAC)',
         description: `Incluye el entregable asociado en la propiedad "entregable". ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -73,7 +74,7 @@ export const versionEntregableSwagger: SwaggerModule = {
       },
       put: {
         tags: ['Versiones de entregable'],
-        summary: 'Reemplazar una versión (SIN AUTH)',
+        summary: 'Reemplazar una versión (JWT + RBAC)',
         description: `Reemplaza los campos editables: los opcionales omitidos quedan en null y status en "active". numero_version y estado no se pueden enviar (400) y entregable_id no se puede cambiar. Una versión APROBADA responde 409 (RN-04). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('VersionEntregablePatch', 'Representación de los campos editables'),
@@ -86,7 +87,7 @@ export const versionEntregableSwagger: SwaggerModule = {
       },
       patch: {
         tags: ['Versiones de entregable'],
-        summary: 'Actualizar campos de una versión (SIN AUTH)',
+        summary: 'Actualizar campos de una versión (JWT + RBAC)',
         description: `Modifica solo los campos enviados. estado o numero_version en el body responden 400. Una versión APROBADA responde 409 (RN-04). ${SIN_AUTH}`,
         parameters: [idParam],
         requestBody: jsonBody('VersionEntregablePatch', 'Campos a modificar'),
@@ -99,7 +100,7 @@ export const versionEntregableSwagger: SwaggerModule = {
       },
       delete: {
         tags: ['Versiones de entregable'],
-        summary: 'Borrado físico de una versión (SIN AUTH)',
+        summary: 'Borrado físico de una versión (JWT + RBAC)',
         description: `Elimina la fila de la tabla version_entregables. Una versión APROBADA responde 409 (RN-04), igual que una versión con aprobaciones asociadas. ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -113,7 +114,7 @@ export const versionEntregableSwagger: SwaggerModule = {
     '/api/version-entregables/{id}/deactivate': {
       patch: {
         tags: ['Versiones de entregable'],
-        summary: 'Borrado lógico de una versión (SIN AUTH)',
+        summary: 'Borrado lógico de una versión (JWT + RBAC)',
         description: `Cambia status a "inactive"; la versión deja de aparecer en el listado. Una versión APROBADA responde 409 (RN-04). ${SIN_AUTH}`,
         parameters: [idParam],
         responses: {
@@ -124,7 +125,7 @@ export const versionEntregableSwagger: SwaggerModule = {
         },
       },
     },
-  },
+  }),
   components: {
     schemas: {
       VersionEntregable: {

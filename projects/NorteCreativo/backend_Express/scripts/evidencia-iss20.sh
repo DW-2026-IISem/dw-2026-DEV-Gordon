@@ -7,6 +7,9 @@
 # Usa los usuarios de laboratorio del seed (admin/Admin123!, finanzas/Finanzas123!). La contraseña de MySQL se lee de .env.
 # Deja la base como estaba: borra las sesiones que crea (device_info = 'evidencia-iss20') y el usuario inactivo de prueba.
 set -u
+
+# Con el servidor apagado un curl a un puerto cerrado puede quedarse colgado: se limitan los tiempos.
+curl() { command curl --connect-timeout 5 --max-time 60 "$@"; }
 cd "$(dirname "$0")/.."
 
 BASE=${BASE:-http://localhost:3012/api}

@@ -6,6 +6,9 @@
 # Variables opcionales: BASE (url de la API), DB (nombre de la base), KEEP=1 (no borrar las sesiones de prueba).
 # La contraseña de MySQL se lee de .env (MYSQL_PASSWORD); no hay secretos en este archivo.
 set -u
+
+# Con el servidor apagado un curl a un puerto cerrado puede quedarse colgado: se limitan los tiempos.
+curl() { command curl --connect-timeout 5 --max-time 60 "$@"; }
 cd "$(dirname "$0")/.."
 
 BASE=${BASE:-http://localhost:3012/api}

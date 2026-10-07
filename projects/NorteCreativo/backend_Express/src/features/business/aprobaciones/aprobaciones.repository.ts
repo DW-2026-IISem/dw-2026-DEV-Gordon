@@ -6,7 +6,7 @@ import './aprobacion.associations';
 
 const MENSAJES = {
   unique: 'Registro duplicado',
-  foreignKey: 'La versión de entregable no es válida para esta operación',
+  foreignKey: 'La versión de entregable o el aprobador no son válidos para esta operación',
 };
 
 // La aprobación es un registro de auditoría: solo se lee y se crea (sin update ni delete).
