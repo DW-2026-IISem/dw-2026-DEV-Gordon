@@ -1,0 +1,143 @@
+### archivo de pruebas 
+
+@base = http://localhost:3012
+
+### NIVEL 1 — SIN AUTENTICACION 
+
+### P1 login sin token (exito, 200)
+# @name loginFinanzas
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+
+### P2 clientes sin token (falla, 401)
+GET {{base}}/api/clientes
+
+### P3 aprobaciones sin token (falla, 401)
+POST {{base}}/api/aprobaciones
+Content-Type: application/json
+
+{ "version_entregable_id": 1, "estado": "APROBADA" }
+
+### P4 login con contraseña mala (falla, 401)
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Incorrecta1!" }
+
+### P5 login con usuario inexistente (falla, 401 con el mismo mensaje)
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "noexiste", "password": "Finanzas123!" }
+
+### NIVEL 2 — SOLO AUTENTICACION 
+
+### P1 perfil con token valido (exito, 200)
+GET {{base}}/api/sesion/perfil
+Authorization: Bearer {{loginFinanzas.response.body.$.access_token}}
+
+### P2 clientes con token mal formado (falla, 401)
+GET {{base}}/api/clientes
+Authorization: Bearer abc.def.ghi
+
+### P3 perfil sin token (falla, 401)
+GET {{base}}/api/sesion/perfil
+
+### NIVEL 3 — JWT + REFRESH 
+
+### P1 refresh con el token del login (exito, 200 con par nuevo)
+# @name refresh1
+POST {{base}}/api/sesion/refresh
+Content-Type: application/json
+
+{ "refresh_token": "{{loginFinanzas.response.body.$.refresh_token}}" }
+
+### P2 clientes con el access nuevo (exito, 200)
+GET {{base}}/api/clientes
+Authorization: Bearer {{refresh1.response.body.$.access_token}}
+
+### P3 reusar el refresh original ya rotado (falla, 401)
+POST {{base}}/api/sesion/refresh
+Content-Type: application/json
+
+{ "refresh_token": "{{loginFinanzas.response.body.$.refresh_token}}" }
+
+### P4 login nuevo para probar logout
+# @name loginLogout
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+
+### P5 logout (exito, 200 con { "message": "Sesión cerrada" })
+POST {{base}}/api/sesion/logout
+Content-Type: application/json
+
+{ "refresh_token": "{{loginLogout.response.body.$.refresh_token}}" }
+
+### P6 refresh despues del logout (falla, 401)
+POST {{base}}/api/sesion/refresh
+Content-Type: application/json
+
+{ "refresh_token": "{{loginLogout.response.body.$.refresh_token}}" }
+
+### NIVEL 4 — JWT + REFRESH + RBAC
+
+### login finanzas (para nivel 4)
+# @name loginFin4
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+
+### login aprobador
+# @name loginAprobador
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "aprobador", "password": "Aprobador123!" }
+
+### login creativo
+# @name loginCreativo
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "creativo", "password": "Creativo123!" }
+
+### P1 finanzas lee clientes (exito, 200)
+GET {{base}}/api/clientes
+Authorization: Bearer {{loginFin4.response.body.$.access_token}}
+
+### P2 finanzas crea cliente (falla, 403)
+POST {{base}}/api/clientes
+Authorization: Bearer {{loginFin4.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "tipo_documento": "NIT", "numero_documento": "900123456", "nombre": "Cliente de prueba" }
+
+### P3 aprobador crea aprobacion (exito, 201 con su propio aprobador_id)
+POST {{base}}/api/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "version_entregable_id": 6, "estado": "APROBADA", "comentario": "Prueba de acceso RBAC" }
+
+### P4 creativo intenta aprobar (falla, 403)
+POST {{base}}/api/aprobaciones
+Authorization: Bearer {{loginCreativo.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "version_entregable_id": 6, "estado": "APROBADA" }
+
+### P5 finanzas lee aprobaciones (falla, 403)
+GET {{base}}/api/aprobaciones
+Authorization: Bearer {{loginFin4.response.body.$.access_token}}
+
+### P6 aprobador manda aprobador_id en el body (falla, 400)
+POST {{base}}/api/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "version_entregable_id": 6, "estado": "APROBADA", "aprobador_id": 1 }

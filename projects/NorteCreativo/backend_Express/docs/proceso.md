@@ -1674,3 +1674,919 @@ acs
 ![alt text](images/proceso-1791345997363.png)
 
 ![alt text](images/proceso-1791346016719.png)
+
+
+## Pruebas HTTP y Swagger
+
+### Tablas escogidas
+
+**`clientes`**: es la tabla base del negocio, todos los roles tienen alguna relación con ella y la matriz deja ver bien la diferencia entre leer y escribir, finanzas lee, pero no crea.
+
+**`aprobaciones`**: es donde vive la rn-05, Solo `CLIENTE_APROBADOR` puede crear y el `aprobador_id` sale del token, nunca del body.
+
+
+### Cómo se leen los cuatro niveles en este backend
+ 
+Desde ISS-21 **todas** las rutas de negocio son **JWT + RBAC** , lo que seria `authenticate` + `authorize`.
+
+Por eso, sobre `clientes` y `aprobaciones`, los niveles "sin autenticación" y "solo autenticación" se demuestran con el caso que falla con codigo (401), eso prueba entonces que las tablas no están abiertas. 
+
+El caso exitoso de esos niveles se demuestra en los endpoints que sí tienen esa modalidad.
+ 
+| Nivel | Modalidad | Quién responde | Endpoint del caso exitoso |
+|---|---|---|---|
+| 1. Sin autenticación | OPEN | nadie filtra | `POST /api/sesion/login` |
+| 2. Solo autenticación | JWT | `authenticate` (401) | `GET /api/sesion/perfil` |
+| 3. JWT + Refresh | JWT + refresh token rotado | `authenticate` + servicio de sesión | `POST /api/sesion/refresh` y luego `GET /api/clientes` |
+| 4. JWT + Refresh + RBAC | JWT + RBAC | `authenticate` (401) + `authorize` (403) | `GET /api/clientes`, `POST /api/aprobaciones` |
+
+### Preparacion
+
+Instalamos HTTP Client en VScode
+
+![alt text](images/proceso-1791947221884.png)
+
+Preparamos el archivo de pruebas HTTP
+
+![alt text](images/proceso-1791947606687.png)
+
+Encendemos el servidor en este caso en el puerto 3012
+
+![alt text](images/proceso-1791947625011.png)
+
+Comprobamos que responda el servidor
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3012/api/health
+```
+
+![alt text](images/proceso-1791947746583.png)
+
+### Pruebas HTTP - Nivel 1 Sin autenticacion
+
+**Prueba #1 login sin token**
+
+Codigo:
+
+```bash
+# @name loginFinanzas
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+```
+Damos clic en send request con http client y nos sale 
+
+Salida:
+
+![alt text](images/proceso-1791948265544.png)
+
+Nos da exitoso con codigo 200
+
+**Prueba #2 clientes sin token**
+
+Codigo:
+
+```bash
+GET {{base}}/api/clientes
+```
+Damos clic en send request con http client y nos sale 
+
+Salida:
+
+![alt text](images/proceso-1791948528898.png)
+
+Dice que nos falta el token bearer en la cacera con codigo 401
+
+**Prueba #3 aprobaciones sin token**
+
+Codigo:
+
+```bash
+POST {{base}}/api/aprobaciones
+Content-Type: application/json
+
+{ "version_entregable_id": 1, "estado": "APROBADA" }
+```
+Send client
+
+Salida:
+
+![alt text](images/proceso-1791948825812.png)
+
+Falta el token bearer en la cabecera autorizacion y da un codigo 401 nuevamente
+
+**Prueba #4 login con contraseña mala**
+
+Codigo:
+
+```bash
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Incorrecta1!" }
+```
+
+send client
+
+Salida:
+
+![alt text](images/proceso-1791949061127.png)
+
+Falla, error 401 y mensaje de credenciales invalidas
+
+**Prueba #5 login con un usuario inexistente**
+
+Codigo:
+
+```bash
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "noexiste", "password": "Finanzas123!" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791949159359.png)
+
+Error 401, mismo mensaje que el anterior
+
+### Pruebas HTTP - Nivel 2 Solo autenticacion 
+
+**Prueba #1 perfil con token valido**
+
+Codigo:
+
+```bash
+GET {{base}}/api/sesion/perfil
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+```
+
+Salida:
+
+![alt text](images/proceso-1791950326758.png)
+
+Exitoso, el perfil es finanzas con id 6 y es activo, da codigo 200
+
+**Prueba #2 clientes con token mal formado**
+
+Codigo:
+
+```bash
+GET {{base}}/api/clientes
+Authorization: Bearer abc.def.ghi
+```
+
+Salida:
+
+![alt text](images/proceso-1791950443275.png)
+
+Token invalido o vencido, dando error 401
+
+**Prueba #3 perfil sin token**
+
+Cdigo:
+
+```bash
+GET {{base}}/api/clientes
+Authorization: Bearer abc.def.ghi
+```
+
+Salida:
+
+![alt text](images/proceso-1791950479211.png)
+
+Codigo error 401, falta el token bearer
+
+### Pruebas HTTP - Nivel 3 JWT + REFRESH
+
+**Prueba #1 refresh con el token del login**
+
+Codigo:
+
+```bash
+POST {{base}}/api/sesion/refresh
+Content-Type: application/json
+
+{ "refresh_token": "{{loginFinanzas.response.body.$.refresh_token}}" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791950618810.png)
+
+Exitoso, codigo 200 y nos arroja el token
+
+**Prueba #2 clientes con el access nuevo**
+
+Codigo:
+
+```bash
+GET {{base}}/api/clientes
+Authorization: Bearer {{refresh1.response.body.$.access_token}}
+```
+
+Salida:
+
+```bash
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 5719
+ETag: W/"1657-v/f/bL9fSkGyINYxkQRPKG4XEiM"
+Date: Wed, 14 Oct 2026 04:04:34 GMT
+Connection: close
+
+{
+  "clientes": [
+    {
+      "id": 1,
+      "tipo_documento": "NIT",
+      "numero_documento": "603091753",
+      "nombre": "Benítez Alcántar Corona Olivares e Hijos",
+      "telefono": "3787631802",
+      "email": "carles.gaytanzamudio@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 2,
+      "tipo_documento": "NIT",
+      "numero_documento": "354263241",
+      "nombre": "Benavídez Elizondo, Gómez Abeyta y Moreno Barrientos Asociados",
+      "telefono": "3240304733",
+      "email": "laura.avilabernal@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 3,
+      "tipo_documento": "CC",
+      "numero_documento": "9825773713",
+      "nombre": "María del Carmen Vergara Partida",
+      "telefono": "3952279069",
+      "email": "silvia_trevinoalvarado@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 4,
+      "tipo_documento": "NIT",
+      "numero_documento": "389548204",
+      "nombre": "Otero Barreto Gracia Posada e Hijos",
+      "telefono": "3374685146",
+      "email": "cecilia_romorivas@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 5,
+      "tipo_documento": "NIT",
+      "numero_documento": "306513233",
+      "nombre": "Cárdenas Vargas, Orellana Lucero y Armendáriz Valentín Asociados",
+      "telefono": "3772121272",
+      "email": "norma.pugaledesma@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 6,
+      "tipo_documento": "NIT",
+      "numero_documento": "169686020",
+      "nombre": "Haro Mayorga, Loera Robledo y Montenegro Valencia Asociados",
+      "telefono": "3820823312",
+      "email": "hernan.maganaprado@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 7,
+      "tipo_documento": "NIT",
+      "numero_documento": "962596410",
+      "nombre": "Rendón Garica S.A.",
+      "telefono": "3563696304",
+      "email": "felipe23@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 8,
+      "tipo_documento": "NIT",
+      "numero_documento": "534785461",
+      "nombre": "Ponce Solano Chavarría Tejada Hermanos",
+      "telefono": "3142567601",
+      "email": "jorgeluis52@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 9,
+      "tipo_documento": "CC",
+      "numero_documento": "3811230224",
+      "nombre": "Carlos Chávez Terrazas",
+      "telefono": "3255262039",
+      "email": "anamaria.urrutiagaribay@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 10,
+      "tipo_documento": "NIT",
+      "numero_documento": "604835095",
+      "nombre": "Gallegos Valladares S.A.",
+      "telefono": "3848925807",
+      "email": "clemente_serratomarin65@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 11,
+      "tipo_documento": "NIT",
+      "numero_documento": "428043813",
+      "nombre": "Pedraza Becerra Briseño Vélez S.A.",
+      "telefono": "3716009448",
+      "email": "julia.benavidessolorio@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 12,
+      "tipo_documento": "NIT",
+      "numero_documento": "747776287",
+      "nombre": "Chávez Marín y Saldivar Cortés",
+      "telefono": "3914697913",
+      "email": "marcela.enriquezaragon@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 13,
+      "tipo_documento": "NIT",
+      "numero_documento": "236710274",
+      "nombre": "Collazo Terrazas, Verduzco Ávila y Quintanilla Palacios Asociados",
+      "telefono": "3657643461",
+      "email": "horacio_cadenaquezada23@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 14,
+      "tipo_documento": "CC",
+      "numero_documento": "7004609094",
+      "nombre": "Juana Morales Gálvez",
+      "telefono": "3625752260",
+      "email": "mateo86@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 15,
+      "tipo_documento": "NIT",
+      "numero_documento": "369627142",
+      "nombre": "Córdova Núñez S.A.",
+      "telefono": "3287704437",
+      "email": "esperanza.delrioguardado@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 16,
+      "tipo_documento": "NIT",
+      "numero_documento": "498477877",
+      "nombre": "Arenas Díaz Urbina Márquez Hermanos",
+      "telefono": "3050922663",
+      "email": "guillermo_villasenorcolon17@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 17,
+      "tipo_documento": "NIT",
+      "numero_documento": "916202204",
+      "nombre": "Roldán Riojas e Hijos",
+      "telefono": "3266879832",
+      "email": "mariana.medranorivas69@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 18,
+      "tipo_documento": "NIT",
+      "numero_documento": "433360514",
+      "nombre": "Negrete Salas Hermanos",
+      "telefono": "3245036470",
+      "email": "benito_archuletafajardo@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 19,
+      "tipo_documento": "NIT",
+      "numero_documento": "294370943",
+      "nombre": "Deleón Ojeda Hermanos",
+      "telefono": "3117376250",
+      "email": "alejandro.raelmaya@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 20,
+      "tipo_documento": "NIT",
+      "numero_documento": "426375888",
+      "nombre": "Hurtado Escamilla Villanueva Armendáriz Hermanos",
+      "telefono": "3334170927",
+      "email": "gerardo_valdesguajardo65@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 22,
+      "tipo_documento": "NIT",
+      "numero_documento": "700111",
+      "nombre": "Cliente Prueba",
+      "telefono": null,
+      "email": null,
+      "status": "active",
+      "createdAt": "2026-10-04T23:40:57.000Z",
+      "updatedAt": "2026-10-04T23:40:57.000Z"
+    }
+  ]
+}
+```
+
+Exitoso, codigo 200 y nos arroja toda la lista de clientes que tenemos
+
+**Prueba #3 reusar el refresh original ya rotado**
+
+Codigo:
+
+```bash
+POST {{base}}/api/sesion/refresh
+Content-Type: application/json
+
+{ "refresh_token": "{{loginFinanzas.response.body.$.refresh_token}}" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791950819014.png)
+
+Falla con codigo 401 y mensaje de que el token ya fue usado y la sesion se revoco
+
+**Prueba #4 login nuevo para probar logout**
+
+Codigo:
+
+```bash
+# @name loginLogout
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791950871701.png)
+
+**Prueba #5 logout**
+
+Codigo:
+
+```bash
+POST {{base}}/api/sesion/logout
+Content-Type: application/json
+
+{ "refresh_token": "{{loginLogout.response.body.$.refresh_token}}" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791950957662.png)
+
+Codigo 200, sesion cerrada
+
+**Prueba #6 refresh despues del logout**
+
+Codigo:
+
+```bash
+POST {{base}}/api/sesion/refresh
+Content-Type: application/json
+
+{ "refresh_token": "{{loginLogout.response.body.$.refresh_token}}" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791951007954.png)
+
+Token ya usado y sesion revocada con error 401
+
+### Pruebas HTTP - Nivel 4 JWT + REFRESH + RBAC
+
+Antes de las pruebas, debemos logearnos con los 3 roles que usaremos, finanzas, aprobador y creativo
+
+Login Finanzas
+
+Codigo:
+
+```bash
+# @name loginFin4
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+```
+![alt text](images/proceso-1791951336754.png)
+
+Login aprobador
+
+```bash
+# @name loginAprobador
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "aprobador", "password": "Aprobador123!" }
+```
+
+![alt text](images/proceso-1791951360833.png)
+
+Login Creativo
+
+```bash
+# @name loginCreativo
+POST {{base}}/api/sesion/login
+Content-Type: application/json
+
+{ "identifier": "creativo", "password": "Creativo123!" }
+```
+
+![alt text](images/proceso-1791951413586.png)
+
+**Prueba #1 finanzas lee clientes**
+
+Codigo:
+
+```bash
+GET {{base}}/api/clientes
+Authorization: Bearer {{loginFin4.response.body.$.access_token}}
+```
+
+Salida: 
+```bash
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 5719
+ETag: W/"1657-v/f/bL9fSkGyINYxkQRPKG4XEiM"
+Date: Wed, 14 Oct 2026 04:17:33 GMT
+Connection: close
+
+{
+  "clientes": [
+    {
+      "id": 1,
+      "tipo_documento": "NIT",
+      "numero_documento": "603091753",
+      "nombre": "Benítez Alcántar Corona Olivares e Hijos",
+      "telefono": "3787631802",
+      "email": "carles.gaytanzamudio@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 2,
+      "tipo_documento": "NIT",
+      "numero_documento": "354263241",
+      "nombre": "Benavídez Elizondo, Gómez Abeyta y Moreno Barrientos Asociados",
+      "telefono": "3240304733",
+      "email": "laura.avilabernal@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 3,
+      "tipo_documento": "CC",
+      "numero_documento": "9825773713",
+      "nombre": "María del Carmen Vergara Partida",
+      "telefono": "3952279069",
+      "email": "silvia_trevinoalvarado@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 4,
+      "tipo_documento": "NIT",
+      "numero_documento": "389548204",
+      "nombre": "Otero Barreto Gracia Posada e Hijos",
+      "telefono": "3374685146",
+      "email": "cecilia_romorivas@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 5,
+      "tipo_documento": "NIT",
+      "numero_documento": "306513233",
+      "nombre": "Cárdenas Vargas, Orellana Lucero y Armendáriz Valentín Asociados",
+      "telefono": "3772121272",
+      "email": "norma.pugaledesma@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 6,
+      "tipo_documento": "NIT",
+      "numero_documento": "169686020",
+      "nombre": "Haro Mayorga, Loera Robledo y Montenegro Valencia Asociados",
+      "telefono": "3820823312",
+      "email": "hernan.maganaprado@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 7,
+      "tipo_documento": "NIT",
+      "numero_documento": "962596410",
+      "nombre": "Rendón Garica S.A.",
+      "telefono": "3563696304",
+      "email": "felipe23@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 8,
+      "tipo_documento": "NIT",
+      "numero_documento": "534785461",
+      "nombre": "Ponce Solano Chavarría Tejada Hermanos",
+      "telefono": "3142567601",
+      "email": "jorgeluis52@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 9,
+      "tipo_documento": "CC",
+      "numero_documento": "3811230224",
+      "nombre": "Carlos Chávez Terrazas",
+      "telefono": "3255262039",
+      "email": "anamaria.urrutiagaribay@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 10,
+      "tipo_documento": "NIT",
+      "numero_documento": "604835095",
+      "nombre": "Gallegos Valladares S.A.",
+      "telefono": "3848925807",
+      "email": "clemente_serratomarin65@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 11,
+      "tipo_documento": "NIT",
+      "numero_documento": "428043813",
+      "nombre": "Pedraza Becerra Briseño Vélez S.A.",
+      "telefono": "3716009448",
+      "email": "julia.benavidessolorio@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 12,
+      "tipo_documento": "NIT",
+      "numero_documento": "747776287",
+      "nombre": "Chávez Marín y Saldivar Cortés",
+      "telefono": "3914697913",
+      "email": "marcela.enriquezaragon@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 13,
+      "tipo_documento": "NIT",
+      "numero_documento": "236710274",
+      "nombre": "Collazo Terrazas, Verduzco Ávila y Quintanilla Palacios Asociados",
+      "telefono": "3657643461",
+      "email": "horacio_cadenaquezada23@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 14,
+      "tipo_documento": "CC",
+      "numero_documento": "7004609094",
+      "nombre": "Juana Morales Gálvez",
+      "telefono": "3625752260",
+      "email": "mateo86@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 15,
+      "tipo_documento": "NIT",
+      "numero_documento": "369627142",
+      "nombre": "Córdova Núñez S.A.",
+      "telefono": "3287704437",
+      "email": "esperanza.delrioguardado@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 16,
+      "tipo_documento": "NIT",
+      "numero_documento": "498477877",
+      "nombre": "Arenas Díaz Urbina Márquez Hermanos",
+      "telefono": "3050922663",
+      "email": "guillermo_villasenorcolon17@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 17,
+      "tipo_documento": "NIT",
+      "numero_documento": "916202204",
+      "nombre": "Roldán Riojas e Hijos",
+      "telefono": "3266879832",
+      "email": "mariana.medranorivas69@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 18,
+      "tipo_documento": "NIT",
+      "numero_documento": "433360514",
+      "nombre": "Negrete Salas Hermanos",
+      "telefono": "3245036470",
+      "email": "benito_archuletafajardo@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 19,
+      "tipo_documento": "NIT",
+      "numero_documento": "294370943",
+      "nombre": "Deleón Ojeda Hermanos",
+      "telefono": "3117376250",
+      "email": "alejandro.raelmaya@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 20,
+      "tipo_documento": "NIT",
+      "numero_documento": "426375888",
+      "nombre": "Hurtado Escamilla Villanueva Armendáriz Hermanos",
+      "telefono": "3334170927",
+      "email": "gerardo_valdesguajardo65@example.com",
+      "status": "active",
+      "createdAt": "2026-09-29T20:46:40.000Z",
+      "updatedAt": "2026-09-29T20:46:40.000Z"
+    },
+    {
+      "id": 22,
+      "tipo_documento": "NIT",
+      "numero_documento": "700111",
+      "nombre": "Cliente Prueba",
+      "telefono": null,
+      "email": null,
+      "status": "active",
+      "createdAt": "2026-10-04T23:40:57.000Z",
+      "updatedAt": "2026-10-04T23:40:57.000Z"
+    }
+  ]
+}
+```
+Nos da 200 y la lista de clientes desde la vista de finanzas
+
+
+**Prueba #2 finanzas crea cliente**
+
+Codigo:
+
+```bash
+POST {{base}}/api/clientes
+Authorization: Bearer {{loginFin4.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "tipo_documento": "NIT", "numero_documento": "900123456", "nombre": "Cliente de prueba" }
+```
+
+Salida: 
+
+![alt text](images/proceso-1791951549695.png)
+
+Error 403, falla, no autorizado y sin consesion
+
+**Prueba #3 aprobador crea aprobacion**
+
+Codigo:
+
+```bash
+POST {{base}}/api/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "version_entregable_id": 6, "estado": "APROBADA", "comentario": "Prueba de acceso RBAC" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791951785871.png)
+
+Codigo 201, con aprobacion de id 8 del hito con id 1
+
+**Prueba #4 creativo intenta aprobar**
+
+Codigo:
+
+```bash
+POST {{base}}/api/aprobaciones
+Authorization: Bearer {{loginCreativo.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "version_entregable_id": 6, "estado": "APROBADA" }
+```
+
+Salida:
+
+![alt text](images/proceso-1791951863200.png)
+
+Error 403, no autorizado y sin consecion
+
+**Prueba #5 creativo intenta aprobar**
+
+Codigo:
+```bash
+GET {{base}}/api/aprobaciones
+Authorization: Bearer {{loginFin4.response.body.$.access_token}}
+```
+
+Salida:
+
+![alt text](images/proceso-1791952001747.png)
+
+Error 403, el creativo no puede aprobar ya que no es de el, no tiene consecion
+
+**Prueba #6 aprobador manda aprobador_id en el body**
+
+Codigo:
+
+```bash
+POST {{base}}/api/aprobaciones
+Authorization: Bearer {{loginAprobador.response.body.$.access_token}}
+Content-Type: application/json
+
+{ "version_entregable_id": 6, "estado": "APROBADA", "aprobador_id": 1 }
+```
+
+Salida:
+
+![alt text](images/proceso-1791952196594.png)
+
+Error 400, no se acepta id en el body, rn-05
