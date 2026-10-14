@@ -4,6 +4,31 @@
 ### HERRAMIENTAS: Claude Code
 ---
 
+## Índice
+
+- [ISS - 01](#iss---01)
+- [ISS - 02](#iss---02)
+- [ISS - 03](#iss---03)
+- [ISS - 04](#iss---04)
+- [ISS - 05](#iss---05)
+- [ISS - 06](#iss---06)
+- [ISS - 07](#iss---07)
+- [ISS - 08](#iss---08)
+- [ISS - 09](#iss---09)
+- [ISS - 10](#iss---10)
+- [ISS - 11](#iss---11)
+- [ISS - 12](#iss---12)
+- [ISS - 13](#iss---13)
+- [ISS - 14](#iss---14)
+- [ISS - 15](#iss---15)
+- [ISS - 16](#iss---16)
+- [ISS - 17](#iss---17)
+- [ISS - 18](#iss---18)
+- [ISS - 19](#iss---19)
+- [ISS - 20](#iss---20)
+- [ISS - 21](#iss---21)
+- [Pruebas HTTP y Swagger](#pruebas-http-y-swagger)
+
 
 ## FASE 0 - REQUISITOS PREVIOS Y PREPARACION
 
@@ -2590,3 +2615,32 @@ Salida:
 ![alt text](images/proceso-1791952196594.png)
 
 Error 400, no se acepta id en el body, rn-05
+
+### 1. Resumen de resultados de pruebas
+
+Se ejecutaron **20 pruebas numeradas** en el orden definido en `docs/pruebas/pruebas.http`.
+Los tres logins del nivel 4 se utilizaron como preparación y no se contabilizan como
+pruebas adicionales.
+
+| # | Nivel | Endpoint / caso | Tipo | Esperado | Obtenido | OK |
+|---:|---|---|---|---|---|:---:|
+| 1 | Sin autenticación | `POST /api/sesion/login` | éxito | 200 + tokens | 200 + tokens | si |
+| 2 | Sin autenticación | `GET /api/clientes` | falla | 401 | 401 por falta de token de autorización | si |
+| 3 | Sin autenticación | `POST /api/aprobaciones` | falla | 401 | 401 por falta de token de autorización | si |
+| 4 | Sin autenticación | login con contraseña incorrecta | falla | 401 genérico | 401, credenciales inválidas | si |
+| 5 | Sin autenticación | login con usuario inexistente | falla | 401 genérico | 401, mismo mensaje que la prueba 4 | si |
+| 6 | Solo autenticación | `GET /api/sesion/perfil` con token válido | éxito | 200 | 200, perfil de `finanzas` activo | si |
+| 7 | Solo autenticación | `GET /api/clientes` con token mal formado | falla | 401 | 401, token inválido o vencido | si |
+| 8 | Solo autenticación | `GET /api/sesion/perfil` sin token | falla | 401 | 401 por falta de token de autorización | si |
+| 9 | JWT + Refresh | `POST /api/sesion/refresh` con token del login | éxito | 200 + nuevo par de tokens | 200 + nuevo token | si |
+| 10 | JWT + Refresh | `GET /api/clientes` con el access token nuevo | éxito | 200 | 200 + lista de clientes | si |
+| 11 | JWT + Refresh | reutilizar el refresh original rotado | falla | 401 | 401, token ya usado y sesión revocada | si |
+| 12 | JWT + Refresh | login nuevo para probar logout | éxito | 200 + tokens | 200 + tokens | si |
+| 13 | JWT + Refresh | `POST /api/sesion/logout` | éxito | 200 + sesión cerrada | 200, sesión cerrada | si |
+| 14 | JWT + Refresh | refresh después del logout | falla | 401 | 401, token ya usado y sesión revocada | si |
+| 15 | JWT + Refresh + RBAC | `finanzas` — `GET /api/clientes` | éxito | 200 | 200 + lista de clientes | si |
+| 16 | JWT + Refresh + RBAC | `finanzas` — `POST /api/clientes` | falla | 403 | 403, no autorizado sin concesión | si |
+| 17 | JWT + Refresh + RBAC | `aprobador` — `POST /api/aprobaciones` | éxito | 201 + su `aprobador_id` | 201, aprobación creada | si |
+| 18 | JWT + Refresh + RBAC | `creativo` — `POST /api/aprobaciones` | falla | 403 | 403, no autorizado sin concesión | si |
+| 19 | JWT + Refresh + RBAC | `finanzas` — `GET /api/aprobaciones` | falla | 403 | 403, acceso denegado | si |
+| 20 | JWT + Refresh + RBAC | `aprobador` con `aprobador_id` en el body | falla | 400 | 400, no se acepta `aprobador_id` en el body (RN-05) | si |
