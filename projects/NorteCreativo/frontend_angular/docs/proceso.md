@@ -1,0 +1,1026 @@
+## PROCESO.MD
+### BITACORA GENERAL DE LA CONSTRUCCION DEL FRONTEND ANGULAR DE NORTE CREATIVO
+### ESTUDIANTE: CARLOS H. ZARATE
+### HERRAMIENTAS: Claude Code
+---
+
+## Índice
+
+- [ISS - 00](#iss---00)
+- [ISS - 01](#iss---01)
+- [ISS - 02](#iss---02)
+- [ISS - 03](#iss---03)
+- [ISS - 04](#iss---04)
+- [ISS - 05](#iss---05)
+- [ISS - 06](#iss---06)
+- [ISS - 07](#iss---07)
+- [ISS - 08](#iss---08)
+- [ISS - 09](#iss---09)
+- [ISS - 10](#iss---10)
+- [ISS - 11](#iss---11)
+
+
+## FASE 0 - REQUISITOS PREVIOS Y PREPARACION
+
+Empezamos verificando las versiones de nodejs, npm y angular cli que tenemos en el wsl, la guia del docente pide node 22 o superior, npm 10 o superior y angular cli 22, el frontend se crea con ng new dentro de projects/NorteCreativo/frontend, que solo tiene la carpeta docs, y consume el backend_Express de la fase anterior, en el puerto 3012 y con la base norte_creativo_express.
+
+Organizamos los ISS igual que la guia del docente, del ISS-00 al ISS-11, pero con el dominio de norte creativo, el mismo mapeo del backend: tipo de producto pasa a ser campaña, producto pasa a ser hito y la venta transaccional pasa a ser la aprobacion que cierra el hito. Quedan asi: ISS-00 requisitos, ISS-01 bootstrap de angular con tailwind y primeng, ISS-02 nucleo (environment, modelos, servicios, sessionstore, directiva de permisos y shell), ISS-03 clientes, ISS-04 campañas, ISS-05 hitos y tareas, ISS-06 entregables y versiones, ISS-07 aprobaciones, dashboard y cierre de la fase i, ISS-08 login con jwt y refresh, ISS-09 guards y rbac en la ui, ISS-10 administracion del rbac e ISS-11 build y calidad. Facturacion queda por fuera.
+
+La guia construye la fase i contra el backend antes de que tuviera los middlewares de auth, pero nuestro backend ya tiene jwt y rbac en todas las rutas, entonces en el ISS-00 le agregamos el interruptor AUTH_ENABLED que usa el docente en su sitio, con false las rutas de negocio quedan abiertas para construir las pantallas sin login, y en el front requireAuth va en false en los dos environments, en la fase ii los dos vuelven a true. La unica ruta de negocio que no se abre es post /api/aprobaciones, porque por la rn-05 el aprobador sale del token.
+
+Seguimos con claude code via cli, sin skills, con el modelo Sonnet 5.5 en esfuerzo alto, y los commits los hago yo despues de verificar cada ac.
+
+Comandos:
+```bash
+node -v && npm -v && npx @angular/cli@22 version
+cd projects/NorteCreativo/backend_Express && npm run db:seed && npm run dev
+ls -A projects/NorteCreativo/frontend
+```
+
+Salida:
+<!-- pegar captura de versiones, backend arriba y carpeta frontend solo con docs -->
+
+## FASE 1 - FUNDAMENTOS Y BUSINESS (SIN LOGIN)
+
+## ISS - 00
+
+### OBJ
+
+**OBJ:** Al finalizar, el equipo tendrá Node, npm y Angular CLI 22 verificados, el backend Express de Norte Creativo sembrado y respondiendo en el 3012, y un modo práctica para construir la Fase I del frontend sin login.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `node -v` ≥ 22, `npm -v` ≥ 10 y `npx @angular/cli@22 version` muestra Angular CLI 22.x.
+- [ ] **AC-2** `npm run db:seed && npm run dev` deja el 3012 escuchando con la base sincronizada.
+- [ ] **AC-3** Con `AUTH_ENABLED=true`, `curl -i localhost:3012/api/clientes` responde 401; con `AUTH_ENABLED=false` responde 200 con `{ clientes }`.
+- [ ] **AC-4** Con `AUTH_ENABLED=false`, `GET /api/usuarios` y `POST /api/aprobaciones` sin token siguen en 401.
+- [ ] **AC-5** Con `AUTH_ENABLED=true`, el login de `admin` devuelve solo el par de tokens, y `GET /api/permisos` con ese token devuelve `total: 75`; con `finanzas`, `total: 6`.
+- [ ] **AC-6** `frontend/` no contiene `src/` ni `package.json`, y `npx tsc --noEmit` del backend no da errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-00 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-00.md.
+Este ISS solo toca projects/NorteCreativo/backend_Express. NO crees nada de Angular.
+
+Agrega un interruptor AUTH_ENABLED al backend (modo practica para la Fase I del frontend):
+- .env.example con AUTH_ENABLED=true. Si la variable falta, el valor es true.
+- Un solo helper que lo lea: src/shared/auth/auth-mode.ts con isAuthEnabled().
+- Con AUTH_ENABLED=false, authenticate y authorize de src/features/auth/access dejan pasar SOLO las rutas
+  de negocio: clientes, campanias, hitos, tareas, entregables, version-entregables y GET de aprobaciones.
+- POST /api/aprobaciones exige JWT siempre: el aprobador sale del usuario autenticado (RN-05).
+- Administracion (usuarios, roles, recursos, asignaciones-rol, concesiones-rol) exige JWT + RBAC siempre.
+  sesion/perfil, permisos y sesiones exigen JWT siempre. login, refresh y logout siguen OPEN.
+- Al arrancar, imprime en consola si el modo practica esta activo.
+Sigue el estilo de los middlewares existentes. No toques la matriz de roles, el catalogo de recursos ni la logica
+de sesion. Puerto 3012 y base norte_creativo_express.
+
+Prohibido: force: true, alter, secretos en el codigo, cambiar el puerto o la base. NO toques docs/proceso.md
+ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (versiones): `node -v && npm -v && npx @angular/cli@22 version`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (backend arriba): `npm run db:seed && npm run dev` en `backend_Express`
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (401 / 200 según interruptor): `curl -s -o /dev/null -w "HTTP %{http_code}\n" localhost:3012/api/clientes` con `AUTH_ENABLED=true` y luego `false`
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (admin y aprobaciones protegidos): `curl -i localhost:3012/api/usuarios` y `curl -i -X POST localhost:3012/api/aprobaciones -H 'Content-Type: application/json' -d '{}'` con `AUTH_ENABLED=false`
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (login y permisos): `TOKEN=$(curl -s -X POST localhost:3012/api/sesion/login -H 'Content-Type: application/json' -d '{"identifier":"admin","password":"Admin123!"}' | jq -r .access_token)` + `curl -s localhost:3012/api/permisos -H "Authorization: Bearer $TOKEN" | jq .total` (repetir con `finanzas` / `Finanzas123!`)
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (carpeta vacía y compilación): `ls -A projects/NorteCreativo/frontend` + `npx tsc --noEmit` en `backend_Express`
+
+<!-- pegar captura -->
+
+
+## ISS - 01
+
+### OBJ
+
+**OBJ:** Al finalizar, existirá el proyecto Angular 22 de Norte Creativo con Tailwind y PrimeNG (Aura), un ejemplo de signals, el esqueleto Header/Aside/contenido/Footer y el menú del dominio, sin llamadas a la API.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `package.json`, `angular.json` y `src/` quedan en la raíz de `frontend/`, sin subcarpeta, y `docs/` sigue intacto.
+- [ ] **AC-2** `npm ls primeng @primeuix/themes primeicons @angular/cdk --depth=0` muestra PrimeNG 22.x y themes 3.x, sin `invalid` ni `UNMET`; `styles.css` importa Tailwind y PrimeIcons; `providePrimeNG` usa Aura y `.app-dark`.
+- [ ] **AC-3** Con el ejemplo montado, los botones cambian total, total con IVA, estado y nombre sin recargar, y la consola registra cada cambio desde el `effect`.
+- [ ] **AC-4** A 1280 px se ven Header, Aside con las 8 opciones, contenido y Footer; el botón oculta el Aside sin abrir el Drawer.
+- [ ] **AC-5** A 390 px el Aside no se ve, el botón abre el Drawer, elegir una opción cambia el título y lo cierra, y no hay scroll horizontal.
+- [ ] **AC-6** `ng build` termina con código 0, la pestaña dice "Norte Creativo · Angular 22", la consola no muestra errores rojos y Network no muestra peticiones `/api`.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-01 (con 01A y 01B) del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-01.md dentro de
+projects/NorteCreativo/frontend/ (la carpeta ya tiene docs/, no la borres).
+Sigue la guia del docente (https://tecnogua.com/academic/site/frontend2026/express/construir/ISS-01-bootstrap-angular-22/)
+adaptada a Norte Creativo.
+
+1) Bootstrap: ng new front-norte-creativo --directory . --style=tailwind --routing --ssr=false --skip-git
+   --package-manager=npm --defaults ; luego npm install primeng @primeuix/themes primeicons @angular/cdk.
+   styles.css con capas theme, base, primeng, utilities + tailwindcss + primeicons. app.config.ts con
+   withComponentInputBinding, providePrimeNG (preset Aura, darkModeSelector .app-dark, capa primeng),
+   MessageService y ConfirmationService. index.html lang="es" y titulo "Norte Creativo · Angular 22".
+   Presupuesto initial de produccion 750kB aviso / 1MB error.
+   Componente src/app/demo/ejemplo: tarjeta de entregable "Video de lanzamiento 30 s", total 1500000;
+   signal para el objeto, computed total con IVA 19%, effect que registra en consola; botones +-100000,
+   estado EN_PROCESO/ENTREGADO, nombre y reiniciar.
+2) 01A: ng generate component layout/header, layout/aside, layout/footer (--skip-tests --defaults).
+   flex min-h-screen flex-col, header h-16 con title "Norte Creativo", aside w-64 shrink-0 con nav aria-label,
+   main id="contenido" min-w-0, footer "Norte Creativo · Agencia de campañas". CSS de layout vacios.
+3) 01B: ng generate component features/construir (--skip-tests --defaults). El esqueleto pasa a Construir y
+   app.html queda en <router-outlet />. p-panelmenu en el aside y p-drawer en movil con: Inicio, Clientes,
+   Campañas, Hitos, Tareas, Entregables, Versiones, Aprobaciones. Construir es el unico con estado
+   (signals mobileOpen, sidebarCollapsed, title); items al aside con input(); header emite menuRequested y
+   aside emite navigated con output(). La URL no cambia.
+   app.routes.ts: /construir con loadComponent; '' y ** redirigen a /construir.
+
+Sin llamadas a /api, sin PrimeFlex, sin ::ng-deep, sin selectores .p-* ni CSS propio. No adelantes environment,
+modelos, servicios ni Shell (ISS-02). Verifica con ng build.
+NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos y pasos exactos en el
+navegador); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (estructura en la raíz): `ls -A projects/NorteCreativo/frontend`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (dependencias y tema): `npm ls primeng @primeuix/themes primeicons @angular/cdk --depth=0` + `grep -R "providePrimeNG|@import 'tailwindcss'" src`
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (ejemplo signals): montar `<app-ejemplo />` en `/construir` un momento, `npm start`, pulsar los botones con la consola abierta
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (escritorio): `npm start` + `localhost:4200` a 1280 px
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (móvil): DevTools en modo dispositivo a 390 px
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (build, consola y Network): `npx ng build; echo $?` + Console + Network filtrando `api`
+
+<!-- pegar captura -->
+
+
+## ISS - 02
+
+### OBJ
+
+**OBJ:** Al finalizar, el frontend tendrá la capa de infraestructura de Norte Creativo (environment, contrato REST tipado, servicios HTTP, utilidades, componentes compartidos, SessionStore, directiva de permisos y Shell con menú), lista para montar las pantallas de negocio.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `environment.apiUrl === 'http://localhost:3012/api'`, sin barra final, y `requireAuth: false` en los dos archivos.
+- [ ] **AC-2** Los servicios devuelven arreglos u objetos desenvueltos, no la envoltura (por ejemplo, `ClienteApi.list()` → `Cliente[]`), y `AprobacionApi` no expone update ni delete.
+- [ ] **AC-3** `toApiMessage` distingue `status 0` (backend caído) de un 403 y muestra la lista `errors` de un 400.
+- [ ] **AC-4** `PageHeader`, `EmptyState` y `StatusTag` compilan como standalone, y `StatusTag` cambia de color cuando cambia su input.
+- [ ] **AC-5** `localhost:4200` carga el `Shell` de forma diferida con el menú de 8 entradas (todo visible, porque `requireAuth` es `false`) y redirige a `/dashboard`; `/construir` sigue funcionando.
+- [ ] **AC-6** `npx ng build` termina con "Application bundle generation complete", sin `✘ [ERROR]` y con el chunk `shell` aparte.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-02 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-02.md en projects/NorteCreativo/frontend.
+Sigue la guia del docente (secciones 2.1 a 2.9: environment, modelos, servicios, utilidades, compartidos, rutas, Shell,
+SessionStore y directiva *appHasPermission) adaptada a Norte Creativo.
+El contrato REAL esta en projects/NorteCreativo/backend_Express: lee los *.model.ts, *.controller.ts y *.routes.ts de
+src/features para copiar campos, enums y sobres EXACTOS (en español: { clientes } / { cliente }, { versiones } / { version },
+{ asignaciones }, { concesiones }; login -> solo tokens; GET /api/sesion/perfil -> { usuario }; GET /api/permisos ->
+{ total, permisos: [{ method, path, roles }] }).
+
+- environment.ts y environment.development.ts: appName 'Norte Creativo', apiUrl 'http://localhost:3012/api' sin barra final,
+  requireAuth false en los dos (Fase I). fileReplacements para development.
+- Modelos en core/models con campos snake_case como la API, Money + toNumber, Payload de escritura sin status, sin
+  numero_version, sin estado de hito/version y sin aprobador_id. Usuario de lectura sin password. Nada de any.
+- Servicios por feature con @Service() y map que desenvuelve el sobre: ClienteApi, CampaniaApi, HitoApi, TareaApi,
+  EntregableApi, VersionEntregableApi (list, get, create, update PATCH, replace PUT, deactivate, remove); AprobacionApi
+  (solo list, get, create); UsuarioApi, RolApi, RecursoApi (CRUD); AsignacionRolApi y ConcesionRolApi (list, get, create,
+  deactivate, reactivate). NotificationService sobre MessageService.
+- core/utils/api-error.ts con toApiMessage (status 0, 400 con errors[], 401, 403, 404, 409).
+- shared/ui: PageHeader, EmptyState, StatusTag (computed sobre p-tag para active/inactive y todos los estados del dominio).
+- core/services/session-store.ts: signals de tokens, usuario y permisos; computed isAuthenticated, roleNames,
+  permissionCount; setTokens, setAccess, clear; can(method, path) con :id como regex y sin query string;
+  canPermission('GET /api/clientes'); todo concedido si requireAuth es false; localStorage 'nortecreativo.session.v1'
+  con try/catch.
+- shared/directives/has-permission.ts: *appHasPermission con effect() y flag rendered.
+- layout/shell: header, aside, router-outlet en main#contenido, footer, p-drawer, p-toast, p-confirmdialog.
+  NAV con grupo "Operacion" (Panel, Clientes, Campañas, Hitos, Tareas, Entregables, Versiones, Aprobaciones), cada item
+  con permission 'GET /api/...'; navGroups computed filtrado con canPermission.
+- app.routes.ts: '' carga Shell con loadComponent e hija por defecto dashboard (componente provisional
+  features/dashboard/dashboard con un PageHeader); ** a ''. Conserva /construir. provideHttpClient() sin interceptores.
+
+No hagas pantallas CRUD, login, guards ni interceptores. NO toques backend_Express, docs/proceso.md ni
+docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos y pasos exactos); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (environment): `cat src/environments/environment*.ts` + `grep -n fileReplacements -A4 angular.json`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (servicios desenvueltos): `grep -rn "map(" src/app/features/*/*-api.ts` + `grep -n "update|remove" src/app/features/aprobaciones/aprobacion-api.ts` (no debe salir nada)
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (mensajes de error): apagar el backend y abrir `/dashboard`; revisar `src/app/core/utils/api-error.ts`
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (compartidos): `ls src/app/shared/ui` + `grep -n "computed" src/app/shared/ui/status-tag/status-tag.ts`
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (Shell y menú): `npm start` + `localhost:4200` y `localhost:4200/construir`
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (build): `npx ng build 2>&1 | tail -15`
+
+<!-- pegar captura -->
+
+
+## ISS - 03
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrá listar, buscar, crear, editar, desactivar y eliminar clientes desde la interfaz, con el estado de la pantalla en signals. Es el patrón que repiten las demás pantallas.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `GET /api/clientes` pinta la tabla con los clientes activos del seeder, paginada.
+- [ ] **AC-2** "Nuevo cliente" abre el diálogo, valida (email inválido o campos vacíos bloquean el envío) y crea con `POST`; la fila aparece sin recargar.
+- [ ] **AC-3** Editar abre el mismo formulario con los datos cargados y hace `PATCH /api/clientes/:id` con 200 y sin `status` en el body.
+- [ ] **AC-4** El buscador filtra sin recargar y sin peticiones nuevas en Network.
+- [ ] **AC-5** Después de la baja lógica el cliente desaparece de la tabla; después de la física, también, y `GET /api/clientes/:id` responde 404.
+- [ ] **AC-6** Un `numero_documento` repetido muestra el 409 en `p-message` y en un toast, y el diálogo sigue abierto.
+- [ ] **AC-7** `ng serve` y `ng build` no muestran errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-03 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-03.md en projects/NorteCreativo/frontend.
+Sigue la guia del docente (secciones 3.1 a 3.7) y su patron visual
+(https://tecnogua.com/academic/site/frontend2026/express/construir/patron-visual/), adaptados a Norte Creativo.
+Usa los modelos, ClienteApi, NotificationService, toApiMessage, PageHeader, EmptyState, StatusTag y *appHasPermission de ISS-02.
+Contrato real en projects/NorteCreativo/backend_Express/src/features/business/clientes.
+
+- core/utils/filter-rows.ts: funcion pura filterRows(rows, term, (row) => [campos]), sin mayusculas ni tildes.
+- npx ng g component features/clientes/cliente-list y cliente-form (--skip-tests --defaults).
+- ClienteForm sin llamadas a la API: input() cliente, resetKey, saving; output() saved y cancelled.
+  NonNullableFormBuilder: tipo_documento (CC, NIT, CE, TI, PASAPORTE) requerido, numero_documento requerido,
+  nombre requerido max 120, telefono opcional, email requerido y valido. effect() para rellenar; status no editable.
+  Errores con p-message tras tocar el campo.
+- ClienteList: signals rows, loading, saving, error, filter, dialogVisible, editing, resetKey; computed visibleRows
+  (nombre, numero_documento, email, telefono) y title. p-table paginada y ordenable, buscador, StatusTag, acciones con
+  aria-label, p-dialog (styleClass "w-full max-w-2xl mx-4").
+  Botones de escritura con *appHasPermission: 'POST /api/clientes', 'PATCH /api/clientes/:id',
+  'PATCH /api/clientes/:id/deactivate', 'DELETE /api/clientes/:id'.
+- Crear POST, editar PATCH sin status, baja logica PATCH /:id/deactivate y baja fisica DELETE /:id, ambas con ConfirmDialog
+  (el mensaje de la fisica dice que es irreversible). Recarga la lista despues de cada operacion.
+- Estados: spinner, p-message persistente si falla la carga, p-message en el dialogo + toast si falla una operacion
+  (el dialogo sigue abierto), EmptyState distinto sin datos y sin coincidencias, toast de exito.
+- Ruta hija clientes del Shell con loadComponent.
+
+Convenciones de la guia: inject() en vez de constructor, takeUntilDestroyed(destroyRef) en load(), computed en vez de getters.
+Sin guards (ISS-09). Sin CSS propio, ::ng-deep ni selectores .p-*.
+NO toques backend_Express, docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos y pasos exactos en el navegador);
+que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (listado + Network): backend con `AUTH_ENABLED=false` + `npm start` + `/clientes` con Network abierta
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (alta y validación): "Nuevo cliente" con email sin `@` y luego con datos válidos + `curl -s localhost:3012/api/clientes | head -c 400`
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (PATCH): editar un cliente + Network → la petición PATCH → Payload y respuesta
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (filtro): escribir en el buscador y comprobar que Network no registra peticiones nuevas
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (bajas): desactivar un cliente y eliminar otro creado para la prueba + `curl -i localhost:3012/api/clientes/<id>`
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (409): crear un cliente con un `numero_documento` del seeder
+
+<!-- pegar captura -->
+
+8. comprobamos AC-7 (build): `npx ng build 2>&1 | tail -15` + consola del navegador
+
+<!-- pegar captura -->
+
+
+## ISS - 04
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán gestionar las campañas de cada cliente desde la interfaz, viendo el nombre del cliente en lugar de su id y sin poder abrir campañas para clientes inactivos.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** La tabla lista las campañas activas con el nombre del cliente (no el id), y Network muestra `GET /api/campanias` y `GET /api/clientes` en paralelo.
+- [ ] **AC-2** Crear y editar validan cliente obligatorio y nombre obligatorio con máximo 120; el select solo ofrece clientes activos.
+- [ ] **AC-3** Crear una campaña para un cliente que se desactivó en otra pestaña muestra el 409 y el diálogo sigue abierto.
+- [ ] **AC-4** Editar hace `PATCH` sin `status` y conserva el cliente elegido (`cliente_id` numérico); la baja lógica oculta la campaña del listado.
+- [ ] **AC-5** El buscador y el filtro por cliente funcionan juntos sin peticiones nuevas.
+- [ ] **AC-6** `/campanias` abre por URL directa (no solo por el menú) y `ng build` termina sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-04 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-04.md en projects/NorteCreativo/frontend.
+Copia el patron EXACTO de src/app/features/clientes (ISS-03) y agrega la relacion many-to-one con cliente como en la
+seccion 5.4 de la guia (carga en paralelo con forkJoin y Map en computed). Contrato real en
+projects/NorteCreativo/backend_Express/src/features/business/campanias.
+
+- npx ng g component features/campanias/campania-list y campania-form (--skip-tests --defaults).
+- CampaniaList: forkJoin de CampaniaApi.list() y ClienteApi.list(); clientes solo se pide si
+  session.canPermission('GET /api/clientes'), si no of([]). computed clientesPorId (Map id -> nombre) para la columna
+  Cliente. Buscador por nombre, descripcion y nombre del cliente + filtro por cliente (p-select con "Todos") combinados
+  en visibleRows. Acciones con *appHasPermission sobre /api/campanias.
+- CampaniaForm sin API: input() campania, clientes, resetKey, saving; output() saved y cancelled.
+  cliente_id con p-select (optionValue id, optionLabel nombre, filter) solo de clientes active, requerido;
+  nombre requerido max 120; descripcion opcional (Textarea). status no editable.
+- POST, PATCH sin status, PATCH /:id/deactivate y DELETE /:id con ConfirmDialog. Recarga tras cada operacion.
+- Muestra con toApiMessage el 409 de cliente inactivo y el 404 de cliente inexistente; el dialogo sigue abierto.
+- Ruta hija campanias del Shell con loadComponent.
+
+No adelantes hitos ni tareas. Sin CSS propio.
+NO toques backend_Express, docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos y pasos exactos en el navegador);
+que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (listado + Network): `/campanias` con Network abierta + `curl -s localhost:3012/api/campanias | head -c 300`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (validación y select): "Nueva campaña" sin cliente ni nombre; desplegar el select de clientes
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (409): desactivar un cliente en `/clientes` (otra pestaña) y, sin recargar, crearle una campaña
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (PATCH y baja): editar + Network → Payload; desactivar una campaña
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (filtros): combinar el filtro por cliente y el buscador con Network abierta
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (URL directa y build): escribir `localhost:4200/campanias` + `npx ng build 2>&1 | tail -15`
+
+<!-- pegar captura -->
+
+
+## ISS - 05
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrá planear cada campaña en hitos y cada hito en tareas desde la interfaz, viendo el estado del hito (ABIERTO, CERRADO, FACTURADO) sin poder cambiarlo a mano.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `/hitos` muestra la campaña por nombre y el estado con su color; `/tareas` muestra el hito por nombre.
+- [ ] **AC-2** El formulario solo ofrece campañas activas y no tiene campo de estado; crear un hito responde 201 y aparece en ABIERTO.
+- [ ] **AC-3** Crear un hito para una campaña inactiva falla con el 409 de RN-08 y el error se muestra al usuario.
+- [ ] **AC-4** Editar conserva la campaña elegida (`campania_id` numérico) y el formulario bloquea el envío sin campaña.
+- [ ] **AC-5** `abiertosCount()` coincide con las filas ABIERTO de la tabla.
+- [ ] **AC-6** "Ver hitos" abre `/hitos?campania=<id>` ya filtrado y "Ver tareas" abre `/tareas?hito=<id>` ya filtrado.
+- [ ] **AC-7** El CRUD de tareas funciona con confirmación y toast, y `ng build` no da errores ni avisos de presupuesto.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-05 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-05.md en projects/NorteCreativo/frontend.
+Copia el patron EXACTO de src/app/features/campanias (ISS-04): forkJoin condicionado por canPermission, Map en computed,
+filtros combinados en visibleRows, form sin API con input()/output(), ConfirmDialog, toApiMessage, *appHasPermission.
+Contrato real en projects/NorteCreativo/backend_Express/src/features/business/hitos y tareas.
+
+- npx ng g component features/hitos/hito-list, hito-form, features/tareas/tarea-list, tarea-form (--skip-tests --defaults).
+- Hitos: columna Campaña por nombre, StatusTag para estado (ABIERTO, CERRADO, FACTURADO), fecha_cierre formateada.
+  computed abiertosCount visible sobre la tabla. Filtros por campaña y estado + buscador.
+  HitoForm: campania_id (campañas active, requerido), nombre requerido max 120, descripcion opcional.
+  SIN campo estado ni fecha_cierre: el hito nace ABIERTO y lo cierra una aprobacion (el backend da 400 si se envia estado).
+  Muestra 409 de campaña inactiva (RN-08) y 404.
+- Tareas: columna Hito por nombre, filtro por hito. TareaForm: hito_id (hitos active, etiqueta "Campaña · Hito"),
+  nombre requerido, descripcion opcional.
+- POST, PATCH sin status, PATCH /:id/deactivate, DELETE /:id con confirmacion y *appHasPermission en ambos.
+- Accion "Ver hitos" en la fila de campaña -> /hitos?campania=<id>; "Ver tareas" en la fila de hito -> /tareas?hito=<id>.
+  El filtro se inicializa desde el query param con input() (withComponentInputBinding ya esta activo).
+- Rutas hijas hitos y tareas del Shell con loadComponent.
+
+No adelantes entregables. Sin CSS propio.
+NO toques backend_Express, docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos y pasos exactos en el navegador);
+que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (listados): `/hitos` y `/tareas` + `curl -s localhost:3012/api/hitos | head -c 400`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (alta de hito): "Nuevo hito" + Network → respuesta con `estado: ABIERTO`
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (409 RN-08): desactivar una campaña en otra pestaña y, sin recargar, crearle un hito
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (edición y validación): editar un hito + Payload; intentar guardar sin campaña
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (conteo): comparar `abiertosCount` con el filtro de estado ABIERTO
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (navegación): "Ver hitos" desde `/campanias` y "Ver tareas" desde `/hitos`, mostrando la URL
+
+<!-- pegar captura -->
+
+8. comprobamos AC-7 (tareas y build): crear, editar, desactivar y eliminar una tarea + `npx ng build 2>&1 | tail -15`
+
+<!-- pegar captura -->
+
+
+## ISS - 06
+
+### OBJ
+
+**OBJ:** Al finalizar, se podrán registrar los entregables de cada tarea y subir versiones para revisión, viendo en el detalle del entregable su historial de versiones, con el número de versión asignado por el backend y sin poder tocar una versión aprobada.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `/entregables` muestra la tarea por nombre, el total en formato moneda y el estado con color.
+- [ ] **AC-2** El formulario no deja guardar sin tarea, con `fecha_fin` anterior a `fecha_inicio` ni con total negativo.
+- [ ] **AC-3** En `/entregables/:id`, "Nueva versión" crea una versión con 201 y aparece en la tabla con el `numero_version` siguiente y en EN_REVISION, sin que el formulario los pidiera.
+- [ ] **AC-4** Una versión APROBADA no ofrece editar, desactivar ni eliminar; si se fuerza un PATCH con `curl`, el backend responde 409 (RN-04).
+- [ ] **AC-5** Crear una versión para un entregable de un hito CERRADO muestra el 409 de RN-06 y no se crea ninguna fila.
+- [ ] **AC-6** Recargar `/entregables/:id` en el navegador carga el detalle, y `ng build` no da errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-06 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-06.md en projects/NorteCreativo/frontend.
+Copia el patron EXACTO de src/app/features/hitos y tareas (ISS-05). Para el detalle enrutado usa la idea de
+cabecera + lineas de la guia (seccion 7.5). Contrato real en projects/NorteCreativo/backend_Express/src/features/business/
+entregables y version-entregables (sobres { entregables } / { entregable }, { versiones } / { version }).
+
+- npx ng g component features/entregables/entregable-list, entregable-form, entregable-detail;
+  features/versiones/version-list, version-form (--skip-tests --defaults).
+- Entregables: columna Tarea por nombre, fechas, total en moneda COP con toNumber, StatusTag EN_PROCESO/ENTREGADO,
+  filtros por tarea y estado. Form: tarea_id (tareas active, etiqueta "Hito · Tarea") requerido, DatePicker de inicio y fin
+  con validador de grupo fin >= inicio, total InputNumber moneda min 0 convertido con Number(), estado EN_PROCESO/ENTREGADO,
+  observaciones. CRUD completo con *appHasPermission.
+- Detalle /entregables/:id (lee id con input(), EntregableApi.get): cabecera + tabla de sus versiones (filtradas por
+  entregable_id, orden numero_version desc) + computed ultimaVersion y pendientes + boton "Nueva version" con
+  *appHasPermission="'POST /api/version-entregables'" y entregable_id fijo.
+- /versiones: listado global con columna Entregable ("Tarea · total", o "#<id> · total" si no hay permiso de tareas) y filtros. VersionForm SIN numero_version ni estado.
+  Version APROBADA sin acciones de editar/desactivar/eliminar; muestra 409 RN-04 y 409 RN-06 con toApiMessage.
+- Rutas hijas entregables, entregables/:id y versiones del Shell con loadComponent.
+
+No adelantes aprobaciones (ISS-07). Sin CSS propio.
+NO toques backend_Express, docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos exactos en el navegador y curl para forzar
+el 409); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (listado): `/entregables`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (validaciones): guardar sin tarea, con fecha fin anterior a la de inicio y con total negativo
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (nueva versión): `/entregables/<id>` → "Nueva versión" + Network → Payload (sin `numero_version`) y respuesta (con `numero_version`)
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (RN-04): fila APROBADA sin acciones + `curl -i -X PATCH localhost:3012/api/version-entregables/<id> -H 'Content-Type: application/json' -d '{"observaciones":"x"}'`
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (RN-06): nueva versión sobre un entregable de un hito CERRADO + `curl -s localhost:3012/api/version-entregables | jq '.versiones | length'` antes y después
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (recarga y build): F5 en `/entregables/<id>` + `npx ng build 2>&1 | tail -15`
+
+<!-- pegar captura -->
+
+
+## ISS - 07
+
+### OBJ
+
+**OBJ:** Al finalizar, el frontend tendrá la pantalla para registrar el veredicto sobre una versión (la operación que cierra el hito en una sola transacción), el historial de aprobaciones y un dashboard coherente con los listados, y la Fase I quedará cerrada con todas las pantallas de negocio funcionando.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `/aprobaciones` lista el historial con la versión resuelta por nombre y sin acciones de editar ni eliminar.
+- [ ] **AC-2** El select solo ofrece versiones EN_REVISION, RECHAZADA sin comentario no deja enviar, y el body no lleva `aprobador_id` (Network → Payload).
+- [ ] **AC-3** En modo práctica, enviar el formulario muestra el mensaje del 401 de RN-05 y no se crea ninguna fila.
+- [ ] **AC-4** Con `curl` y el token de `aprobador`, aprobar la única versión EN_REVISION de un hito con un solo entregable responde 201 con `hito_cerrado: true`; al recargar, `/hitos` muestra el hito CERRADO y `/aprobaciones` la fila nueva.
+- [ ] **AC-5** Con `curl`, otra aprobación sobre una versión de ese hito responde 409 y nada cambia en la UI.
+- [ ] **AC-6** El dashboard carga sin errores, los KPIs coinciden con los listados y se recalculan al volver después de crear o desactivar registros.
+- [ ] **AC-7** Cierre de la Fase I: los endpoints de negocio responden 200 sin token, el recorrido visual pasa sin errores en consola y `ng build` termina sin errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-07 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-07.md en projects/NorteCreativo/frontend.
+Copia el patron de src/app/features/versiones (ISS-06). Para el formulario transaccional sigue la idea de /ventas/nueva
+de la guia (formulario con signals en tres bloques, un solo POST, navegar al listado al guardar) y para el dashboard
+las secciones 7.6 y 7.7.
+Contrato en projects/NorteCreativo/backend_Express/src/features/business/aprobaciones: solo GET y POST;
+POST responde 201 { aprobacion, hito_cerrado, hito_id, fecha_cierre }; aprobador_id en el body da 400 (RN-05);
+hito cerrado da 409; exige JWT incluso con AUTH_ENABLED=false.
+
+- npx ng g component features/aprobaciones/aprobacion-list y aprobacion-form (--skip-tests --defaults).
+- Historial /aprobaciones: forkJoin aprobaciones + versiones, columna "Entregable · v<numero_version>", StatusTag,
+  comentario, fecha. Sin editar ni eliminar.
+- /aprobaciones/nueva: bloque version (solo EN_REVISION, etiqueta "Entregable #<id> · v<numero_version> · <total>",
+  sin depender de tareas porque CLIENTE_APROBADOR no las lee), bloque veredicto
+  (APROBADA/RECHAZADA con p-selectbutton, comentario requerido en la UI si RECHAZADA), bloque resumen. Un solo POST con
+  { version_entregable_id, estado, comentario }, nunca aprobador_id. hito_cerrado true -> toast "Hito cerrado" con fecha;
+  si no, toast del veredicto; luego navega a /aprobaciones. Errores 401 (explica que requiere sesion de CLIENTE_APROBADOR,
+  llega en ISS-08), 404 y 409 con toApiMessage. Lee ?version=<id> con input() para preseleccionar.
+- Accion "Revisar" en filas EN_REVISION de /versiones y del detalle del entregable -> /aprobaciones/nueva?version=<id>.
+  Boton y accion con *appHasPermission="'POST /api/aprobaciones'".
+- Dashboard (completa el provisional de ISS-02): forkJoin de clientes, campanias, hitos, versiones, aprobaciones, cada
+  peticion solo si canPermission('GET /api/...'), si no of([]). KPIs en p-card con Skeleton (clientes activos, campañas
+  activas, hitos ABIERTOS, hitos CERRADOS, versiones EN_REVISION). computed pendientes (5), ultimasAprobaciones (5),
+  hitosPorEstado. Tablas de pendientes y ultimas aprobaciones.
+- Rutas aprobaciones y aprobaciones/nueva en el Shell; dashboard sigue como hija por defecto.
+
+No agregues interceptor, guard, AuthService ni Authorization (Fase II). Sin CSS propio.
+NO toques backend_Express, docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos en el navegador y curl exactos con login
+de aprobador para el cierre de hito); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (historial): `/aprobaciones`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (payload): abrir `/aprobaciones/nueva`, elegir RECHAZADA sin comentario; luego enviar una válida y revisar Network → Payload
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (401 RN-05): enviar el formulario con el backend en `AUTH_ENABLED=false`
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (cierre de hito): `TOKEN=$(curl -s -X POST localhost:3012/api/sesion/login -H 'Content-Type: application/json' -d '{"identifier":"aprobador","password":"Aprobador123!"}' | jq -r .access_token)` + `curl -i -X POST localhost:3012/api/aprobaciones -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"version_entregable_id":<id>,"estado":"APROBADA"}'` + recargar `/hitos` y `/aprobaciones`
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (409 hito cerrado): repetir el POST sobre otra versión del hito ya CERRADO
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (dashboard): comparar KPIs con los listados; crear o desactivar un registro y volver
+
+<!-- pegar captura -->
+
+8. comprobamos AC-7 (cierre Fase I): `for p in clientes campanias hitos tareas entregables version-entregables aprobaciones; do echo "== $p"; curl -s -o /dev/null -w "%{http_code}\n" localhost:3012/api/$p; done` + recorrido por `/dashboard`, `/clientes`, `/campanias`, `/hitos`, `/tareas`, `/entregables`, `/entregables/<id>`, `/versiones`, `/aprobaciones` + `npx ng build 2>&1 | tail -20`
+
+<!-- pegar captura -->
+
+
+## FASE 2 - AUTH CON RBAC
+
+Para la fase ii ponemos requireAuth en true en los dos environments y AUTH_ENABLED en true en el .env del backend, y limpiamos nortecreativo.session.v1 del localStorage. El login del backend solo devuelve el par de tokens, el perfil y los permisos se piden despues con forkjoin, y los roles no viajan en el jwt, la ui decide que mostrar con get /api/permisos y el backend vuelve a validar cada peticion. Probamos con los 5 usuarios del seeder, admin, cuentas, creativo, aprobador y finanzas, para ver el menu y los botones de cada rol y los 401 y 403.
+
+## ISS - 08
+
+### OBJ
+
+**OBJ:** Al finalizar, cada usuario de Norte Creativo podrá iniciar sesión, ver su perfil y sus permisos efectivos y cerrar sesión, y la aplicación renovará el access token sin que lo note con el refresh token rotativo del backend.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** Con `requireAuth: true`, `/dashboard` sin sesión redirige a `/login?returnUrl=%2Fdashboard`.
+- [ ] **AC-2** Login con `admin` / `Admin123!` guarda los tokens y carga perfil y permisos; `/perfil` muestra ADMIN y 75 permisos. Con `finanzas` muestra FINANZAS y 6.
+- [ ] **AC-3** En Application → Local Storage está `nortecreativo.session.v1` con `accessToken`, `refreshToken`, `usuario` y `permisos`.
+- [ ] **AC-4** Cada petición protegida lleva `Authorization: Bearer <access>`; `login` y `refresh` no.
+- [ ] **AC-5** Con el access vencido o alterado, navegar a `/clientes` muestra en Network: `GET /api/clientes` → 401, un solo `POST /api/sesion/refresh` → 200, y el reintento → 200.
+- [ ] **AC-6** "Cerrar sesión" borra el storage y vuelve a `/login`; ese refresh ya no sirve (`curl` → 401). Reusar un refresh ya rotado responde 401 y el front limpia la sesión.
+- [ ] **AC-7** Con `aprobador`, el formulario de ISS-07 registra un veredicto con 201, y `ng serve` / `ng build` no muestran errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-08 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-08.md en projects/NorteCreativo/frontend.
+Sigue la guia del docente (secciones 8.1 a 8.10) adaptada al contrato REAL de
+projects/NorteCreativo/backend_Express/src/features/auth/session:
+login body { identifier, password } -> solo tokens { access_token, token_type, expires_in, refresh_token, refresh_expires_in };
+refresh y logout body { refresh_token }; GET /api/sesion/perfil -> { usuario: { id, username, email, status, roles[] } };
+GET /api/permisos -> { total, permisos: [{ method, path, roles }] }.
+
+- requireAuth true en ambos environments.
+- provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])); npx ng g interceptor core/interceptors/auth
+  y core/interceptors/error (--functional --skip-tests --defaults).
+- SessionStore de ISS-02: con requireAuth true canPermission usa los permisos efectivos, deny by default.
+- core/services/auth.ts: login (tap guarda tokens + switchMap me), me (forkJoin perfil + permisos -> setAccess, limpia si
+  falla), refresh, logout (finalize limpia siempre).
+- authInterceptor: Bearer solo hacia environment.apiUrl y no en login/refresh/logout; 401 -> refreshInFlight de modulo con
+  ??= + shareReplay(1) + finalize, reintento con el token nuevo; refresh 401 -> clear, toast de sesion expirada, /login.
+  errorInterceptor traduce status 0.
+- npx ng g component features/auth/login, profile, forbidden (--skip-tests --defaults).
+  /login fuera del Shell con returnUrl; /perfil con roles, tabla de permisos con buscador, botones "Actualizar permisos"
+  (me()) y "Cerrar sesion".
+- Shell: avatar + p-menu popup "Mi sesion", "Actualizar permisos", "Cerrar sesion" (referencia #userMenuPanel).
+- npx ng g guard core/guards/auth --functional: sin sesion -> /login?returnUrl; con requireAuth false deja pasar.
+  Shell con canActivate [authGuard]. /construir sigue publico.
+
+No hagas guestGuard ni permissionGuard (ISS-09). No toques el backend salvo AUTH_ENABLED=true en su .env local.
+NO toques docs/proceso.md ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos en el navegador y curl exactos);
+que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (redirección): storage vacío + abrir `localhost:4200/dashboard`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (perfil): login de `admin` y de `finanzas` + `/perfil`
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (storage): DevTools → Application → Local Storage
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (cabeceras): Network → `clientes` → Headers; y `login` → Headers
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (refresh único): alterar `accessToken` en el storage + ir a `/clientes` + Network filtrando `clientes|refresh`
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (logout y reuse): copiar el `refreshToken` antes de salir + `curl -i -X POST localhost:3012/api/sesion/refresh -H 'Content-Type: application/json' -d '{"refresh_token":"<token>"}'`
+
+<!-- pegar captura -->
+
+8. comprobamos AC-7 (veredicto y build): login de `aprobador` + `/aprobaciones/nueva` + `npx ng build 2>&1 | tail -15`
+
+<!-- pegar captura -->
+
+
+## ISS - 09
+
+### OBJ
+
+**OBJ:** Al finalizar, cada uno de los 5 roles de Norte Creativo verá solo las pantallas y acciones que su matriz le concede, llegará a `/forbidden` si entra por URL a una que no le corresponde, y el menú cambiará sin recargar cuando cambien sus permisos.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** Sin sesión, cualquier ruta protegida lleva a `/login` con `returnUrl`; con sesión, `/login` lleva a `/dashboard`.
+- [ ] **AC-2** El menú de cada uno de los 5 usuarios coincide con la columna "Menú visible" de la matriz.
+- [ ] **AC-3** `finanzas` escribe `/tareas` en la URL y llega a `/forbidden`, donde se lee `GET /api/tareas`.
+- [ ] **AC-4** Los botones de escritura desaparecen cuando falta el POST, PATCH o DELETE: `cuentas` no los ve en `/clientes` y sí en `/campanias`; `creativo` en `/versiones` ve crear y editar, pero no desactivar ni eliminar; `aprobador` ve "Revisar" y `admin` no.
+- [ ] **AC-5** Después de conceder `GET /api/tareas` a FINANZAS con `curl` (token de admin), `finanzas` pulsa "Actualizar permisos" y aparece Tareas en el menú sin recargar; al retirar la concesión y actualizar otra vez, desaparece.
+- [ ] **AC-6** `finanzas` hace desde la consola un `fetch` a `/api/usuarios` con su token y obtiene 403 (el backend manda); sin token el resultado es 401.
+- [ ] **AC-7** `ng serve` y `ng build` no muestran errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-09 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-09.md en projects/NorteCreativo/frontend.
+Sigue la guia del docente (secciones 9.1 a 9.6). La matriz real esta en
+projects/NorteCreativo/backend_Express/src/features/auth/resource-roles/role-matrix.ts
+(5 roles; POST /api/aprobaciones solo CLIENTE_APROBADOR).
+
+- npx ng g guard core/guards/guest y core/guards/permission (--functional --skip-tests --defaults). Revisa authGuard
+  de ISS-08 para que use createUrlTree. guestGuard: con sesion /login -> /dashboard. permissionGuard: data.permission,
+  deny by default, createUrlTree a /forbidden con queryParams { permission }, deja pasar si requireAuth es false.
+- app.routes.ts: canActivate [permissionGuard] + data.permission en clientes, campanias, hitos, tareas, entregables,
+  entregables/:id, versiones (GET /api/version-entregables), aprobaciones y aprobaciones/nueva (POST /api/aprobaciones).
+  dashboard, perfil y forbidden sin permissionGuard. login con guestGuard.
+- Revisa en todas las pantallas que cada boton tenga el permiso exacto (POST, PATCH /:id, PATCH /:id/deactivate,
+  DELETE /:id, POST /api/aprobaciones) y oculta la columna de acciones si no queda ninguna. Asegura que can() compare
+  con el patron anclado (^...$).
+- /forbidden muestra el permiso faltante y un boton al panel.
+- Comprueba que navGroups oculta grupos vacios y reacciona a "Actualizar permisos".
+
+No hagas la administracion RBAC (ISS-10). NO toques backend_Express, docs/proceso.md ni docs/trazabilidad_NC/.
+NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos con cada uno de los 5 usuarios, el curl
+exacto para conceder y retirar GET /api/tareas a FINANZAS y el fetch para el 403); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (redirecciones): sin sesión abrir `/hitos`; con sesión abrir `/login`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (menú ×5): login con `admin`, `cuentas`, `creativo`, `aprobador` y `finanzas`
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (forbidden): `finanzas` + escribir `localhost:4200/tareas`
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (botones): `cuentas` en `/clientes` y `/campanias`; `creativo`, `aprobador` y `admin` en `/versiones`
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (actualizar permisos): `curl -s -X POST localhost:3012/api/concesiones-rol -H "Authorization: Bearer $ADMIN" -H 'Content-Type: application/json' -d '{"role_id":<FINANZAS>,"resource_id":<GET /api/tareas>}'` + "Actualizar permisos" + `PATCH /api/concesiones-rol/<id>/deactivate`
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (403 vs 401): `fetch('http://localhost:3012/api/usuarios',{headers:{Authorization:'Bearer '+JSON.parse(localStorage.getItem('nortecreativo.session.v1')).accessToken}}).then(r=>console.log(r.status))` y el mismo sin cabecera
+
+<!-- pegar captura -->
+
+8. comprobamos AC-7 (build): `npx ng build 2>&1 | tail -15`
+
+<!-- pegar captura -->
+
+
+## ISS - 10
+
+### OBJ
+
+**OBJ:** Al finalizar, ADMIN podrá gestionar usuarios, roles y recursos, asignar roles a usuarios, conceder recursos a roles y ver los permisos efectivos de cualquier usuario desde la interfaz, sin reiniciar el backend para que los cambios surtan efecto.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `admin` lista, crea y edita usuarios; la contraseña y el estado solo se envían al crear (Network → Payload) y la respuesta nunca trae `password`. El propio `admin` no puede desactivarse ni eliminarse desde la UI.
+- [ ] **AC-2** "Ver permisos" de `finanzas` muestra sus 6 permisos con método, ruta y rol; `GET /api/usuarios/:id/permisos` aparece en el catálogo y `check-resource-catalog.ts` da OK.
+- [ ] **AC-3** Roles: CRUD con baja lógica; un rol creado como "auditor" se guarda como "AUDITOR".
+- [ ] **AC-4** Recursos: crear, editar, desactivar y eliminar; un `path` sin `/api/` no deja enviar y un par repetido muestra el 409.
+- [ ] **AC-5** Asignaciones: crear el vínculo usuario-rol y retirarlo; repetir uno activo muestra el 409 y crear uno retirado lo reactiva sin duplicar la fila. Al retirar FINANZAS de un usuario, su siguiente petición a `/api/clientes` responde 403 sin reiniciar el backend.
+- [ ] **AC-6** Concesiones: el select muestra "MÉTODO ruta"; una concesión retirada desaparece del menú del rol afectado tras "Actualizar permisos".
+- [ ] **AC-7** `cuentas` no ve el grupo Seguridad y `/admin/usuarios` por URL lo lleva a `/forbidden`; `ng serve` y `ng build` no muestran errores.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-10 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-10.md.
+Sigue la guia del docente (secciones 10.1 a 10.9). Contrato real en projects/NorteCreativo/backend_Express/src/features/auth
+(users, roles, resources, role-users, resource-roles). Campos aceptados: usuario create username, email, password, status /
+update username, email; rol name, description; recurso method, path, description; asignacion user_id, role_id;
+concesion role_id, resource_id. Sobres { usuarios } / { usuario }, { roles } / { rol }, { recursos } / { recurso },
+{ asignaciones } / { asignacion }, { concesiones } / { concesion }.
+
+1) Backend (minimo): agrega GET /api/usuarios/:id/permisos con authenticate + authorize, reutilizando
+   findEffectiveForUser de resource-roles.repository.ts y respondiendo { total, permisos: [{ method, path, roles }] }
+   igual que /api/permisos. Registralo en resource-catalog.ts y en Swagger. Verifica con npx tsc --noEmit y
+   npx ts-node scripts/check-resource-catalog.ts. No toques la matriz de roles.
+2) Frontend: npx ng g component features/admin/usuarios/usuario-list, usuario-form, roles/rol-list, rol-form,
+   recursos/recurso-list, recurso-form, asignaciones/asignacion-list, concesiones/concesion-list (--skip-tests --defaults).
+   Patron EXACTO de las pantallas de la Fase I.
+   - Usuarios: password (p-password toggleMask) y status solo al crear; PATCH solo username y email; isSelf deshabilita
+     desactivar/eliminar; 409 visible; "Ver permisos" en dialogo con GET /api/usuarios/:id/permisos.
+   - Roles: name y description, baja logica, 409. Recursos: method p-select, path con validador que empiece por /api/,
+     description, 409.
+   - Asignaciones y concesiones: nombres con forkJoin + Map, SIN DELETE, deactivate y reactivate, filtros por usuario y
+     por rol, select de recurso con etiqueta "METHOD path".
+   - Rutas /admin/usuarios, /admin/roles, /admin/recursos, /admin/asignaciones, /admin/permisos con permissionGuard y
+     data.permission (GET /api/usuarios, roles, recursos, asignaciones-rol, concesiones-rol). Grupo "Seguridad" en NAV.
+   - Acciones con *appHasPermission.
+
+Sin cambio de contrasena ni sesiones propias. Prohibido en el backend: force: true, alter, cambiar puerto o base.
+NO toques docs/proceso.md ni docs/trazabilidad_NC/ de ningun proyecto. NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos en el navegador con cada usuario y curl
+exactos); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (usuarios): crear `prueba_front` + Network → Payload y respuesta; editarlo; fila de `admin` sin bajas
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (ver permisos): "Ver permisos" de `finanzas` + `npx ts-node scripts/check-resource-catalog.ts` en `backend_Express`
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (roles): crear "auditor" y ver la fila
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (recursos): path `clientes` sin `/api/`; repetir `GET /api/clientes`
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (asignaciones y 403): asignar FINANZAS a `prueba_front`, entrar con él, retirar la asignación desde `admin` y recargar `/clientes` con `prueba_front`
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (concesiones): retirar una concesión de FINANZAS + "Actualizar permisos" con `finanzas`; luego reactivarla
+
+<!-- pegar captura -->
+
+8. comprobamos AC-7 (forbidden y build): `cuentas` + `localhost:4200/admin/usuarios` + `npx ng build 2>&1 | tail -15`
+
+<!-- pegar captura -->
+
+
+## ISS - 11
+
+### OBJ
+
+**OBJ:** Al finalizar, el frontend de Norte Creativo será reproducible y desplegable: compila para producción dentro de presupuesto, pasa el formato, cambia entre Fase I y Fase II con una sola bandera, y queda demostrado el recorrido completo de una campaña hasta el cierre del hito con los 5 roles.
+
+### AC
+
+**AC:**
+- [ ] **AC-1** `npx ng build` termina con 0 errores y sin avisos de presupuesto que impidan el despliegue.
+- [ ] **AC-2** Los 15 puntos del checklist de humo pasan.
+- [ ] **AC-3** Cambiar `requireAuth` en los dos entornos (con `AUTH_ENABLED` igual en el backend) produce el comportamiento de cada fase.
+- [ ] **AC-4** Revocar el refresh token con `curl` cierra la sesión de forma controlada, con toast.
+- [ ] **AC-5** `npm run format:check` no reporta archivos sin formatear.
+- [ ] **AC-6** `dist/` se sirve con fallback SPA y las rutas profundas recargan bien.
+- [ ] **AC-7** `docs/problemas.md` y `README.md` del frontend existen y coinciden con lo que pasó en el recorrido.
+
+### Procedimiento
+
+1. pegamos el prompt 
+
+``` text
+Naturaleza: PRACTICO. Eres asistente SOLO de ISS-11 del frontend, no del frontend entero.
+
+Implementa los AC de projects/NorteCreativo/frontend/docs/trazabilidad_NC/ISS-11.md en projects/NorteCreativo/frontend.
+Sigue la guia del docente (secciones 11.1 a 11.7).
+
+- requireAuth true en los dos environments.
+- package.json: scripts start, build, watch, test y format:check (prettier --check "src/**/*.{ts,html,css}");
+  instala prettier como devDependency si falta y formatea con prettier --write.
+- angular.json: presupuesto initial 750kB/1MB y anyComponentStyle 4kB/8kB. Si el build se pasa, reduce con
+  loadComponent e imports puntuales de PrimeNG; no subas el error.
+- Revisa todas las pantallas sin cambiar funcionalidad: inject(), takeUntilDestroyed en load(), computed en vez de getters,
+  sin any, label o aria-label en inputs, aria-label + pTooltip en botones de icono, estados legibles como texto.
+- Crea docs/problemas.md con la tabla del ISS-11 y README.md del frontend (arranque backend 3012 + front 4200, usuarios
+  del seeder, interruptores requireAuth / AUTH_ENABLED, comandos de calidad, publicacion de dist con fallback SPA).
+- Deja npm run build y npm run format:check en verde.
+
+No agregues funcionalidades nuevas. NO toques backend_Express, docs/proceso.md ni docs/trazabilidad_NC/.
+NO hagas commit ni push: lo hago yo.
+
+Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos y los 15 puntos del checklist
+con el usuario de cada paso); que quedo fuera de alcance.
+```
+
+Salida:
+<!-- pegar captura del resumen que entrega claude code -->
+
+2. comprobamos AC-1 (build): `npx ng build 2>&1 | tail -20`
+
+<!-- pegar captura -->
+
+3. comprobamos AC-2 (checklist de humo): los 15 puntos, una captura por punto con el usuario visible en el header
+
+<!-- pegar captura -->
+
+4. comprobamos AC-3 (cambio de fase): `requireAuth=false` + `AUTH_ENABLED=false` + storage limpio, y de vuelta a `true`
+
+<!-- pegar captura -->
+
+5. comprobamos AC-4 (refresh revocado): copiar `refreshToken` del storage + `curl -X POST localhost:3012/api/sesion/logout -H 'Content-Type: application/json' -d '{"refresh_token":"<token>"}'` + alterar el access y pulsar cualquier acción
+
+<!-- pegar captura -->
+
+6. comprobamos AC-5 (formato): `npm run format:check`
+
+<!-- pegar captura -->
+
+7. comprobamos AC-6 (fallback SPA): `npx serve -s dist/front-norte-creativo/browser` + F5 en `/entregables/<id>`
+
+<!-- pegar captura -->
+
+8. comprobamos AC-7 (documentación): `docs/problemas.md` y `README.md` del frontend
+
+<!-- pegar captura -->
+
+
