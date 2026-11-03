@@ -259,32 +259,33 @@ docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
 Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos y pasos exactos); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
+2. comprobamos AC-1 (environment): `cat src/environments/environment.ts src/environments/environment.development.ts` + `grep -n fileReplacements -A6 angular.json`
 
-2. comprobamos AC-1 (environment): `cat src/environments/environment*.ts` + `grep -n fileReplacements -A4 angular.json`
+![AC-1: apiUrl sin barra final, requireAuth false en los dos environments y fileReplacements](images/iss-02-ac-1.png)
 
-<!-- pegar captura -->
+3. comprobamos AC-2 (servicios desenvueltos): `grep -n "map(" src/app/features/clientes/cliente-api.ts src/app/features/aprobaciones/aprobacion-api.ts` + `grep -c "map(" src/app/features/*/*-api.ts` + `grep -nE "update|remove" src/app/features/aprobaciones/aprobacion-api.ts || echo "sin update ni remove"` (no debe salir nada) + prueba unitaria `cliente-api.spec.ts` que comprueba que `ClienteApi.list()` devuelve `Cliente[]` y que `AprobacionApi` no expone update, replace, deactivate ni remove
 
-3. comprobamos AC-2 (servicios desenvueltos): `grep -rn "map(" src/app/features/*/*-api.ts` + `grep -n "update|remove" src/app/features/aprobaciones/aprobacion-api.ts` (no debe salir nada)
+![AC-2: servicios que desenvuelven el sobre y AprobacionApi sin update ni remove](images/iss-02-ac-2.png)
 
-<!-- pegar captura -->
+4. comprobamos AC-3 (mensajes de error): como el panel provisional no hace llamadas a la API, no hay un backend caído que mostrar en `/dashboard`; se comprueba `toApiMessage` con la prueba `api-error.spec.ts` (status 0 contra un 403 y la lista `errors` de un 400) y los `case` de `src/app/core/utils/api-error.ts`
 
-4. comprobamos AC-3 (mensajes de error): apagar el backend y abrir `/dashboard`; revisar `src/app/core/utils/api-error.ts`
+![AC-3: toApiMessage distingue status 0 de un 403 y muestra la lista errors de un 400](images/iss-02-ac-3.png)
 
-<!-- pegar captura -->
+5. comprobamos AC-4 (compartidos): `ls src/app/shared/ui` + `grep -n "computed" src/app/shared/ui/status-tag/status-tag.ts` + prueba `status-tag.spec.ts`, que cambia el input de `active` a `inactive` y comprueba que cambia el color del `p-tag`
 
-5. comprobamos AC-4 (compartidos): `ls src/app/shared/ui` + `grep -n "computed" src/app/shared/ui/status-tag/status-tag.ts`
+![AC-4: PageHeader, EmptyState y StatusTag; StatusTag cambia de color con su input](images/iss-02-ac-4.png)
 
-<!-- pegar captura -->
+6. comprobamos AC-5 (Shell y menú): `npm start` + `localhost:4200`, que redirige a `/dashboard` y carga el Shell con el menú de 8 entradas, y `localhost:4200/construir`, que sigue funcionando
 
-6. comprobamos AC-5 (Shell y menú): `npm start` + `localhost:4200` y `localhost:4200/construir`
+![AC-5: localhost:4200 carga el Shell diferido con el menú Operación y 8 entradas en /dashboard](images/iss-02-ac-5-shell.png)
 
-<!-- pegar captura -->
+![AC-5: /construir sigue funcionando](images/iss-02-ac-5-construir.png)
+
+![AC-5: la ruta final es /dashboard, el menú tiene las 8 entradas y la consola no tiene errores](images/iss-02-ac-5.png)
 
 7. comprobamos AC-6 (build): `npx ng build 2>&1 | tail -15`
 
-<!-- pegar captura -->
+![AC-6: build completo sin errores y con el chunk shell aparte](images/iss-02-ac-6.png)
 
 
 ## ISS - 03

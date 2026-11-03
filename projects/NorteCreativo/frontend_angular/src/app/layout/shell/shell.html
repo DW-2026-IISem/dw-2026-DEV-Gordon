@@ -1,0 +1,22 @@
+<div class="flex min-h-screen flex-col">
+  <app-header (menuRequested)="onMenuRequested()" />
+
+  <div class="flex flex-1">
+    @if (!sidebarCollapsed()) {
+      <app-aside class="hidden lg:block" [items]="menuItems()" (navigated)="onNavigated()" />
+    }
+
+    <main id="contenido" class="min-w-0 flex-1 p-6">
+      <router-outlet />
+    </main>
+  </div>
+
+  <app-footer />
+</div>
+
+<p-drawer [(visible)]="mobileOpen" header="Norte Creativo" position="left">
+  <app-aside [items]="menuItems()" (navigated)="onNavigated()" />
+</p-drawer>
+
+<p-toast />
+<p-confirmdialog />
