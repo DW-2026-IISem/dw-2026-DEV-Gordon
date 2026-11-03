@@ -4,11 +4,12 @@ API REST en Express 5 + TypeScript + Sequelize para la cadena de trabajo de la a
 
 ```
 Cliente → Campaña → Hito → Tarea → Entregable → VersionEntregable → Aprobación
+                 ↘ Presupuesto            ↘ Factura (FacturarHitos: hitos CERRADOS → FACTURADO)
 ```
 
 Cada versión de un entregable se aprueba o se rechaza. Cuando **todos** los entregables de un hito tienen su **última versión** `APROBADA`, el hito se cierra solo (`estado: CERRADO`, `fecha_cierre`) dentro de una única transacción. **Ningún endpoint cierra un hito a mano**: `estado` y `fecha_cierre` en el body de `POST/PUT/PATCH /api/hitos` responden `400`.
 
-Todas las rutas de **negocio** (`clientes`, `campanias`, `hitos`, `tareas`, `entregables`, `version-entregables`, `aprobaciones`) y de **administración de seguridad** (`usuarios`, `roles`, `recursos`, `asignaciones-rol`, `concesiones-rol`) exigen **JWT + RBAC**: token válido y una concesión activa para ese `(method, path)` (ver «Acceso a la API»). Solo el login, el refresh, el logout, `/api/health` y la documentación son abiertas.
+Todas las rutas de **negocio** (`clientes`, `campanias`, `presupuestos`, `hitos`, `tareas`, `entregables`, `version-entregables`, `aprobaciones`, `facturas`) y de **administración de seguridad** (`usuarios`, `roles`, `recursos`, `asignaciones-rol`, `concesiones-rol`) exigen **JWT + RBAC**: token válido y una concesión activa para ese `(method, path)` (ver «Acceso a la API»). Solo el login, el refresh, el logout, `/api/health` y la documentación son abiertas.
 
 ## Requisitos y arranque
 
@@ -30,11 +31,13 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 |---|---|---|
 | Clientes | `/api/clientes` | CRUD + `PATCH /:id/deactivate` |
 | Campañas | `/api/campanias` | CRUD + `PATCH /:id/deactivate` |
+| Presupuestos | `/api/presupuestos` | CRUD + `PATCH /:id/deactivate`. Nace `BORRADOR`; `PATCH {"estado":"APROBADO"}` lo aprueba y desde ahí es inmutable (`PUT`/`PATCH`/`deactivate`/`DELETE` → `409`) |
 | Hitos | `/api/hitos` | CRUD + `PATCH /:id/deactivate` (el estado no es editable) |
 | Tareas | `/api/tareas` | CRUD + `PATCH /:id/deactivate` |
 | Entregables | `/api/entregables` | CRUD + `PATCH /:id/deactivate` |
 | Versiones de entregable | `/api/version-entregables` | CRUD + `PATCH /:id/deactivate` (`numero_version` y `estado` los controla el sistema) |
 | Aprobaciones | `/api/aprobaciones` | `POST`, `GET`, `GET /:id` (registro de auditoría: sin PUT, PATCH ni DELETE) |
+| Facturas | `/api/facturas` | `POST` (FacturarHitos, transaccional), `GET` (filtro `?campania_id=`), `GET /:id` con sus hitos (registro contable: sin PUT, PATCH ni DELETE) |
 | Usuarios | `/api/usuarios` | CRUD + `PATCH /:id/deactivate` (la contraseña se hashea con bcrypt y nunca se devuelve; `username` y `email` únicos → `409`) |
 | Roles | `/api/roles` | CRUD + `PATCH /:id/deactivate` (nombre único en mayúsculas → `409`) |
 | Recursos | `/api/recursos` | CRUD + `PATCH /:id/deactivate` (`(method, path)` único → `409`; el path es un patrón con `:id`) |
@@ -45,7 +48,7 @@ Cada feature trae su carpeta `http/` con peticiones para el cliente REST de VS C
 
 ## Usuarios de laboratorio
 
-`npm run db:seed` siembra (de forma idempotente, por `username`) un usuario por cada rol de Norte Creativo. Son **solo para práctica en local**; no uses estas contraseñas en ningún entorno real. Cada uno recibe su rol con el seeder (ver la matriz de concesiones). Las rutas aún no están protegidas (ISS-18 e ISS-21).
+`npm run db:seed` siembra (de forma idempotente, por `username`) un usuario por cada rol de Norte Creativo. Son **solo para práctica en local**; no uses estas contraseñas en ningún entorno real. Cada uno recibe su rol con el seeder (ver la matriz de concesiones).
 
 | username | email | contraseña de laboratorio |
 |---|---|---|
@@ -65,7 +68,7 @@ En la base, `password` se guarda como hash bcrypt (`$2…`); la API jamás la de
 | **JWT** | `authenticate` | token válido y usuario activo | `401` |
 | **JWT + RBAC** | `authenticate` + `authorize` | token + concesión activa para el `(method, path)` | `401` / `403` |
 
-- **JWT + RBAC** (`authenticate` + `authorize`): todo el negocio (`/api/clientes`, `/api/campanias`, `/api/hitos`, `/api/tareas`, `/api/entregables`, `/api/version-entregables`, `/api/aprobaciones`) y la administración de seguridad (`/api/usuarios`, `/api/roles`, `/api/recursos`, `/api/asignaciones-rol`, `/api/concesiones-rol`).
+- **JWT + RBAC** (`authenticate` + `authorize`): todo el negocio (`/api/clientes`, `/api/campanias`, `/api/presupuestos`, `/api/hitos`, `/api/tareas`, `/api/entregables`, `/api/version-entregables`, `/api/aprobaciones`, `/api/facturas`) y la administración de seguridad (`/api/usuarios`, `/api/roles`, `/api/recursos`, `/api/asignaciones-rol`, `/api/concesiones-rol`).
 - Hoy en **JWT** (solo `authenticate`): `/api/sesiones`, siempre filtrado por el usuario del token. Quedan fuera del catálogo de recursos porque no pasan por RBAC.
 - **OPEN**: `POST /api/sesion/login`, `/refresh` y `/logout`, `/api/health`, `/api/docs` y `/api/docs.json`.
 - **JWT**: además de `/api/sesiones`, `GET /api/sesion/perfil` y `GET /api/permisos`.
@@ -120,8 +123,10 @@ Evidencia de los AC en un solo comando (con el servidor corriendo): `bash script
 `npm run db:seed` siembra, de forma determinista y reconciliadora (reejecutarlo no cambia los conteos):
 
 - **5 roles:** `ADMIN`, `CUENTAS`, `CREATIVO`, `CLIENTE_APROBADOR`, `FINANZAS`.
-- **76 recursos** (`src/features/auth/resources/resource-catalog.ts`): un `(method, path)` por endpoint de negocio y de administración de seguridad. Quedan fuera los abiertos (`/api/health`, `/api/docs`).
+- **86 recursos** (`src/features/auth/resources/resource-catalog.ts`): un `(method, path)` por endpoint de negocio y de administración de seguridad. Quedan fuera los abiertos (`/api/health`, `/api/docs`).
 - **5 asignaciones** (un usuario de laboratorio por rol) y las **concesiones** de la matriz de abajo.
+
+**Facturación (SDD):** `CUENTAS` crea campañas y asigna el presupuesto pero **no factura**; `CREATIVO` **no ve** presupuestos ni facturas; `FINANZAS` factura hitos cerrados y compara presupuesto contra lo facturado; `CLIENTE_APROBADOR` no tiene acceso a facturación (decisión por defecto del SDD).
 
 Un rol o un recurso por sí solos **no conceden nada**: el permiso es la fila de `resource_roles` (concesión). Para comprobar que el catálogo cubre todas las rutas reales:
 
@@ -143,11 +148,13 @@ Leyenda: **L** lectura (`GET` listado y `GET /:id`) · **C** crear (`POST`) · *
 | tareas | LCUD | LCUD | L | — | — |
 | entregables | LCUD | L | LCU | L | — |
 | version-entregables | LCUD | L | LCU | L | — |
+| presupuestos | LCUD | LCUD | — | — | L |
+| facturas | L C | — | — | — | L C |
 | aprobaciones | L | L | — | L C | — |
 | usuarios, roles, recursos, asignaciones-rol, concesiones-rol | LCUD (en `asignaciones-rol` y `concesiones-rol`: L, C, retirar/revocar y reactivar) | — | — | — | — |
-| **Concesiones activas** | **75** | **29** | **16** | **11** | **6** |
+| **Concesiones activas** | **85** | **36** | **16** | **11** | **11** |
 
-**RN-05 (solo el cliente aprueba):** `POST /api/aprobaciones` lo tiene concedido **únicamente `CLIENTE_APROBADOR`**; por eso `ADMIN` (que por lo demás lo tiene todo) son 75 de los 76 recursos. El `aprobador_id` **nunca viene del body**: se toma del usuario autenticado (enviarlo responde `400`) y es una FK a `users`.
+**RN-05 (solo el cliente aprueba):** `POST /api/aprobaciones` lo tiene concedido **únicamente `CLIENTE_APROBADOR`**; por eso `ADMIN` (que por lo demás lo tiene todo) son 85 de los 86 recursos. El `aprobador_id` **nunca viene del body**: se toma del usuario autenticado (enviarlo responde `400`) y es una FK a `users`.
 
 Usuarios de laboratorio → rol: `admin` → ADMIN, `cuentas` → CUENTAS, `creativo` → CREATIVO, `aprobador` → CLIENTE_APROBADOR, `finanzas` → FINANZAS.
 
@@ -158,10 +165,10 @@ Solo para práctica en local (se siembran con `npm run db:seed`; no las uses en 
 | username | contraseña | rol | puede, por ejemplo… |
 |---|---|---|---|
 | `admin` | `Admin123!` | `ADMIN` | todo el negocio y la administración de seguridad, salvo aprobar |
-| `cuentas` | `Cuentas123!` | `CUENTAS` | clientes (L); campañas, hitos y tareas (CRUD); resto en lectura |
-| `creativo` | `Creativo123!` | `CREATIVO` | entregables y versiones (crear, leer, actualizar); lo demás en lectura |
+| `cuentas` | `Cuentas123!` | `CUENTAS` | clientes (L); campañas, hitos y tareas (CRUD) y **presupuestos** (CRUD); resto en lectura; **no factura** |
+| `creativo` | `Creativo123!` | `CREATIVO` | entregables y versiones (crear, leer, actualizar); lo demás en lectura; **no ve presupuestos ni facturas** |
 | `aprobador` | `Aprobador123!` | `CLIENTE_APROBADOR` | lectura y **registrar aprobaciones** |
-| `finanzas` | `Finanzas123!` | `FINANZAS` | solo lectura de clientes, campañas e hitos |
+| `finanzas` | `Finanzas123!` | `FINANZAS` | lectura de clientes, campañas, hitos y presupuestos; **crea y lee facturas** (FacturarHitos) |
 
 Los archivos `.http` de cada feature traen un login por rol (`# @name loginAdmin`, `loginFinanzas`…): envía primero el login del rol que quieras y las peticiones siguientes reutilizan su `access_token`.
 
@@ -173,6 +180,15 @@ bash scripts/smoke-rbac.sh        # con el servidor corriendo y la base sembrada
 
 Prueba las 3 modalidades (OPEN: login; JWT: perfil y permisos; JWT + RBAC: 200 y 403 por rol), la RN-05 (el rol que no es `CLIENTE_APROBADOR` recibe `403`, `aprobador_id` en el body da `400` y el `aprobador_id` guardado es el del token) y el `400` en JSON ante un cuerpo mal formado. Crea una cadena de prueba y la desactiva al terminar; la aprobación de prueba queda registrada (las aprobaciones no se borran).
 
+## Smoke test de facturación
+
+```bash
+bash scripts/smoke-facturacion.sh                    # servidor corriendo y base sembrada; código 0 si TODO pasa
+npx ts-node scripts/check-facturacion-evaluator.ts   # el evaluador de RN-03 es puro y correcto (sin servidor ni base)
+```
+
+Cubre presupuestos (validaciones, aprobación e inmutabilidad), el RBAC de facturación (401/403 por rol), FacturarHitos (400/404/409, atomicidad, RN-03 con tope exacto, RN-07, ausencia de PUT/PATCH/DELETE) y que un hito `FACTURADO` no admite versiones ni aprobaciones (RN-06). Crea sus propios datos (prefijo `SMOKE-FACT`); las facturas y los presupuestos aprobados no se pueden borrar, así que quedan en la base.
+
 ## Errores del cuerpo de la petición
 
 Un JSON mal formado responde `400 {"message":"El cuerpo de la petición no es un JSON válido"}` y un cuerpo demasiado grande `413`, siempre en JSON y **sin stack trace ni rutas del servidor** (`src/shared/http/body-error-handler.ts`, registrado después de las rutas).
@@ -182,6 +198,7 @@ Un JSON mal formado responde `400 {"message":"El cuerpo de la petición no es un
 - **Sin ownership:** el RBAC es **por endpoint**. Un `CLIENTE_APROBADOR` puede aprobar cualquier versión y ver todas las campañas, no solo las suyas; no hay reglas de «es dueño del recurso».
 - **Sin `AsignacionTarea`:** no se modela qué usuario trabaja en qué tarea.
 - **Sin límite de intentos de login** ni bloqueo de cuenta.
+- **Sin anulación de facturas:** `facturas` no tiene `PUT`, `PATCH` ni `DELETE`; una factura emitida no se corrige ni se anula por la API (una nota crédito queda fuera de alcance).
 
 > **Si ya tenías la base creada** antes de la RN-05, `sync()` no añade la llave foránea de `aprobaciones.aprobador_id`. Con los datos actuales (todos los `aprobador_id` apuntan a usuarios existentes):
 > `ALTER TABLE aprobaciones ADD CONSTRAINT fk_aprobaciones_aprobador FOREIGN KEY (aprobador_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE;`
@@ -245,3 +262,55 @@ curl -s -i -X PATCH $B/hitos/1 -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"e
 ```
 
 Para ver que un hito con varios entregables **no** se cierra hasta que todos estén aprobados, crea un segundo entregable en la misma tarea (o en otra del mismo hito) con su versión 1 y aprueba solo una de las dos: la respuesta trae `hito_cerrado: false`.
+
+## FacturarHitos: cómo funciona
+
+`POST /api/facturas` (solo `FINANZAS`, y `ADMIN`) con `{ "campania_id", "hito_ids": [..] }` ejecuta, en **una sola transacción** (`withTransaction`, con reintento ante colisión del consecutivo o deadlock):
+
+1. La campaña existe (`404`), está activa y tiene un presupuesto `APROBADO` (si no → `409`). Su fila se bloquea (`LOCK.UPDATE`) para serializar facturaciones de la misma campaña.
+2. Cada hito (bloqueado con `LOCK.UPDATE`, en orden de id) existe (`404`), pertenece a la campaña (`400`) y está `CERRADO` (un hito `ABIERTO` o ya `FACTURADO` → `409`). `hito_ids` vacío, repetido o no numérico → `400`.
+3. `valor` de cada hito = suma de `entregables.total` de sus tareas; `subtotal` = suma de valores; `impuestos` = `subtotal × FACTURA_IVA` (`.env`, por defecto `0.19`); `total` = `subtotal + impuestos`. Un subtotal de 0 → `409`.
+4. **RN-03:** `ya facturado` (suma de subtotales de la campaña) + `subtotal` no puede exceder el presupuesto aprobado (suma de presupuestos `APROBADO` activos) → si excede, `409` (`excedePresupuesto` en `facturacion.evaluator.ts`, función pura; llegar exactamente al tope se permite).
+5. **RN-07:** `numero` = `NC-<año>-<consecutivo de 6 dígitos>`, único por índice (un choque se reintenta; agotados los intentos → `409`).
+6. Crea `facturas` + `factura_hitos` y pasa cada hito a `FACTURADO`. Cualquier error revierte todo.
+
+Respuesta `201`: `{ factura, hitos: [{ hito_id, valor }], presupuesto_aprobado, total_facturado_campania }`.
+
+### Libreto de la demo de facturación
+
+Continúa el libreto anterior (el hito `1` quedó `CERRADO` y su entregable vale `1500`). `cuentas` asigna el presupuesto y `finanzas` factura.
+
+```bash
+CUENTAS=$(curl -s -X POST $B/sesion/login -H "$H" -d '{"identifier":"cuentas","password":"Cuentas123!"}' | node -pe "JSON.parse(require('fs').readFileSync(0)).access_token")
+FIN=$(curl -s -X POST $B/sesion/login -H "$H" -d '{"identifier":"finanzas","password":"Finanzas123!"}' | node -pe "JSON.parse(require('fs').readFileSync(0)).access_token")
+
+# 1. presupuesto de 2000 para la campaña 1: nace BORRADOR; sin aprobar no se puede facturar
+curl -s -X POST $B/presupuestos -H "$H" -H "Authorization: Bearer $CUENTAS" -d '{"campania_id":1,"valor":2000}'
+curl -s -i -X POST $B/facturas -H "$H" -H "Authorization: Bearer $FIN" -d '{"campania_id":1,"hito_ids":[1]}'          # 409: sin presupuesto APROBADO
+
+# 2. aprobar el presupuesto (desde aquí es inmutable: PUT/PATCH/deactivate -> 409)
+curl -s -X PATCH $B/presupuestos/1 -H "$H" -H "Authorization: Bearer $CUENTAS" -d '{"estado":"APROBADO"}'
+
+# 3. cuentas no factura (403); finanzas factura el hito CERRADO -> 201: subtotal 1500, impuestos 285, total 1785, hito FACTURADO
+curl -s -i -X POST $B/facturas -H "$H" -H "Authorization: Bearer $CUENTAS" -d '{"campania_id":1,"hito_ids":[1]}'
+curl -s -X POST $B/facturas -H "$H" -H "Authorization: Bearer $FIN" -d '{"campania_id":1,"hito_ids":[1]}'
+curl -s $B/hitos/1 -H "Authorization: Bearer $ADMIN"                                                             # estado: FACTURADO
+
+# 4. reintento sobre el mismo hito -> 409, nada cambia
+curl -s -i -X POST $B/facturas -H "$H" -H "Authorization: Bearer $FIN" -d '{"campania_id":1,"hito_ids":[1]}'
+
+# 5. exceder el presupuesto: otro hito cerrado de 800 (1500 + 800 > 2000) -> 409 (RN-03), el hito sigue CERRADO
+curl -s -X POST $B/hitos -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"campania_id":1,"nombre":"Piezas extra"}'
+curl -s -X POST $B/tareas -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"hito_id":2,"nombre":"Banner extra"}'
+curl -s -X POST $B/entregables -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"tarea_id":2,"total":800}'
+curl -s -X POST $B/version-entregables -H "$H" -H "Authorization: Bearer $ADMIN" -d '{"entregable_id":2}'
+curl -s -X POST $B/aprobaciones -H "$H" -H "Authorization: Bearer $APROB" -d '{"version_entregable_id":3,"estado":"APROBADA"}'
+curl -s -i -X POST $B/facturas -H "$H" -H "Authorization: Bearer $FIN" -d '{"campania_id":1,"hito_ids":[2]}'
+
+# 6. consultas (finanzas); la factura es un registro contable: PUT/PATCH/DELETE -> 404; creativo -> 403
+curl -s "$B/facturas?campania_id=1" -H "Authorization: Bearer $FIN"
+curl -s $B/facturas/1 -H "Authorization: Bearer $FIN"
+curl -s -i -X DELETE $B/facturas/1 -H "Authorization: Bearer $ADMIN"
+```
+
+> Los ids (`1`, `2`, `3`) asumen una base sin datos de negocio previos; si no, sustitúyelos por los de cada respuesta. Si ya tenías la base creada antes de este issue, `sync()` crea las tablas nuevas (`presupuestos`, `facturas`, `factura_hitos`) pero la matriz hay que reaplicarla con `npm run db:seed`.

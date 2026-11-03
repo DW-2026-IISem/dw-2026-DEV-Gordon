@@ -1,0 +1,87 @@
+### Factura — FacturarHitos (JWT + RBAC: requiere token)
+@baseUrl = http://localhost:3012/api
+
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: presupuestos (CRUD) · finanzas: presupuestos (L) y facturas (C/L) · creativo: sin acceso
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "admin", "password": "Admin123!" }
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "cuentas", "password": "Cuentas123!" }
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "creativo", "password": "Creativo123!" }
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+
+###
+
+
+### Facturar hitos CERRADOS (finanzas) -> 201: factura con numero NC-<año>-<6 dígitos>, subtotal/impuestos/total y los hitos pasan a FACTURADO
+POST {{baseUrl}}/facturas
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "hito_ids": [1] }
+
+### Hito ABIERTO o ya FACTURADO -> 409, no se crea nada
+POST {{baseUrl}}/facturas
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "hito_ids": [1] }
+
+### Excede el presupuesto aprobado (RN-03) -> 409, nada cambia
+POST {{baseUrl}}/facturas
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "hito_ids": [2] }
+
+### Hito de otra campaña -> 400
+POST {{baseUrl}}/facturas
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "hito_ids": [9] }
+
+### hito_ids vacío -> 400
+POST {{baseUrl}}/facturas
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "hito_ids": [] }
+
+### Campaña u hito inexistente -> 404
+POST {{baseUrl}}/facturas
+Authorization: Bearer {{loginFinanzas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 999999, "hito_ids": [1] }
+
+### cuentas no factura -> 403
+POST {{baseUrl}}/facturas
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "hito_ids": [1] }

@@ -12,6 +12,8 @@ import '../features/business/tareas/tarea.associations';
 import '../features/business/entregables/entregable.associations';
 import '../features/business/version-entregables/version-entregable.associations';
 import '../features/business/aprobaciones/aprobacion.associations';
+import '../features/business/presupuestos/presupuesto.associations';
+import '../features/business/facturas/factura.associations';
 import '../features/auth/users/user.model';
 import '../features/auth/roles/role.model';
 import '../features/auth/resources/resource.model';

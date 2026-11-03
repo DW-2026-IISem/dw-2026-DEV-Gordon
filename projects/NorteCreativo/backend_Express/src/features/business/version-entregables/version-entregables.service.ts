@@ -76,10 +76,10 @@ export class VersionEntregablesService {
     const entregable = await this.entregables.findByIdWithTareaYHito(entregableId);
     if (!entregable) throw new AppError(404, 'Entregable no encontrado');
 
-    // RN-06: un hito CERRADO no admite versiones nuevas.
+    // RN-06: un hito que ya no está ABIERTO (CERRADO o FACTURADO) no admite versiones nuevas.
     const hito = (entregable as any).tarea?.hito;
-    if (hito?.estado === 'CERRADO') {
-      throw new AppError(409, 'No se crean versiones para un entregable cuyo hito está CERRADO (RN-06)');
+    if (hito && hito.estado !== 'ABIERTO') {
+      throw new AppError(409, `No se crean versiones para un entregable cuyo hito está ${hito.estado} (RN-06)`);
     }
 
     // Equivale a count + 1; se parte del máximo para no chocar con el UNIQUE si se borró una versión intermedia.

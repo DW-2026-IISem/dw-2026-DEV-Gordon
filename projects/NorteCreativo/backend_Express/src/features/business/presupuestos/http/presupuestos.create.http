@@ -1,0 +1,72 @@
+### Presupuesto — creación (JWT + RBAC: requiere token)
+@baseUrl = http://localhost:3012/api
+
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: presupuestos (CRUD) · finanzas: presupuestos (L) y facturas (C/L) · creativo: sin acceso
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "admin", "password": "Admin123!" }
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "cuentas", "password": "Cuentas123!" }
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "creativo", "password": "Creativo123!" }
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+
+###
+
+### Crear presupuesto -> 201, estado BORRADOR
+POST {{baseUrl}}/presupuestos
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "valor": 10000000, "observaciones": "Presupuesto neto de la campaña" }
+
+### Campaña inexistente -> 404
+POST {{baseUrl}}/presupuestos
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 999999, "valor": 1000 }
+
+### Sin valor -> 400
+POST {{baseUrl}}/presupuestos
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1 }
+
+### valor <= 0 -> 400
+POST {{baseUrl}}/presupuestos
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "valor": 0 }
+
+### creativo no ve presupuestos -> 403
+POST {{baseUrl}}/presupuestos
+Authorization: Bearer {{loginCreativo.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "valor": 1000 }

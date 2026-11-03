@@ -5,6 +5,7 @@ import { seedHitos } from '../../features/business/hitos/hito.seeder';
 import { seedTareas } from '../../features/business/tareas/tarea.seeder';
 import { seedEntregables } from '../../features/business/entregables/entregable.seeder';
 import { seedVersionEntregables } from '../../features/business/version-entregables/version-entregable.seeder';
+import { seedPresupuestos } from '../../features/business/presupuestos/presupuesto.seeder';
 import { seedUsers } from '../../features/auth/users/users.seeder';
 import { seedRoles } from '../../features/auth/roles/roles.seeder';
 import { seedResources } from '../../features/auth/resources/resources.seeder';
@@ -23,6 +24,8 @@ import '../../features/business/tareas/tarea.associations';
 import '../../features/business/entregables/entregable.associations';
 import '../../features/business/version-entregables/version-entregable.associations';
 import '../../features/business/aprobaciones/aprobacion.associations';
+import '../../features/business/presupuestos/presupuesto.associations';
+import '../../features/business/facturas/factura.associations';
 import { getSeedCounts } from './counts';
 
 export class SeedersRunner {
@@ -44,6 +47,7 @@ export class SeedersRunner {
       // 2) Negocio.
       await seedClientes(counts.clientes);
       await seedCampanias(counts.campanias);
+      await seedPresupuestos();
       await seedHitos(counts.hitos);
       await seedTareas(counts.tareas);
       await seedEntregables(counts.entregables);

@@ -1,0 +1,45 @@
+### Presupuesto — borrado (JWT + RBAC: requiere token)
+@baseUrl = http://localhost:3012/api
+
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: presupuestos (CRUD) · finanzas: presupuestos (L) y facturas (C/L) · creativo: sin acceso
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "admin", "password": "Admin123!" }
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "cuentas", "password": "Cuentas123!" }
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "creativo", "password": "Creativo123!" }
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+
+###
+
+### Desactivar (borrado lógico); un APROBADO -> 409
+PATCH {{baseUrl}}/presupuestos/1/deactivate
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+
+### Borrado físico; un APROBADO -> 409
+DELETE {{baseUrl}}/presupuestos/1
+Authorization: Bearer {{loginCuentas.response.body.access_token}}

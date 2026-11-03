@@ -33,6 +33,7 @@ export const MATRIZ_ROLES: Record<string, Regla[] | 'TODO'> = {
     { base: '/api/entregables', operaciones: LEER },
     { base: '/api/version-entregables', operaciones: LEER },
     { base: '/api/aprobaciones', operaciones: LEER },
+    { base: '/api/presupuestos', operaciones: CRUD },
   ],
   CREATIVO: [
     { base: '/api/campanias', operaciones: LEER },
@@ -52,6 +53,8 @@ export const MATRIZ_ROLES: Record<string, Regla[] | 'TODO'> = {
     { base: '/api/clientes', operaciones: LEER },
     { base: '/api/campanias', operaciones: LEER },
     { base: '/api/hitos', operaciones: LEER },
+    { base: '/api/presupuestos', operaciones: LEER },
+    { base: '/api/facturas', operaciones: CREAR_LEER },
   ],
 };
 

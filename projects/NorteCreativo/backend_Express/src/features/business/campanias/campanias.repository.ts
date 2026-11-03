@@ -1,4 +1,4 @@
-import { InferAttributes } from 'sequelize';
+import { InferAttributes, Transaction } from 'sequelize';
 import { guardDb } from '../../../shared/database/guard-db';
 import { Cliente } from '../clientes/cliente.model';
 import { Campania } from './campania.model';
@@ -14,6 +14,11 @@ export class CampaniasRepository {
 
   public findById(id: number): Promise<Campania | null> {
     return Campania.findByPk(id);
+  }
+
+  // Bloqueo de fila (SELECT ... FOR UPDATE): serializa facturaciones simultáneas de la misma campaña.
+  public findByIdForUpdate(id: number, transaction: Transaction): Promise<Campania | null> {
+    return Campania.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
   }
 
   public findByIdWithCliente(id: number): Promise<Campania | null> {

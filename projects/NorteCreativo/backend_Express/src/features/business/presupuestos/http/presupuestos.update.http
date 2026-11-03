@@ -1,0 +1,58 @@
+### Presupuesto — actualización y aprobación (JWT + RBAC: requiere token)
+@baseUrl = http://localhost:3012/api
+
+### Primero envía (Send Request) el login del rol que vayas a usar; las peticiones de abajo reutilizan su access_token.
+### admin: todo salvo aprobar · cuentas: presupuestos (CRUD) · finanzas: presupuestos (L) y facturas (C/L) · creativo: sin acceso
+
+# @name loginAdmin
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "admin", "password": "Admin123!" }
+
+###
+
+# @name loginCuentas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "cuentas", "password": "Cuentas123!" }
+
+###
+
+# @name loginCreativo
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "creativo", "password": "Creativo123!" }
+
+###
+
+# @name loginFinanzas
+POST {{baseUrl}}/sesion/login
+Content-Type: application/json
+
+{ "identifier": "finanzas", "password": "Finanzas123!" }
+
+###
+
+### Aprobar un presupuesto BORRADOR -> 200 (desde aquí es inmutable)
+PATCH {{baseUrl}}/presupuestos/1
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "estado": "APROBADO" }
+
+### Editar un presupuesto APROBADO -> 409
+PUT {{baseUrl}}/presupuestos/1
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "campania_id": 1, "valor": 2000 }
+
+### PATCH sobre un APROBADO -> 409
+PATCH {{baseUrl}}/presupuestos/1
+Authorization: Bearer {{loginCuentas.response.body.access_token}}
+Content-Type: application/json
+
+{ "valor": 2000 }
