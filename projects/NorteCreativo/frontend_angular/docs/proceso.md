@@ -34,11 +34,13 @@ Comandos:
 ```bash
 node -v && npm -v && npx @angular/cli@22 version
 cd projects/NorteCreativo/backend_Express && npm run db:seed && npm run dev
-ls -A projects/NorteCreativo/frontend
+curl -s localhost:3012/api/health | jq
+ls -A projects/NorteCreativo/frontend_angular
 ```
 
-Salida:
-<!-- pegar captura de versiones, backend arriba y carpeta frontend solo con docs -->
+Salida (el backend corre en otra terminal; aqui se comprueba con el health):
+
+![Fase 0: versiones, backend arriba y carpeta del frontend solo con docs](images/iss-00-fase-0.png)
 
 ## FASE 1 - FUNDAMENTOS Y BUSINESS (SIN LOGIN)
 
@@ -86,32 +88,29 @@ ni docs/trazabilidad_NC/. NO hagas commit ni push: lo hago yo.
 Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos exactos); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (versiones): `node -v && npm -v && npx @angular/cli@22 version`
 
-<!-- pegar captura -->
+![AC-1: versiones de node, npm y angular cli](images/iss-00-ac-1.png)
 
 3. comprobamos AC-2 (backend arriba): `npm run db:seed && npm run dev` en `backend_Express`
 
-<!-- pegar captura -->
+![AC-2: seed y backend escuchando en el 3012](images/iss-00-ac-2.png)
 
-4. comprobamos AC-3 (401 / 200 según interruptor): `curl -s -o /dev/null -w "HTTP %{http_code}\n" localhost:3012/api/clientes` con `AUTH_ENABLED=true` y luego `false`
+4. comprobamos AC-3 (401 / 200 según interruptor): `curl -s -o /dev/null -w "HTTP %{http_code}\n" localhost:3012/api/clientes` con `AUTH_ENABLED=true` y luego `false`, mas `curl -s localhost:3012/api/clientes | jq 'keys'` para ver que la respuesta es `{ clientes }`
 
-<!-- pegar captura -->
+![AC-3: 401 con AUTH_ENABLED=true y 200 con false](images/iss-00-ac-3.png)
 
-5. comprobamos AC-4 (admin y aprobaciones protegidos): `curl -i localhost:3012/api/usuarios` y `curl -i -X POST localhost:3012/api/aprobaciones -H 'Content-Type: application/json' -d '{}'` con `AUTH_ENABLED=false`
+5. comprobamos AC-4 (admin y aprobaciones protegidos): `curl -s -i -w "\n" localhost:3012/api/usuarios` y `curl -s -i -w "\n" -X POST localhost:3012/api/aprobaciones -H 'Content-Type: application/json' -d '{}'` con `AUTH_ENABLED=false`
 
-<!-- pegar captura -->
+![AC-4: usuarios y POST aprobaciones siguen en 401 en modo practica](images/iss-00-ac-4.png)
 
-6. comprobamos AC-5 (login y permisos): `TOKEN=$(curl -s -X POST localhost:3012/api/sesion/login -H 'Content-Type: application/json' -d '{"identifier":"admin","password":"Admin123!"}' | jq -r .access_token)` + `curl -s localhost:3012/api/permisos -H "Authorization: Bearer $TOKEN" | jq .total` (repetir con `finanzas` / `Finanzas123!`)
+6. comprobamos AC-5 (login y permisos), con `AUTH_ENABLED=true`: el login de `admin` con `jq 'keys'` para ver que solo devuelve el par de tokens, y despues el login encadenado a `/api/permisos` en una sola linea con `xargs`, sin variables: `curl -s -X POST localhost:3012/api/sesion/login -H 'Content-Type: application/json' -d '{"identifier":"admin","password":"Admin123!"}' | jq -r .access_token | xargs -I{} curl -s localhost:3012/api/permisos -H "Authorization: Bearer {}" | jq .total` (repetido con `finanzas` / `Finanzas123!`)
 
-<!-- pegar captura -->
+![AC-5: login con par de tokens y total de permisos de admin y finanzas](images/iss-00-ac-5.png)
 
-7. comprobamos AC-6 (carpeta vacía y compilación): `ls -A projects/NorteCreativo/frontend` + `npx tsc --noEmit` en `backend_Express`
+7. comprobamos AC-6 (carpeta sin código y compilación): `ls -A projects/NorteCreativo/frontend_angular` + `npx tsc --noEmit` en `backend_Express`
 
-<!-- pegar captura -->
+![AC-6: frontend_angular solo con docs y backend compilando sin errores](images/iss-00-ac-6.png)
 
 
 ## ISS - 01
