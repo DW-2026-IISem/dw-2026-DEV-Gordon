@@ -57,7 +57,7 @@ Salida (el backend corre en otra terminal; aqui se comprueba con el health):
 - [ ] **AC-2** `npm run db:seed && npm run dev` deja el 3012 escuchando con la base sincronizada.
 - [ ] **AC-3** Con `AUTH_ENABLED=true`, `curl -i localhost:3012/api/clientes` responde 401; con `AUTH_ENABLED=false` responde 200 con `{ clientes }`.
 - [ ] **AC-4** Con `AUTH_ENABLED=false`, `GET /api/usuarios` y `POST /api/aprobaciones` sin token siguen en 401.
-- [ ] **AC-5** Con `AUTH_ENABLED=true`, el login de `admin` devuelve solo el par de tokens, y `GET /api/permisos` con ese token devuelve `total: 75`; con `finanzas`, `total: 6`.
+- [ ] **AC-5** Con `AUTH_ENABLED=true`, el login de `admin` devuelve solo el par de tokens, y `GET /api/permisos` con ese token devuelve `total: 85`; con `finanzas`, `total: 11`.
 - [ ] **AC-6** `frontend/` no contiene `src/` ni `package.json`, y `npx tsc --noEmit` del backend no da errores.
 
 ### Procedimiento
@@ -168,32 +168,37 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 navegador); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
+2. comprobamos AC-1 (estructura en la raíz): `ls -A projects/NorteCreativo/frontend_angular` y `ls -A projects/NorteCreativo/frontend_angular/docs`
+haz
+![AC-1: package.json, angular.json y src en la raiz, docs intacto](images/iss-01-ac-1.png)
 
-2. comprobamos AC-1 (estructura en la raíz): `ls -A projects/NorteCreativo/frontend`
+3. comprobamos AC-2 (dependencias y tema): `npm ls primeng @primeuix/themes primeicons @angular/cdk --depth=0` + `grep -rnE "tailwindcss|primeicons|Aura|app-dark" src --include=styles.css --include=app.config.ts`
 
-<!-- pegar captura -->
+![AC-2: PrimeNG 22.1.4, themes 3.1.0, Tailwind, PrimeIcons, Aura y .app-dark](images/iss-01-ac-2.png)
 
-3. comprobamos AC-2 (dependencias y tema): `npm ls primeng @primeuix/themes primeicons @angular/cdk --depth=0` + `grep -R "providePrimeNG|@import 'tailwindcss'" src`
+4. comprobamos AC-3 (ejemplo signals): montar `<app-ejemplo />` en `/construir` un momento, `npm start`, pulsar los botones (+ 100.000 dos veces, Cambiar estado y Cambiar nombre) y revisar la consola con `playwright-cli --raw console | grep ejemplo | sed 's/ @ .*//'`
 
-<!-- pegar captura -->
+![AC-3: el ejemplo tras pulsar los botones, total, total con IVA, estado y nombre cambiados](images/iss-01-ac-3-pagina.png)
 
-4. comprobamos AC-3 (ejemplo signals): montar `<app-ejemplo />` en `/construir` un momento, `npm start`, pulsar los botones con la consola abierta
+![AC-3: la consola registra cada cambio desde el effect](images/iss-01-ac-3-consola.png)
 
-<!-- pegar captura -->
+5. comprobamos AC-4 (escritorio): `npm start` + `localhost:4200` a 1280 px, con el Header, el Aside con las 8 opciones, el contenido y el Footer, y luego el botón de menú para ocultar el Aside (sin abrir el Drawer)
 
-5. comprobamos AC-4 (escritorio): `npm start` + `localhost:4200` a 1280 px
+![AC-4: escritorio a 1280 px con Aside visible](images/iss-01-ac-4-escritorio.png)
 
-<!-- pegar captura -->
+![AC-4: el botón oculta el Aside y no abre el Drawer](images/iss-01-ac-4-aside-oculto.png)
 
-6. comprobamos AC-5 (móvil): DevTools en modo dispositivo a 390 px
+6. comprobamos AC-5 (móvil): navegador a 390 px, el Aside no se ve, el botón abre el Drawer, elegir "Clientes" cambia el título a Clientes y cierra el Drawer, la URL sigue en `/construir` y `scrollWidth` = `clientWidth` = 390 (sin scroll horizontal)
 
-<!-- pegar captura -->
+![AC-5: móvil a 390 px sin Aside](images/iss-01-ac-5-movil.png)
 
-7. comprobamos AC-6 (build, consola y Network): `npx ng build; echo $?` + Console + Network filtrando `api`
+![AC-5: el botón abre el Drawer con las 8 opciones](images/iss-01-ac-5-drawer.png)
 
-<!-- pegar captura -->
+![AC-5: tras elegir Clientes cambia el título y se cierra el Drawer](images/iss-01-ac-5-opcion.png)
+
+7. comprobamos AC-6 (build, consola y Network): `npx ng build; echo $?`, el título de la pestaña con `playwright-cli --raw eval "document.title"`, la consola con `playwright-cli --raw console error` y Network con `playwright-cli --raw requests --static | grep "/api/"`
+
+![AC-6: build con código 0, título, consola sin errores y sin peticiones a /api](images/iss-01-ac-6.png)
 
 
 ## ISS - 02
@@ -703,7 +708,7 @@ Para la fase ii ponemos requireAuth en true en los dos environments y AUTH_ENABL
 
 **AC:**
 - [ ] **AC-1** Con `requireAuth: true`, `/dashboard` sin sesión redirige a `/login?returnUrl=%2Fdashboard`.
-- [ ] **AC-2** Login con `admin` / `Admin123!` guarda los tokens y carga perfil y permisos; `/perfil` muestra ADMIN y 75 permisos. Con `finanzas` muestra FINANZAS y 6.
+- [ ] **AC-2** Login con `admin` / `Admin123!` guarda los tokens y carga perfil y permisos; `/perfil` muestra ADMIN y 85 permisos. Con `finanzas` muestra FINANZAS y 11.
 - [ ] **AC-3** En Application → Local Storage está `nortecreativo.session.v1` con `accessToken`, `refreshToken`, `usuario` y `permisos`.
 - [ ] **AC-4** Cada petición protegida lleva `Authorization: Bearer <access>`; `login` y `refresh` no.
 - [ ] **AC-5** Con el access vencido o alterado, navegar a `/clientes` muestra en Network: `GET /api/clientes` → 401, un solo `POST /api/sesion/refresh` → 200, y el reintento → 200.
@@ -869,7 +874,7 @@ Salida:
 
 **AC:**
 - [ ] **AC-1** `admin` lista, crea y edita usuarios; la contraseña y el estado solo se envían al crear (Network → Payload) y la respuesta nunca trae `password`. El propio `admin` no puede desactivarse ni eliminarse desde la UI.
-- [ ] **AC-2** "Ver permisos" de `finanzas` muestra sus 6 permisos con método, ruta y rol; `GET /api/usuarios/:id/permisos` aparece en el catálogo y `check-resource-catalog.ts` da OK.
+- [ ] **AC-2** "Ver permisos" de `finanzas` muestra sus 11 permisos con método, ruta y rol; `GET /api/usuarios/:id/permisos` aparece en el catálogo y `check-resource-catalog.ts` da OK.
 - [ ] **AC-3** Roles: CRUD con baja lógica; un rol creado como "auditor" se guarda como "AUDITOR".
 - [ ] **AC-4** Recursos: crear, editar, desactivar y eliminar; un `path` sin `/api/` no deja enviar y un par repetido muestra el 409.
 - [ ] **AC-5** Asignaciones: crear el vínculo usuario-rol y retirarlo; repetir uno activo muestra el 409 y crear uno retirado lo reactiva sin duplicar la fila. Al retirar FINANZAS de un usuario, su siguiente petición a `/api/clientes` responde 403 sin reiniciar el backend.

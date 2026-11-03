@@ -65,7 +65,7 @@
 
 **AC:**
 - [ ] **AC-1** Con `requireAuth: true`, `/dashboard` sin sesión redirige a `/login?returnUrl=%2Fdashboard`.
-- [ ] **AC-2** Login con `admin` / `Admin123!` guarda los tokens y carga perfil y permisos; `/perfil` muestra ADMIN y 75 permisos. Con `finanzas` muestra FINANZAS y 6.
+- [ ] **AC-2** Login con `admin` / `Admin123!` guarda los tokens y carga perfil y permisos; `/perfil` muestra ADMIN y 85 permisos. Con `finanzas` muestra FINANZAS y 11.
 - [ ] **AC-3** En Application → Local Storage está `nortecreativo.session.v1` con `accessToken`, `refreshToken`, `usuario` y `permisos`.
 - [ ] **AC-4** Cada petición protegida lleva `Authorization: Bearer <access>`; `login` y `refresh` no.
 - [ ] **AC-5** Con el access vencido o alterado, navegar a `/clientes` muestra en Network: `GET /api/clientes` → 401, un solo `POST /api/sesion/refresh` → 200, y el reintento → 200.

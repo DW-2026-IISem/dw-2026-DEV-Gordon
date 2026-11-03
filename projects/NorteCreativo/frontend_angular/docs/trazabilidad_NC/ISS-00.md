@@ -38,7 +38,7 @@
 - [ ] **AC-2** `npm run db:seed && npm run dev` deja el 3012 escuchando con la base sincronizada.
 - [ ] **AC-3** Con `AUTH_ENABLED=true`, `curl -i localhost:3012/api/clientes` responde 401; con `AUTH_ENABLED=false` responde 200 con `{ clientes }`.
 - [ ] **AC-4** Con `AUTH_ENABLED=false`, `GET /api/usuarios` y `POST /api/aprobaciones` sin token siguen en 401.
-- [ ] **AC-5** Con `AUTH_ENABLED=true`, el login de `admin` devuelve solo el par de tokens, y `GET /api/permisos` con ese token devuelve `total: 75`; con `finanzas`, `total: 6`.
+- [ ] **AC-5** Con `AUTH_ENABLED=true`, el login de `admin` devuelve solo el par de tokens, y `GET /api/permisos` con ese token devuelve `total: 85`; con `finanzas`, `total: 11`.
 - [ ] **AC-6** `frontend/` no contiene `src/` ni `package.json`, y `npx tsc --noEmit` del backend no da errores.
 
 **Checklist interno (IA, En curso):**

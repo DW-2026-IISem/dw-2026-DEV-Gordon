@@ -20,7 +20,7 @@
 - **Regla de oro (§10.1)**: un usuario puede hacer `MÉTODO /ruta` solo si la cadena `role_users` → `roles` → `resource_roles` → `resources` está activa en todos sus eslabones. Si falta uno, la respuesta es 403.
 - **Ajuste mínimo del backend para "Ver permisos"**: la guía lo pide (criterio 2) y Norte Creativo no tiene ese endpoint.
   - Se agrega `GET /api/usuarios/:id/permisos` (JWT + RBAC), que reutiliza `findEffectiveForUser` de `resource-roles.repository.ts` y responde `{ total, permisos }` con la misma forma que `/api/permisos`.
-  - Se registra en `resource-catalog.ts`: el catálogo pasa de 76 a 77, ADMIN de 75 a 76 permisos tras `npm run db:seed`, y `check-resource-catalog.ts` debe quedar en OK.
+  - Se registra en `resource-catalog.ts`: el catálogo pasa de 86 a 87, ADMIN de 85 a 86 permisos tras `npm run db:seed`, y `check-resource-catalog.ts` debe quedar en OK.
 - **Generar con CLI (§10.2)** en `features/admin/` (`--skip-tests --defaults`): `usuarios/usuario-list|usuario-form`, `roles/rol-list|rol-form`, `recursos/recurso-list|recurso-form`, `asignaciones/asignacion-list` y `concesiones/concesion-list`. Los servicios ya existen desde ISS-02.
 - **Usuarios (§10.3)**:
   - Crear con `username`, `email`, `password` (`p-password` con `toggleMask`) y `status`. Editar solo `username` y `email` (`PATCH`; el backend no acepta más campos). La contraseña y el estado solo se envían al crear.
@@ -61,7 +61,7 @@
 
 **AC:**
 - [ ] **AC-1** `admin` lista, crea y edita usuarios; la contraseña y el estado solo se envían al crear (Network → Payload) y la respuesta nunca trae `password`. El propio `admin` no puede desactivarse ni eliminarse desde la UI.
-- [ ] **AC-2** "Ver permisos" de `finanzas` muestra sus 6 permisos con método, ruta y rol; `GET /api/usuarios/:id/permisos` aparece en el catálogo y `check-resource-catalog.ts` da OK.
+- [ ] **AC-2** "Ver permisos" de `finanzas` muestra sus 11 permisos con método, ruta y rol; `GET /api/usuarios/:id/permisos` aparece en el catálogo y `check-resource-catalog.ts` da OK.
 - [ ] **AC-3** Roles: CRUD con baja lógica; un rol creado como "auditor" se guarda como "AUDITOR".
 - [ ] **AC-4** Recursos: crear, editar, desactivar y eliminar; un `path` sin `/api/` no deja enviar y un par repetido muestra el 409.
 - [ ] **AC-5** Asignaciones: crear el vínculo usuario-rol y retirarlo; repetir uno activo muestra el 409 y crear uno retirado lo reactiva sin duplicar la fila. Al retirar FINANZAS de un usuario, su siguiente petición a `/api/clientes` responde 403 sin reiniciar el backend.

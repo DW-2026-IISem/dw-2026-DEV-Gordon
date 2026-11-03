@@ -51,13 +51,13 @@ La guía construye la Fase I contra el backend "antes de ISS-13". Aquí se usa e
 
 | Usuario | Password | Rol | Permisos (antes de ISS-10) | Permisos (desde ISS-10) |
 |---|---|---|---:|---:|
-| `admin` | `Admin123!` | ADMIN | 75 | 76 |
-| `cuentas` | `Cuentas123!` | CUENTAS | 29 | 29 |
+| `admin` | `Admin123!` | ADMIN | 85 | 86 |
+| `cuentas` | `Cuentas123!` | CUENTAS | 36 | 36 |
 | `creativo` | `Creativo123!` | CREATIVO | 16 | 16 |
 | `aprobador` | `Aprobador123!` | CLIENTE_APROBADOR | 11 | 11 |
-| `finanzas` | `Finanzas123!` | FINANZAS | 6 | 6 |
+| `finanzas` | `Finanzas123!` | FINANZAS | 11 | 11 |
 
-El catálogo tiene 76 recursos (77 desde ISS-10, por `GET /api/usuarios/:id/permisos`). ADMIN recibe todos menos `POST /api/aprobaciones`, que es solo de CLIENTE_APROBADOR.
+El catálogo tiene 86 recursos (87 desde ISS-10, por `GET /api/usuarios/:id/permisos`). ADMIN recibe todos menos `POST /api/aprobaciones`, que es solo de CLIENTE_APROBADOR.
 
 ## Diferencias con el contrato de StoreLab
 
