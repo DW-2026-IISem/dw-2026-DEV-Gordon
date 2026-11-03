@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import '../../../shared/auth/auth-user'; // declara req.auth (ampliación global de Request)
+import { isOpenInPracticeMode } from '../../../shared/auth/auth-mode';
 import { extractBearerToken, verifyAccessToken } from '../../../shared/auth/jwt';
 import { AppError } from '../../../shared/errors/app-error';
 import { sendError } from '../../../shared/http/error-response';
@@ -11,6 +12,9 @@ const usersRepository = new UsersRepository();
 // Revalida el usuario en la BD en cada petición: desactivar un usuario corta su acceso al instante.
 export async function authenticate(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    // Modo práctica (AUTH_ENABLED=false): solo el negocio pasa sin token.
+    if (isOpenInPracticeMode(req.method, req.originalUrl)) return next();
+
     const token = extractBearerToken(req.headers.authorization);
     if (!token) throw new AppError(401, 'Falta el token Bearer en la cabecera Authorization');
 

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import '../../../shared/auth/auth-user'; // declara req.auth (ampliación global de Request)
+import { isOpenInPracticeMode } from '../../../shared/auth/auth-mode';
 import { isOperationGranted, normalizePath } from '../../../shared/auth/resource-match';
 import { AppError } from '../../../shared/errors/app-error';
 import { sendError } from '../../../shared/http/error-response';
@@ -12,6 +13,9 @@ const resourceRolesRepository = new ResourceRolesRepository();
 // dar o retirar una concesión surte efecto en la siguiente petición, sin reiniciar el servidor.
 export async function authorize(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    // Modo práctica (AUTH_ENABLED=false): el negocio abierto no consulta la matriz RBAC.
+    if (isOpenInPracticeMode(req.method, req.originalUrl)) return next();
+
     if (!req.auth) throw new AppError(401, 'Autenticación requerida');
 
     // Express atiende HEAD con los handlers de GET: se autoriza como GET.

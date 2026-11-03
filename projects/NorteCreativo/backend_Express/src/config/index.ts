@@ -6,6 +6,7 @@ import routes from '../routes';
 import { bodyErrorHandler } from '../shared/http/body-error-handler';
 import { sequelize, testConnection } from '../database/db';
 import { setupSwagger } from '../swagger';
+import { isAuthEnabled } from '../shared/auth/auth-mode';
 import '../features/business/campanias/campania.associations';
 import '../features/business/hitos/hito.associations';
 import '../features/business/tareas/tarea.associations';
@@ -77,6 +78,11 @@ export class App {
   public listen(): void {
     this.app.listen(this.app.get('port'), () => {
       console.log(`Servidor ejecutándose en puerto ${this.app.get('port')}`);
+      console.log(
+        isAuthEnabled()
+          ? 'AUTH_ENABLED=true: JWT + RBAC activos en todas las rutas'
+          : 'MODO PRACTICA activo (AUTH_ENABLED=false): el negocio responde sin token; administración, sesión y POST /api/aprobaciones siguen protegidos',
+      );
     });
   }
 }
