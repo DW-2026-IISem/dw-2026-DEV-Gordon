@@ -3,9 +3,14 @@ import { toApiMessage } from './api-error';
 
 describe('toApiMessage', () => {
   it('distingue backend caído (status 0) de un 403', () => {
-    const caido = toApiMessage(new HttpErrorResponse({ status: 0, error: new ProgressEvent('error') }));
+    const caido = toApiMessage(
+      new HttpErrorResponse({ status: 0, error: new ProgressEvent('error') }),
+    );
     const prohibido = toApiMessage(
-      new HttpErrorResponse({ status: 403, error: { message: 'No autorizado: sin concesión para GET /api/usuarios' } }),
+      new HttpErrorResponse({
+        status: 403,
+        error: { message: 'No autorizado: sin concesión para GET /api/usuarios' },
+      }),
     );
 
     expect(caido).toContain('No se pudo conectar con el servidor');
@@ -17,7 +22,10 @@ describe('toApiMessage', () => {
     const mensaje = toApiMessage(
       new HttpErrorResponse({
         status: 400,
-        error: { message: 'Error de validación', errors: ['Cliente.nombre cannot be null', 'Cliente.numero_documento cannot be null'] },
+        error: {
+          message: 'Error de validación',
+          errors: ['Cliente.nombre cannot be null', 'Cliente.numero_documento cannot be null'],
+        },
       }),
     );
 
@@ -27,7 +35,9 @@ describe('toApiMessage', () => {
 
   it('usa el message del backend en 401, 404 y 409', () => {
     for (const status of [401, 404, 409]) {
-      expect(toApiMessage(new HttpErrorResponse({ status, error: { message: `mensaje ${status}` } }))).toBe(`mensaje ${status}`);
+      expect(
+        toApiMessage(new HttpErrorResponse({ status, error: { message: `mensaje ${status}` } })),
+      ).toBe(`mensaje ${status}`);
     }
   });
 

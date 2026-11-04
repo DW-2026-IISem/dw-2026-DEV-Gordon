@@ -1,5 +1,10 @@
 <app-page-header title="Roles" subtitle="Agrupan los permisos que se conceden a los usuarios.">
-  <p-button *appHasPermission="'POST /api/roles'" label="Nuevo rol" icon="pi pi-plus" (onClick)="openNew()" />
+  <p-button
+    *appHasPermission="'POST /api/roles'"
+    label="Nuevo rol"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
 </app-page-header>
 
 @if (error(); as message) {
@@ -12,11 +17,27 @@
 <div class="mb-4 max-w-md">
   <p-iconfield>
     <p-inputicon class="pi pi-search" />
-    <input pInputText type="search" class="w-full" placeholder="Buscar por nombre o descripción" aria-label="Buscar roles" [value]="filter()" (input)="onFilter($event)" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por nombre o descripción"
+      aria-label="Buscar roles"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
   </p-iconfield>
 </div>
 
-<p-table [value]="visibleRows()" [loading]="loading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25]" dataKey="id" [tableStyle]="{ 'min-width': '40rem' }">
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '40rem' }"
+>
   <ng-template #header>
     <tr>
       <th pSortableColumn="name">Nombre <p-sort-icon field="name" /></th>
@@ -42,6 +63,8 @@
             [text]="true"
             [ariaLabel]="'Editar ' + row.name"
             (onClick)="openEdit(row)"
+            [pTooltip]="'Editar ' + row.name"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/roles/:id/deactivate'"
@@ -51,6 +74,8 @@
             [text]="true"
             [ariaLabel]="'Desactivar ' + row.name"
             (onClick)="confirmDeactivate(row)"
+            [pTooltip]="'Desactivar ' + row.name"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'DELETE /api/roles/:id'"
@@ -60,6 +85,8 @@
             [text]="true"
             [ariaLabel]="'Eliminar ' + row.name"
             (onClick)="confirmRemove(row)"
+            [pTooltip]="'Eliminar ' + row.name"
+            tooltipPosition="top"
           />
         </td>
       }
@@ -71,9 +98,17 @@
       <td colspan="4">
         @if (!loading()) {
           @if (rows().length === 0) {
-            <app-empty-state icon="pi pi-id-card" title="Aún no hay roles" message="Crea el primero con «Nuevo rol»." />
+            <app-empty-state
+              icon="pi pi-id-card"
+              title="Aún no hay roles"
+              message="Crea el primero con «Nuevo rol»."
+            />
           } @else {
-            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Nada coincide con la búsqueda. Prueba con otro término." />
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Nada coincide con la búsqueda. Prueba con otro término."
+            />
           }
         }
       </td>
@@ -81,9 +116,21 @@
   </ng-template>
 </p-table>
 
-<p-dialog [header]="title()" [(visible)]="dialogVisible" [modal]="true" [draggable]="false" styleClass="w-full max-w-2xl mx-4">
+<p-dialog
+  [header]="title()"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-2xl mx-4"
+>
   @if (dialogError(); as message) {
     <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
   }
-  <app-rol-form [rol]="editing()" [resetKey]="resetKey()" [saving]="saving()" (saved)="save($event)" (cancelled)="closeDialog()" />
+  <app-rol-form
+    [rol]="editing()"
+    [resetKey]="resetKey()"
+    [saving]="saving()"
+    (saved)="save($event)"
+    (cancelled)="closeDialog()"
+  />
 </p-dialog>

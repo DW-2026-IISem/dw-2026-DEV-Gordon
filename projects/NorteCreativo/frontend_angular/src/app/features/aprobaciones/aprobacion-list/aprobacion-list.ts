@@ -63,7 +63,9 @@ export class AprobacionList implements OnInit {
   protected readonly filter = signal('');
   protected readonly estadoFilter = signal<EstadoAprobacion | null>(null);
 
-  protected readonly versionesPorId = computed(() => new Map(this.versiones().map((v) => [v.id, v])));
+  protected readonly versionesPorId = computed(
+    () => new Map(this.versiones().map((v) => [v.id, v])),
+  );
   protected readonly estadoOptions: Option[] = [
     { id: null, nombre: 'Todos los estados' },
     { id: 'APROBADA', nombre: 'Aprobada' },
@@ -74,7 +76,10 @@ export class AprobacionList implements OnInit {
     const estado = this.estadoFilter();
     const base = this.rows().filter((a) => estado === null || a.estado === estado);
     const ordenadas = [...base].sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id);
-    return filterRows(ordenadas, this.filter(), (a) => [this.versionLabel(a.version_entregable_id), a.comentario]);
+    return filterRows(ordenadas, this.filter(), (a) => [
+      this.versionLabel(a.version_entregable_id),
+      a.comentario,
+    ]);
   });
 
   ngOnInit(): void {
@@ -84,13 +89,17 @@ export class AprobacionList implements OnInit {
   // «Entregable #<id> · v<numero>»; no depende de tareas (CLIENTE_APROBADOR no las lee).
   protected versionLabel(versionId: number): string {
     const version = this.versionesPorId().get(versionId);
-    return version ? `Entregable #${version.entregable_id} · v${version.numero_version}` : `Versión #${versionId}`;
+    return version
+      ? `Entregable #${version.entregable_id} · v${version.numero_version}`
+      : `Versión #${versionId}`;
   }
 
   protected load(): void {
     this.loading.set(true);
     this.error.set(null);
-    const versiones$: Observable<VersionEntregable[]> = this.session.canPermission('GET /api/version-entregables')
+    const versiones$: Observable<VersionEntregable[]> = this.session.canPermission(
+      'GET /api/version-entregables',
+    )
       ? this.versionApi.list()
       : of([]);
 

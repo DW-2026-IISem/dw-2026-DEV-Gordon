@@ -11,27 +11,39 @@ export class EntregableApi {
   private readonly base = `${environment.apiUrl}/entregables`;
 
   list(): Observable<Entregable[]> {
-    return this.http.get<{ entregables: Entregable[] }>(this.base).pipe(map((res) => res.entregables));
+    return this.http
+      .get<{ entregables: Entregable[] }>(this.base)
+      .pipe(map((res) => res.entregables));
   }
 
   get(id: number): Observable<Entregable> {
-    return this.http.get<{ entregable: Entregable }>(`${this.base}/${id}`).pipe(map((res) => res.entregable));
+    return this.http
+      .get<{ entregable: Entregable }>(`${this.base}/${id}`)
+      .pipe(map((res) => res.entregable));
   }
 
   create(payload: EntregablePayload): Observable<Entregable> {
-    return this.http.post<{ entregable: Entregable }>(this.base, payload).pipe(map((res) => res.entregable));
+    return this.http
+      .post<{ entregable: Entregable }>(this.base, payload)
+      .pipe(map((res) => res.entregable));
   }
 
   update(id: number, payload: Partial<EntregablePayload>): Observable<Entregable> {
-    return this.http.patch<{ entregable: Entregable }>(`${this.base}/${id}`, payload).pipe(map((res) => res.entregable));
+    return this.http
+      .patch<{ entregable: Entregable }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.entregable));
   }
 
   replace(id: number, payload: EntregablePayload): Observable<Entregable> {
-    return this.http.put<{ entregable: Entregable }>(`${this.base}/${id}`, payload).pipe(map((res) => res.entregable));
+    return this.http
+      .put<{ entregable: Entregable }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.entregable));
   }
 
   deactivate(id: number): Observable<Entregable> {
-    return this.http.patch<{ entregable: Entregable }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.entregable));
+    return this.http
+      .patch<{ entregable: Entregable }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.entregable));
   }
 
   remove(id: number): Observable<void> {

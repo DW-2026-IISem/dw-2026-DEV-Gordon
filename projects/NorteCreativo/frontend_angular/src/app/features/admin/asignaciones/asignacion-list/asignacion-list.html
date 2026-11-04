@@ -1,5 +1,10 @@
 <app-page-header title="Asignaciones" subtitle="Qué roles tiene cada usuario.">
-  <p-button *appHasPermission="'POST /api/asignaciones-rol'" label="Nueva asignación" icon="pi pi-plus" (onClick)="openNew()" />
+  <p-button
+    *appHasPermission="'POST /api/asignaciones-rol'"
+    label="Nueva asignación"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
 </app-page-header>
 
 @if (error(); as message) {
@@ -25,7 +30,15 @@
   />
 </div>
 
-<p-table [value]="visibleRows()" [loading]="loading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25]" dataKey="id" [tableStyle]="{ 'min-width': '36rem' }">
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '36rem' }"
+>
   <ng-template #header>
     <tr>
       <th>Usuario</th>
@@ -52,6 +65,8 @@
             [text]="true"
             [ariaLabel]="'Retirar asignación ' + row.roleLabel + ' de ' + row.usuarioLabel"
             (onClick)="confirmDeactivate(row)"
+            [pTooltip]="'Retirar asignación ' + row.roleLabel + ' de ' + row.usuarioLabel"
+            tooltipPosition="top"
           />
         </td>
       }
@@ -62,29 +77,73 @@
     <tr>
       <td colspan="4">
         @if (!loading()) {
-          <app-empty-state icon="pi pi-user-plus" title="Sin asignaciones" message="Asigna un rol a un usuario con «Nueva asignación»." />
+          <app-empty-state
+            icon="pi pi-user-plus"
+            title="Sin asignaciones"
+            message="Asigna un rol a un usuario con «Nueva asignación»."
+          />
         }
       </td>
     </tr>
   </ng-template>
 </p-table>
 
-<p-dialog header="Nueva asignación" [(visible)]="dialogVisible" [modal]="true" [draggable]="false" styleClass="w-full max-w-lg mx-4">
+<p-dialog
+  header="Nueva asignación"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-lg mx-4"
+>
   @if (dialogError(); as message) {
     <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
   }
   <div class="grid gap-4">
     <div class="flex flex-col gap-1">
       <label for="asignacion-nuevo-a" class="font-medium">Usuario</label>
-      <p-select inputId="asignacion-nuevo-a" [options]="usuarioOptions()" optionLabel="label" optionValue="value" [ngModel]="newUsuario()" (ngModelChange)="newUsuario.set($event)" [filter]="true" placeholder="Elige un usuario" styleClass="w-full" appendTo="body" />
+      <p-select
+        inputId="asignacion-nuevo-a"
+        [options]="usuarioOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="newUsuario()"
+        (ngModelChange)="newUsuario.set($event)"
+        [filter]="true"
+        placeholder="Elige un usuario"
+        styleClass="w-full"
+        appendTo="body"
+      />
     </div>
     <div class="flex flex-col gap-1">
       <label for="asignacion-nuevo-rol" class="font-medium">Rol</label>
-      <p-select inputId="asignacion-nuevo-rol" [options]="roleOptions()" optionLabel="label" optionValue="value" [ngModel]="newRole()" (ngModelChange)="newRole.set($event)" [filter]="true" placeholder="Elige un rol" styleClass="w-full" appendTo="body" />
+      <p-select
+        inputId="asignacion-nuevo-rol"
+        [options]="roleOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="newRole()"
+        (ngModelChange)="newRole.set($event)"
+        [filter]="true"
+        placeholder="Elige un rol"
+        styleClass="w-full"
+        appendTo="body"
+      />
     </div>
     <div class="flex justify-end gap-2">
-      <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="dialogVisible.set(false)" />
-      <p-button label="Guardar" icon="pi pi-check" [loading]="saving()" [disabled]="!canSave" (onClick)="save()" />
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        type="button"
+        (onClick)="dialogVisible.set(false)"
+      />
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="!canSave()"
+        (onClick)="save()"
+      />
     </div>
   </div>
 </p-dialog>

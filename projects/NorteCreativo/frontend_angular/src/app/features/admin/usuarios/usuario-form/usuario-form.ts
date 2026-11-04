@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, untracked } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
@@ -12,7 +12,14 @@ type CampoUsuario = 'username' | 'email' | 'password';
 
 // Formulario sin llamadas a la API. Crear: username, email, password y status. Editar: solo username y email.
 @Component({
-  imports: [ReactiveFormsModule, InputTextModule, PasswordModule, SelectModule, MessageModule, ButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    InputTextModule,
+    PasswordModule,
+    SelectModule,
+    MessageModule,
+    ButtonModule,
+  ],
   selector: 'app-usuario-form',
   styleUrl: './usuario-form.css',
   templateUrl: './usuario-form.html',
@@ -44,7 +51,12 @@ export class UsuarioForm {
       const usuario = this.usuario();
       this.resetKey();
       untracked(() => {
-        this.form.reset({ username: usuario?.username ?? '', email: usuario?.email ?? '', password: '', status: 'active' });
+        this.form.reset({
+          username: usuario?.username ?? '',
+          email: usuario?.email ?? '',
+          password: '',
+          status: 'active',
+        });
         // La contraseña solo existe al crear: al editar no se pide ni se valida.
         if (usuario) this.form.controls.password.disable();
         else this.form.controls.password.enable();
@@ -52,9 +64,7 @@ export class UsuarioForm {
     });
   }
 
-  protected get editing(): boolean {
-    return this.usuario() !== null;
-  }
+  protected readonly editing = computed(() => this.usuario() !== null);
 
   protected invalid(name: CampoUsuario, error?: string): boolean {
     const control = this.form.controls[name];
@@ -68,6 +78,8 @@ export class UsuarioForm {
     }
     const value = this.form.getRawValue();
     const base = { username: value.username.trim(), email: value.email.trim() };
-    this.saved.emit(this.editing ? base : { ...base, password: value.password, status: value.status });
+    this.saved.emit(
+      this.editing() ? base : { ...base, password: value.password, status: value.status },
+    );
   }
 }

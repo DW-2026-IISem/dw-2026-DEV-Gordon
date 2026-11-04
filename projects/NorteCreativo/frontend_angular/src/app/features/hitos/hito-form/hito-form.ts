@@ -12,7 +12,14 @@ type CampoHito = 'campania_id' | 'nombre' | 'descripcion';
 
 // Sin campo estado ni fecha_cierre: el hito nace ABIERTO y lo cierra una aprobación.
 @Component({
-  imports: [ReactiveFormsModule, InputTextModule, SelectModule, TextareaModule, MessageModule, ButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    InputTextModule,
+    SelectModule,
+    TextareaModule,
+    MessageModule,
+    ButtonModule,
+  ],
   selector: 'app-hito-form',
   styleUrl: './hito-form.css',
   templateUrl: './hito-form.html',
@@ -29,7 +36,9 @@ export class HitoForm {
   readonly cancelled = output<void>();
 
   // Un hito solo se abre en una campaña activa.
-  protected readonly campaniasActivas = computed(() => this.campanias().filter((c) => c.status === 'active'));
+  protected readonly campaniasActivas = computed(() =>
+    this.campanias().filter((c) => c.status === 'active'),
+  );
 
   protected readonly form = this.fb.group({
     campania_id: this.fb.control<number | null>(null, Validators.required),

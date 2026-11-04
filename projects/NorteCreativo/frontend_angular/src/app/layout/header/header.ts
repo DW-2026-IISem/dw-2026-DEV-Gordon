@@ -8,9 +8,10 @@ import { AuthService } from '../../core/services/auth';
 import { NotificationService } from '../../core/services/notification';
 import { SessionStore } from '../../core/services/session-store';
 import { toApiMessage } from '../../core/utils/api-error';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
-  imports: [ButtonModule, AvatarModule, MenuModule],
+  imports: [TooltipModule, ButtonModule, AvatarModule, MenuModule],
   selector: 'app-header',
   styleUrl: './header.css',
   templateUrl: './header.html',
@@ -24,10 +25,16 @@ export class Header {
   protected readonly title = 'Norte Creativo';
   readonly menuRequested = output<void>();
 
-  protected readonly inicial = computed(() => (this.session.usuario()?.username ?? '?').charAt(0).toUpperCase());
+  protected readonly inicial = computed(() =>
+    (this.session.usuario()?.username ?? '?').charAt(0).toUpperCase(),
+  );
 
   protected readonly userItems: MenuItem[] = [
-    { label: 'Mi sesión', icon: 'pi pi-user', command: () => void this.router.navigate(['/perfil']) },
+    {
+      label: 'Mi sesión',
+      icon: 'pi pi-user',
+      command: () => void this.router.navigate(['/perfil']),
+    },
     {
       label: 'Actualizar permisos',
       icon: 'pi pi-refresh',

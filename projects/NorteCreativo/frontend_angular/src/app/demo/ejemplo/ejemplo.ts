@@ -11,7 +11,11 @@ interface EntregableDemo {
   estado: EstadoEntregable;
 }
 
-const INICIAL: EntregableDemo = { nombre: 'Video de lanzamiento 30 s', total: 1500000, estado: 'EN_PROCESO' };
+const INICIAL: EntregableDemo = {
+  nombre: 'Video de lanzamiento 30 s',
+  total: 1500000,
+  estado: 'EN_PROCESO',
+};
 const IVA = 0.19;
 const PASO = 100000;
 
@@ -28,7 +32,12 @@ export class Ejemplo {
 
   constructor() {
     effect(() => {
-      console.log('[ejemplo] cambió el entregable:', this.entregable(), '| total con IVA 19 %:', this.totalConIva());
+      console.log(
+        '[ejemplo] cambió el entregable:',
+        this.entregable(),
+        '| total con IVA 19 %:',
+        this.totalConIva(),
+      );
     });
   }
 
@@ -37,7 +46,10 @@ export class Ejemplo {
   }
 
   protected alternarEstado(): void {
-    this.entregable.update((e) => ({ ...e, estado: e.estado === 'EN_PROCESO' ? 'ENTREGADO' : 'EN_PROCESO' }));
+    this.entregable.update((e) => ({
+      ...e,
+      estado: e.estado === 'EN_PROCESO' ? 'ENTREGADO' : 'EN_PROCESO',
+    }));
   }
 
   protected cambiarNombre(): void {

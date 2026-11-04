@@ -6,7 +6,8 @@ describe('UsuarioForm', () => {
   let fixture: ComponentFixture<UsuarioForm>;
   let emitted: (UsuarioPayload | UsuarioPatch)[];
 
-  const submit = () => fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
+  const submit = () =>
+    fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
   const setValue = (id: string, value: string) => {
     const input = fixture.nativeElement.querySelector(`#${id}`) as HTMLInputElement;
     input.value = value;
@@ -27,7 +28,14 @@ describe('UsuarioForm', () => {
     const form = (fixture.componentInstance as unknown as { form: UsuarioForm['form'] }).form;
     form.controls.password.setValue('Clave12345');
     submit();
-    expect(emitted).toEqual([{ username: 'prueba_front', email: 'prueba@example.com', password: 'Clave12345', status: 'active' }]);
+    expect(emitted).toEqual([
+      {
+        username: 'prueba_front',
+        email: 'prueba@example.com',
+        password: 'Clave12345',
+        status: 'active',
+      },
+    ]);
   });
 
   it('al crear sin contraseña no emite', () => {
@@ -38,7 +46,14 @@ describe('UsuarioForm', () => {
   });
 
   it('al editar solo envía username y email (sin password ni status)', async () => {
-    const usuario: Usuario = { id: 9, username: 'ana', email: 'ana@example.com', status: 'active', createdAt: '', updatedAt: '' };
+    const usuario: Usuario = {
+      id: 9,
+      username: 'ana',
+      email: 'ana@example.com',
+      status: 'active',
+      createdAt: '',
+      updatedAt: '',
+    };
     fixture.componentRef.setInput('usuario', usuario);
     fixture.detectChanges();
     await fixture.whenStable();

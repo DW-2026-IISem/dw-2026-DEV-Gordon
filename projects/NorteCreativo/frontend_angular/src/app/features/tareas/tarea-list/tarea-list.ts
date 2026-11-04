@@ -1,4 +1,13 @@
-import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -26,6 +35,7 @@ import { CampaniaApi } from '../../campanias/campania-api';
 import { HitoApi } from '../../hitos/hito-api';
 import { TareaApi } from '../tarea-api';
 import { TareaForm } from '../tarea-form/tarea-form';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface HitoOption {
   id: number | null;
@@ -34,6 +44,7 @@ interface HitoOption {
 
 @Component({
   imports: [
+    TooltipModule,
     FormsModule,
     TableModule,
     ButtonModule,
@@ -78,8 +89,12 @@ export class TareaList implements OnInit {
   protected readonly editing = signal<Tarea | null>(null);
   protected readonly resetKey = signal(0);
 
-  protected readonly hitosPorId = computed(() => new Map(this.hitos().map((h) => [h.id, h.nombre])));
-  protected readonly campaniasPorId = computed(() => new Map(this.campanias().map((c) => [c.id, c.nombre])));
+  protected readonly hitosPorId = computed(
+    () => new Map(this.hitos().map((h) => [h.id, h.nombre])),
+  );
+  protected readonly campaniasPorId = computed(
+    () => new Map(this.campanias().map((c) => [c.id, c.nombre])),
+  );
   protected readonly hitoOptions = computed<HitoOption[]>(() => [
     { id: null, nombre: 'Todos los hitos' },
     ...this.hitos().map((h) => ({ id: h.id, nombre: h.nombre })),
@@ -89,10 +104,20 @@ export class TareaList implements OnInit {
     const hitoId = this.hitoFilter();
     const nombres = this.hitosPorId();
     const base = hitoId === null ? this.rows() : this.rows().filter((t) => t.hito_id === hitoId);
-    return filterRows(base, this.filter(), (t) => [t.nombre, t.descripcion, nombres.get(t.hito_id)]);
+    return filterRows(base, this.filter(), (t) => [
+      t.nombre,
+      t.descripcion,
+      nombres.get(t.hito_id),
+    ]);
   });
   // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
-  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/tareas/:id', 'PATCH /api/tareas/:id/deactivate', 'DELETE /api/tareas/:id']));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'PATCH /api/tareas/:id',
+      'PATCH /api/tareas/:id/deactivate',
+      'DELETE /api/tareas/:id',
+    ]),
+  );
   protected readonly title = computed(() => (this.editing() ? 'Editar tarea' : 'Nueva tarea'));
 
   constructor() {
@@ -114,7 +139,9 @@ export class TareaList implements OnInit {
   protected load(): void {
     this.loading.set(true);
     this.error.set(null);
-    const hitos$: Observable<Hito[]> = this.session.canPermission('GET /api/hitos') ? this.hitoApi.list() : of([]);
+    const hitos$: Observable<Hito[]> = this.session.canPermission('GET /api/hitos')
+      ? this.hitoApi.list()
+      : of([]);
     const campanias$: Observable<Campania[]> = this.session.canPermission('GET /api/campanias')
       ? this.campaniaApi.list()
       : of([]);
@@ -163,7 +190,9 @@ export class TareaList implements OnInit {
       next: (tarea) => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.notify.success(editing ? `Tarea «${tarea.nombre}» actualizada.` : `Tarea «${tarea.nombre}» creada.`);
+        this.notify.success(
+          editing ? `Tarea «${tarea.nombre}» actualizada.` : `Tarea «${tarea.nombre}» creada.`,
+        );
         this.load();
       },
       error: (err: unknown) => {

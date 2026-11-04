@@ -15,7 +15,16 @@ import { EmptyState } from '../../../shared/ui/empty-state/empty-state';
 import { PageHeader } from '../../../shared/ui/page-header/page-header';
 
 @Component({
-  imports: [ButtonModule, IconFieldModule, InputIconModule, InputTextModule, TableModule, TagModule, PageHeader, EmptyState],
+  imports: [
+    ButtonModule,
+    IconFieldModule,
+    InputIconModule,
+    InputTextModule,
+    TableModule,
+    TagModule,
+    PageHeader,
+    EmptyState,
+  ],
   selector: 'app-profile',
   styleUrl: './profile.css',
   templateUrl: './profile.html',
@@ -30,7 +39,11 @@ export class Profile {
   protected readonly refreshing = signal(false);
 
   protected readonly visiblePermisos = computed(() =>
-    filterRows(this.session.permisos(), this.filter(), (p) => [p.method, p.path, p.roles.join(' ')]),
+    filterRows(this.session.permisos(), this.filter(), (p) => [
+      p.method,
+      p.path,
+      p.roles.join(' '),
+    ]),
   );
 
   protected onFilter(event: Event): void {

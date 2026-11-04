@@ -23,15 +23,21 @@ export class HitoApi {
   }
 
   update(id: number, payload: Partial<HitoPayload>): Observable<Hito> {
-    return this.http.patch<{ hito: Hito }>(`${this.base}/${id}`, payload).pipe(map((res) => res.hito));
+    return this.http
+      .patch<{ hito: Hito }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.hito));
   }
 
   replace(id: number, payload: HitoPayload): Observable<Hito> {
-    return this.http.put<{ hito: Hito }>(`${this.base}/${id}`, payload).pipe(map((res) => res.hito));
+    return this.http
+      .put<{ hito: Hito }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.hito));
   }
 
   deactivate(id: number): Observable<Hito> {
-    return this.http.patch<{ hito: Hito }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.hito));
+    return this.http
+      .patch<{ hito: Hito }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.hito));
   }
 
   remove(id: number): Observable<void> {

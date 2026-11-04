@@ -23,15 +23,21 @@ export class TareaApi {
   }
 
   update(id: number, payload: Partial<TareaPayload>): Observable<Tarea> {
-    return this.http.patch<{ tarea: Tarea }>(`${this.base}/${id}`, payload).pipe(map((res) => res.tarea));
+    return this.http
+      .patch<{ tarea: Tarea }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.tarea));
   }
 
   replace(id: number, payload: TareaPayload): Observable<Tarea> {
-    return this.http.put<{ tarea: Tarea }>(`${this.base}/${id}`, payload).pipe(map((res) => res.tarea));
+    return this.http
+      .put<{ tarea: Tarea }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.tarea));
   }
 
   deactivate(id: number): Observable<Tarea> {
-    return this.http.patch<{ tarea: Tarea }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.tarea));
+    return this.http
+      .patch<{ tarea: Tarea }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.tarea));
   }
 
   remove(id: number): Observable<void> {

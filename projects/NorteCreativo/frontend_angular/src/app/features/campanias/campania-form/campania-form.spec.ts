@@ -59,13 +59,19 @@ describe('CampaniaForm', () => {
 
   it('el select solo ofrece clientes activos', async () => {
     const { fixture } = await setup();
-    const opciones = (fixture.componentInstance as unknown as { clientesActivos: () => Cliente[] }).clientesActivos();
+    const opciones = (
+      fixture.componentInstance as unknown as { clientesActivos: () => Cliente[] }
+    ).clientesActivos();
     expect(opciones.map((c) => c.nombre)).toEqual(['Cliente Activo']);
   });
 
   it('con datos válidos emite cliente_id numérico y no lleva status', async () => {
     const { fixture, emitidos, escribir, enviar } = await setup();
-    const form = (fixture.componentInstance as unknown as { form: { controls: { cliente_id: { setValue: (v: number) => void } } } }).form;
+    const form = (
+      fixture.componentInstance as unknown as {
+        form: { controls: { cliente_id: { setValue: (v: number) => void } } };
+      }
+    ).form;
     form.controls.cliente_id.setValue(1);
     await escribir('campania-nombre', ' Lanzamiento ');
     await enviar();

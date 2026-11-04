@@ -23,20 +23,32 @@
     <label for="tarea-nombre" class="font-medium">Nombre</label>
     <input pInputText id="tarea-nombre" formControlName="nombre" autocomplete="off" />
     @if (invalid('nombre', 'required')) {
-      <p-message severity="error" size="small" variant="simple">El nombre es obligatorio.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >El nombre es obligatorio.</p-message
+      >
     }
     @if (invalid('nombre', 'maxlength')) {
-      <p-message severity="error" size="small" variant="simple">El nombre no puede superar 120 caracteres.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >El nombre no puede superar 120 caracteres.</p-message
+      >
     }
   </div>
 
   <div class="flex flex-col gap-1">
-    <label for="tarea-descripcion" class="font-medium">Descripción <span class="text-slate-500">(opcional)</span></label>
+    <label for="tarea-descripcion" class="font-medium"
+      >Descripción <span class="text-slate-500">(opcional)</span></label
+    >
     <textarea pTextarea id="tarea-descripcion" formControlName="descripcion" rows="3"></textarea>
   </div>
 
   <div class="flex justify-end gap-2">
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelled.emit()" />
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      type="button"
+      (onClick)="cancelled.emit()"
+    />
     <p-button label="Guardar" type="submit" icon="pi pi-check" [loading]="saving()" />
   </div>
 </form>

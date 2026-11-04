@@ -25,6 +25,7 @@ import { StatusTag } from '../../../shared/ui/status-tag/status-tag';
 import { ClienteApi } from '../../clientes/cliente-api';
 import { CampaniaApi } from '../campania-api';
 import { CampaniaForm } from '../campania-form/campania-form';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface ClienteOption {
   id: number | null;
@@ -33,6 +34,7 @@ interface ClienteOption {
 
 @Component({
   imports: [
+    TooltipModule,
     FormsModule,
     TableModule,
     ButtonModule,
@@ -75,7 +77,9 @@ export class CampaniaList implements OnInit {
   protected readonly resetKey = signal(0);
 
   // Map id -> nombre: se arma una sola vez y da la columna "Cliente".
-  protected readonly clientesPorId = computed(() => new Map(this.clientes().map((c) => [c.id, c.nombre])));
+  protected readonly clientesPorId = computed(
+    () => new Map(this.clientes().map((c) => [c.id, c.nombre])),
+  );
   protected readonly clienteOptions = computed<ClienteOption[]>(() => [
     { id: null, nombre: 'Todos los clientes' },
     ...this.clientes().map((c) => ({ id: c.id, nombre: c.nombre })),
@@ -84,12 +88,24 @@ export class CampaniaList implements OnInit {
   // El filtro por cliente y el buscador se combinan.
   protected readonly visibleRows = computed(() => {
     const clienteId = this.clienteFilter();
-    const delCliente = clienteId === null ? this.rows() : this.rows().filter((c) => c.cliente_id === clienteId);
+    const delCliente =
+      clienteId === null ? this.rows() : this.rows().filter((c) => c.cliente_id === clienteId);
     const nombres = this.clientesPorId();
-    return filterRows(delCliente, this.filter(), (c) => [c.nombre, c.descripcion, nombres.get(c.cliente_id)]);
+    return filterRows(delCliente, this.filter(), (c) => [
+      c.nombre,
+      c.descripcion,
+      nombres.get(c.cliente_id),
+    ]);
   });
   // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
-  protected readonly hasActions = computed(() => this.session.canAny(['GET /api/hitos', 'PATCH /api/campanias/:id', 'PATCH /api/campanias/:id/deactivate', 'DELETE /api/campanias/:id']));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'GET /api/hitos',
+      'PATCH /api/campanias/:id',
+      'PATCH /api/campanias/:id/deactivate',
+      'DELETE /api/campanias/:id',
+    ]),
+  );
   protected readonly title = computed(() => (this.editing() ? 'Editar campaña' : 'Nueva campaña'));
 
   ngOnInit(): void {
@@ -157,7 +173,11 @@ export class CampaniaList implements OnInit {
       next: (campania) => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.notify.success(editing ? `Campaña «${campania.nombre}» actualizada.` : `Campaña «${campania.nombre}» creada.`);
+        this.notify.success(
+          editing
+            ? `Campaña «${campania.nombre}» actualizada.`
+            : `Campaña «${campania.nombre}» creada.`,
+        );
         this.load();
       },
       error: (err: unknown) => {
@@ -177,7 +197,8 @@ export class CampaniaList implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: { label: 'Desactivar', severity: 'warn' },
       rejectButtonProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
-      accept: () => this.run(this.api.deactivate(campania.id), `Campaña «${campania.nombre}» desactivada.`),
+      accept: () =>
+        this.run(this.api.deactivate(campania.id), `Campaña «${campania.nombre}» desactivada.`),
     });
   }
 
@@ -188,7 +209,8 @@ export class CampaniaList implements OnInit {
       icon: 'pi pi-trash',
       acceptButtonProps: { label: 'Eliminar', severity: 'danger' },
       rejectButtonProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
-      accept: () => this.run(this.api.remove(campania.id), `Campaña «${campania.nombre}» eliminada.`),
+      accept: () =>
+        this.run(this.api.remove(campania.id), `Campaña «${campania.nombre}» eliminada.`),
     });
   }
 

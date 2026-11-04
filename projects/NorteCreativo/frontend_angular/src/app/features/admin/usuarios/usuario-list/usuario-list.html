@@ -1,5 +1,10 @@
 <app-page-header title="Usuarios" subtitle="Cuentas que pueden entrar a Norte Creativo.">
-  <p-button *appHasPermission="'POST /api/usuarios'" label="Nuevo usuario" icon="pi pi-plus" (onClick)="openNew()" />
+  <p-button
+    *appHasPermission="'POST /api/usuarios'"
+    label="Nuevo usuario"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
 </app-page-header>
 
 @if (error(); as message) {
@@ -12,11 +17,27 @@
 <div class="mb-4 max-w-md">
   <p-iconfield>
     <p-inputicon class="pi pi-search" />
-    <input pInputText type="search" class="w-full" placeholder="Buscar por usuario o correo" aria-label="Buscar usuarios" [value]="filter()" (input)="onFilter($event)" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por usuario o correo"
+      aria-label="Buscar usuarios"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
   </p-iconfield>
 </div>
 
-<p-table [value]="visibleRows()" [loading]="loading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25]" dataKey="id" [tableStyle]="{ 'min-width': '40rem' }">
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '40rem' }"
+>
   <ng-template #header>
     <tr>
       <th pSortableColumn="username">Usuario <p-sort-icon field="username" /></th>
@@ -43,6 +64,8 @@
             [text]="true"
             [ariaLabel]="'Ver permisos de ' + row.username"
             (onClick)="verPermisos(row)"
+            [pTooltip]="'Ver permisos de ' + row.username"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/usuarios/:id'"
@@ -51,6 +74,8 @@
             [text]="true"
             [ariaLabel]="'Editar ' + row.username"
             (onClick)="openEdit(row)"
+            [pTooltip]="'Editar ' + row.username"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/usuarios/:id/deactivate'"
@@ -61,6 +86,8 @@
             [ariaLabel]="'Desactivar ' + row.username"
             [disabled]="isSelf(row)"
             (onClick)="confirmDeactivate(row)"
+            [pTooltip]="'Desactivar ' + row.username"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'DELETE /api/usuarios/:id'"
@@ -71,6 +98,8 @@
             [ariaLabel]="'Eliminar ' + row.username"
             [disabled]="isSelf(row)"
             (onClick)="confirmRemove(row)"
+            [pTooltip]="'Eliminar ' + row.username"
+            tooltipPosition="top"
           />
         </td>
       }
@@ -82,9 +111,17 @@
       <td colspan="4">
         @if (!loading()) {
           @if (rows().length === 0) {
-            <app-empty-state icon="pi pi-users" title="Aún no hay usuarios" message="Crea el primero con «Nuevo usuario»." />
+            <app-empty-state
+              icon="pi pi-users"
+              title="Aún no hay usuarios"
+              message="Crea el primero con «Nuevo usuario»."
+            />
           } @else {
-            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Nada coincide con la búsqueda. Prueba con otro término." />
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Nada coincide con la búsqueda. Prueba con otro término."
+            />
           }
         }
       </td>
@@ -92,11 +129,23 @@
   </ng-template>
 </p-table>
 
-<p-dialog [header]="title()" [(visible)]="dialogVisible" [modal]="true" [draggable]="false" styleClass="w-full max-w-2xl mx-4">
+<p-dialog
+  [header]="title()"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-2xl mx-4"
+>
   @if (dialogError(); as message) {
     <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
   }
-  <app-usuario-form [usuario]="editing()" [resetKey]="resetKey()" [saving]="saving()" (saved)="save($event)" (cancelled)="closeDialog()" />
+  <app-usuario-form
+    [usuario]="editing()"
+    [resetKey]="resetKey()"
+    [saving]="saving()"
+    (saved)="save($event)"
+    (cancelled)="closeDialog()"
+  />
 </p-dialog>
 
 <p-dialog
@@ -109,8 +158,17 @@
   @if (permisosError(); as message) {
     <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
   }
-  <p class="mb-3 text-sm text-slate-600">{{ permisos().length }} permisos efectivos (la cadena usuario → rol → concesión → recurso está activa).</p>
-  <p-table [value]="permisos()" [loading]="permisosLoading()" [scrollable]="true" scrollHeight="24rem" dataKey="path">
+  <p class="mb-3 text-sm text-slate-600">
+    {{ permisos().length }} permisos efectivos (la cadena usuario → rol → concesión → recurso está
+    activa).
+  </p>
+  <p-table
+    [value]="permisos()"
+    [loading]="permisosLoading()"
+    [scrollable]="true"
+    scrollHeight="24rem"
+    dataKey="path"
+  >
     <ng-template #header>
       <tr>
         <th>Método</th>
@@ -129,7 +187,11 @@
       <tr>
         <td colspan="3">
           @if (!permisosLoading()) {
-            <app-empty-state icon="pi pi-lock" title="Sin permisos" message="Este usuario no tiene ninguna concesión activa." />
+            <app-empty-state
+              icon="pi pi-lock"
+              title="Sin permisos"
+              message="Este usuario no tiene ninguna concesión activa."
+            />
           }
         </td>
       </tr>

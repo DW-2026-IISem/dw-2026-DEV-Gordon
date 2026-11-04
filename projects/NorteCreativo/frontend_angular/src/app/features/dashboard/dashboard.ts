@@ -29,7 +29,18 @@ import { VersionEntregableApi } from '../versiones/version-entregable-api';
 
 // Cada petición solo se hace si el rol puede leer ese recurso; si no, llega una lista vacía.
 @Component({
-  imports: [DatePipe, ButtonModule, CardModule, MessageModule, SkeletonModule, TableModule, PageHeader, EmptyState, StatusTag, HasPermission],
+  imports: [
+    DatePipe,
+    ButtonModule,
+    CardModule,
+    MessageModule,
+    SkeletonModule,
+    TableModule,
+    PageHeader,
+    EmptyState,
+    StatusTag,
+    HasPermission,
+  ],
   selector: 'app-dashboard',
   styleUrl: './dashboard.css',
   templateUrl: './dashboard.html',
@@ -73,10 +84,20 @@ export class Dashboard implements OnInit {
     const r = this.resumen();
     return [
       { id: 'clientes', label: 'Clientes activos', value: r.clientes_activos, icon: 'pi pi-users' },
-      { id: 'campanias', label: 'Campañas activas', value: r.campanias_activas, icon: 'pi pi-megaphone' },
+      {
+        id: 'campanias',
+        label: 'Campañas activas',
+        value: r.campanias_activas,
+        icon: 'pi pi-megaphone',
+      },
       { id: 'abiertos', label: 'Hitos abiertos', value: r.hitos_abiertos, icon: 'pi pi-flag' },
       { id: 'cerrados', label: 'Hitos cerrados', value: r.hitos_cerrados, icon: 'pi pi-lock' },
-      { id: 'revision', label: 'Versiones en revisión', value: r.versiones_en_revision, icon: 'pi pi-clock' },
+      {
+        id: 'revision',
+        label: 'Versiones en revisión',
+        value: r.versiones_en_revision,
+        icon: 'pi pi-clock',
+      },
     ];
   });
 
@@ -90,7 +111,9 @@ export class Dashboard implements OnInit {
 
   // Las 5 aprobaciones más recientes por fecha.
   protected readonly ultimasAprobaciones = computed(() =>
-    [...this.aprobaciones()].sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id).slice(0, 5),
+    [...this.aprobaciones()]
+      .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id)
+      .slice(0, 5),
   );
 
   ngOnInit(): void {

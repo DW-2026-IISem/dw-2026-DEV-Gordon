@@ -22,13 +22,29 @@
   <div class="grid gap-4 sm:grid-cols-2">
     <div class="flex flex-col gap-1">
       <label for="entregable-inicio" class="font-medium">Fecha de inicio</label>
-      <p-datepicker inputId="entregable-inicio" formControlName="fecha_inicio" dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true" styleClass="w-full" />
+      <p-datepicker
+        inputId="entregable-inicio"
+        formControlName="fecha_inicio"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showButtonBar]="true"
+        styleClass="w-full"
+      />
     </div>
     <div class="flex flex-col gap-1">
       <label for="entregable-fin" class="font-medium">Fecha de fin</label>
-      <p-datepicker inputId="entregable-fin" formControlName="fecha_fin" dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true" styleClass="w-full" />
+      <p-datepicker
+        inputId="entregable-fin"
+        formControlName="fecha_fin"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showButtonBar]="true"
+        styleClass="w-full"
+      />
       @if (rangoInvalido) {
-        <p-message severity="error" size="small" variant="simple">La fecha de fin no puede ser anterior a la de inicio.</p-message>
+        <p-message severity="error" size="small" variant="simple"
+          >La fecha de fin no puede ser anterior a la de inicio.</p-message
+        >
       }
     </div>
   </div>
@@ -36,24 +52,54 @@
   <div class="grid gap-4 sm:grid-cols-2">
     <div class="flex flex-col gap-1">
       <label for="entregable-total" class="font-medium">Total</label>
-      <p-inputnumber inputId="entregable-total" formControlName="total" mode="currency" currency="COP" locale="es-CO" [maxFractionDigits]="0" styleClass="w-full" />
+      <p-inputnumber
+        inputId="entregable-total"
+        formControlName="total"
+        mode="currency"
+        currency="COP"
+        locale="es-CO"
+        [maxFractionDigits]="0"
+        styleClass="w-full"
+      />
       @if (invalid('total', 'min')) {
-        <p-message severity="error" size="small" variant="simple">El total no puede ser negativo.</p-message>
+        <p-message severity="error" size="small" variant="simple"
+          >El total no puede ser negativo.</p-message
+        >
       }
     </div>
     <div class="flex flex-col gap-1">
       <label for="entregable-estado" class="font-medium">Estado</label>
-      <p-select inputId="entregable-estado" formControlName="estado" [options]="estados" optionLabel="label" optionValue="value" styleClass="w-full" />
+      <p-select
+        inputId="entregable-estado"
+        formControlName="estado"
+        [options]="estados"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+      />
     </div>
   </div>
 
   <div class="flex flex-col gap-1">
-    <label for="entregable-observaciones" class="font-medium">Observaciones <span class="text-slate-500">(opcional)</span></label>
-    <textarea pTextarea id="entregable-observaciones" formControlName="observaciones" rows="3"></textarea>
+    <label for="entregable-observaciones" class="font-medium"
+      >Observaciones <span class="text-slate-500">(opcional)</span></label
+    >
+    <textarea
+      pTextarea
+      id="entregable-observaciones"
+      formControlName="observaciones"
+      rows="3"
+    ></textarea>
   </div>
 
   <div class="flex justify-end gap-2">
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelled.emit()" />
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      type="button"
+      (onClick)="cancelled.emit()"
+    />
     <p-button label="Guardar" type="submit" icon="pi pi-check" [loading]="saving()" />
   </div>
 </form>

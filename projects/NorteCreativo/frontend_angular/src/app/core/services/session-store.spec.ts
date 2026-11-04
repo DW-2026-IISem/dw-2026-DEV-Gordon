@@ -45,7 +45,13 @@ describe('SessionStore', () => {
 
   it('persiste en localStorage y se restaura, y clear() la borra', () => {
     const a = new SessionStore();
-    a.setTokens({ access_token: 'a', token_type: 'Bearer', expires_in: 900, refresh_token: 'r', refresh_expires_in: 604800 });
+    a.setTokens({
+      access_token: 'a',
+      token_type: 'Bearer',
+      expires_in: 900,
+      refresh_token: 'r',
+      refresh_expires_in: 604800,
+    });
     a.setAccess(perfil, permisos);
     expect(localStorage.getItem('nortecreativo.session.v1')).not.toBeNull();
 

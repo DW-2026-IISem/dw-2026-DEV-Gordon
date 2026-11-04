@@ -24,7 +24,9 @@ describe('filterRows', () => {
   });
 
   it('busca en cualquiera de los campos y tolera null', () => {
-    expect(filterRows(filas, 'sol.com', campos).map((f) => f.nombre)).toEqual(['Distribuidora Sol']);
+    expect(filterRows(filas, 'sol.com', campos).map((f) => f.nombre)).toEqual([
+      'Distribuidora Sol',
+    ]);
     expect(filterRows(filas, 'null', campos)).toHaveLength(0);
   });
 

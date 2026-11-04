@@ -30,7 +30,9 @@ export class RolForm {
     effect(() => {
       const rol = this.rol();
       this.resetKey();
-      untracked(() => this.form.reset({ name: rol?.name ?? '', description: rol?.description ?? '' }));
+      untracked(() =>
+        this.form.reset({ name: rol?.name ?? '', description: rol?.description ?? '' }),
+      );
     });
   }
 

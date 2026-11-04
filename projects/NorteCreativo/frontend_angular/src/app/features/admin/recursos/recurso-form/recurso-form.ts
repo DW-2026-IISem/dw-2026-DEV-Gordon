@@ -1,5 +1,11 @@
 import { Component, effect, inject, input, output, untracked } from '@angular/core';
-import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
@@ -42,7 +48,11 @@ export class RecursoForm {
       const recurso = this.recurso();
       this.resetKey();
       untracked(() =>
-        this.form.reset({ method: recurso?.method ?? 'GET', path: recurso?.path ?? '', description: recurso?.description ?? '' }),
+        this.form.reset({
+          method: recurso?.method ?? 'GET',
+          path: recurso?.path ?? '',
+          description: recurso?.description ?? '',
+        }),
       );
     });
   }
@@ -58,6 +68,10 @@ export class RecursoForm {
       return;
     }
     const value = this.form.getRawValue();
-    this.saved.emit({ method: value.method, path: value.path.trim(), description: value.description.trim() || null });
+    this.saved.emit({
+      method: value.method,
+      path: value.path.trim(),
+      description: value.description.trim() || null,
+    });
   }
 }

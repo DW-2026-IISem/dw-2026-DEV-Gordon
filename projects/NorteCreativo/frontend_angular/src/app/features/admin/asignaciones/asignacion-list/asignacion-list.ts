@@ -20,6 +20,7 @@ import { HasPermission } from '../../../../shared/directives/has-permission';
 import { EmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { PageHeader } from '../../../../shared/ui/page-header/page-header';
 import { StatusTag } from '../../../../shared/ui/status-tag/status-tag';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface Opcion {
   label: string;
@@ -32,7 +33,19 @@ interface Fila extends AsignacionRol {
 }
 
 @Component({
-  imports: [FormsModule, TableModule, ButtonModule, DialogModule, SelectModule, MessageModule, PageHeader, EmptyState, StatusTag, HasPermission],
+  imports: [
+    TooltipModule,
+    FormsModule,
+    TableModule,
+    ButtonModule,
+    DialogModule,
+    SelectModule,
+    MessageModule,
+    PageHeader,
+    EmptyState,
+    StatusTag,
+    HasPermission,
+  ],
   selector: 'app-asignacion-list',
   styleUrl: './asignacion-list.css',
   templateUrl: './asignacion-list.html',
@@ -58,11 +71,16 @@ export class AsignacionList implements OnInit {
   protected readonly newUsuario = signal<number | null>(null);
   protected readonly newRole = signal<number | null>(null);
 
+  protected readonly canSave = computed(
+    () => this.newUsuario() !== null && this.newRole() !== null,
+  );
   protected readonly visibleRows = computed(() => {
     const filtro = this.userFilter();
     return filtro === null ? this.rows() : this.rows().filter((row) => row.user_id === filtro);
   });
-  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/asignaciones-rol/:id/deactivate']));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny(['PATCH /api/asignaciones-rol/:id/deactivate']),
+  );
 
   ngOnInit(): void {
     this.load();
@@ -76,9 +94,13 @@ export class AsignacionList implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ rows, usuarios, roles }) => {
-          const usuarioMap = new Map<number, string>(usuarios.map((item) => [item.id, item.username]));
+          const usuarioMap = new Map<number, string>(
+            usuarios.map((item) => [item.id, item.username]),
+          );
           const roleMap = new Map<number, string>(roles.map((rol: Rol) => [rol.id, rol.name]));
-          this.usuarioOptions.set(usuarios.map((item) => ({ label: item.username, value: item.id })));
+          this.usuarioOptions.set(
+            usuarios.map((item) => ({ label: item.username, value: item.id })),
+          );
           this.roleOptions.set(roles.map((rol: Rol) => ({ label: rol.name, value: rol.id })));
           this.rows.set(
             rows.map((row) => ({
@@ -103,13 +125,9 @@ export class AsignacionList implements OnInit {
     this.dialogVisible.set(true);
   }
 
-  protected get canSave(): boolean {
-    return this.newUsuario() !== null && this.newRole() !== null;
-  }
-
   // POST también reactiva un vínculo retirado (el backend no duplica la fila).
   protected save(): void {
-    if (!this.canSave) return;
+    if (!this.canSave()) return;
     this.saving.set(true);
     this.dialogError.set(null);
     this.api

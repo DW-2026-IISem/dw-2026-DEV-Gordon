@@ -10,7 +10,9 @@
 <section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5" aria-label="Indicadores">
   @if (loading()) {
     @for (n of skeletons; track n) {
-      <p-card><p-skeleton width="60%" styleClass="mb-2" /><p-skeleton height="2rem" width="40%" /></p-card>
+      <p-card
+        ><p-skeleton width="60%" styleClass="mb-2" /><p-skeleton height="2rem" width="40%"
+      /></p-card>
     }
   } @else {
     @for (kpi of kpis(); track kpi.id) {
@@ -27,7 +29,11 @@
     <h2 id="titulo-pendientes" class="mb-3 text-xl font-semibold">Pendientes de revisión</h2>
     <p-table [value]="pendientes()" [loading]="loading()" dataKey="id">
       <ng-template #header>
-        <tr><th>Versión</th><th>Total</th><th class="text-right">Acción</th></tr>
+        <tr>
+          <th>Versión</th>
+          <th>Total</th>
+          <th class="text-right">Acción</th>
+        </tr>
       </ng-template>
       <ng-template #body let-version>
         <tr>
@@ -45,7 +51,17 @@
         </tr>
       </ng-template>
       <ng-template #emptymessage>
-        <tr><td colspan="3">@if (!loading()) { <app-empty-state icon="pi pi-check" title="Nada pendiente" message="No hay versiones en revisión." /> }</td></tr>
+        <tr>
+          <td colspan="3">
+            @if (!loading()) {
+              <app-empty-state
+                icon="pi pi-check"
+                title="Nada pendiente"
+                message="No hay versiones en revisión."
+              />
+            }
+          </td>
+        </tr>
       </ng-template>
     </p-table>
   </section>
@@ -54,7 +70,11 @@
     <h2 id="titulo-ultimas" class="mb-3 text-xl font-semibold">Últimas aprobaciones</h2>
     <p-table [value]="ultimasAprobaciones()" [loading]="loading()" dataKey="id">
       <ng-template #header>
-        <tr><th>Versión</th><th>Veredicto</th><th>Fecha</th></tr>
+        <tr>
+          <th>Versión</th>
+          <th>Veredicto</th>
+          <th>Fecha</th>
+        </tr>
       </ng-template>
       <ng-template #body let-aprobacion>
         <tr>
@@ -64,7 +84,17 @@
         </tr>
       </ng-template>
       <ng-template #emptymessage>
-        <tr><td colspan="3">@if (!loading()) { <app-empty-state icon="pi pi-verified" title="Sin aprobaciones" message="Aún no se ha registrado ningún veredicto." /> }</td></tr>
+        <tr>
+          <td colspan="3">
+            @if (!loading()) {
+              <app-empty-state
+                icon="pi pi-verified"
+                title="Sin aprobaciones"
+                message="Aún no se ha registrado ningún veredicto."
+              />
+            }
+          </td>
+        </tr>
       </ng-template>
     </p-table>
   </section>

@@ -1,6 +1,20 @@
-<app-page-header title="Acceso denegado" subtitle="Tu rol no tiene permiso para ver esta pantalla." />
-<app-empty-state icon="pi pi-lock" title="No tienes acceso" message="Si crees que es un error, pide a un administrador que revise tus roles." />
+<app-page-header
+  title="Acceso denegado"
+  subtitle="Tu rol no tiene permiso para ver esta pantalla."
+/>
+<app-empty-state
+  icon="pi pi-lock"
+  title="No tienes acceso"
+  message="Si crees que es un error, pide a un administrador que revise tus roles."
+/>
 @if (permission(); as p) {
-  <p class="mt-3 text-sm text-gray-600">Permiso requerido: <code>{{ p }}</code></p>
+  <p class="mt-3 text-sm text-gray-600">
+    Permiso requerido: <code>{{ p }}</code>
+  </p>
 }
-<p-button class="mt-4 inline-block" label="Volver al panel" icon="pi pi-home" (onClick)="goHome()" />
+<p-button
+  class="mt-4 inline-block"
+  label="Volver al panel"
+  icon="pi pi-home"
+  (onClick)="goHome()"
+/>

@@ -19,13 +19,19 @@ const cliente: Cliente = {
 };
 
 describe('servicios de API', () => {
-  beforeEach(() => TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] }));
+  beforeEach(() =>
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }),
+  );
 
   it('ClienteApi.list() desenvuelve { clientes } y devuelve Cliente[]', () => {
     const http = TestBed.inject(HttpTestingController);
     let resultado: Cliente[] | undefined;
 
-    TestBed.inject(ClienteApi).list().subscribe((lista) => (resultado = lista));
+    TestBed.inject(ClienteApi)
+      .list()
+      .subscribe((lista) => (resultado = lista));
     http.expectOne(`${environment.apiUrl}/clientes`).flush({ clientes: [cliente] });
 
     expect(Array.isArray(resultado)).toBe(true);
@@ -36,7 +42,9 @@ describe('servicios de API', () => {
     const http = TestBed.inject(HttpTestingController);
     let resultado: Cliente | undefined;
 
-    TestBed.inject(ClienteApi).get(1).subscribe((item) => (resultado = item));
+    TestBed.inject(ClienteApi)
+      .get(1)
+      .subscribe((item) => (resultado = item));
     http.expectOne(`${environment.apiUrl}/clientes/1`).flush({ cliente });
 
     expect(resultado).toEqual(cliente);

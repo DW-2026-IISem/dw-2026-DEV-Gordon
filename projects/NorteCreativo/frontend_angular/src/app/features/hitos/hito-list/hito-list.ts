@@ -1,5 +1,14 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -26,6 +35,7 @@ import { StatusTag } from '../../../shared/ui/status-tag/status-tag';
 import { CampaniaApi } from '../../campanias/campania-api';
 import { HitoApi } from '../hito-api';
 import { HitoForm } from '../hito-form/hito-form';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface Option<T> {
   id: T | null;
@@ -34,6 +44,7 @@ interface Option<T> {
 
 @Component({
   imports: [
+    TooltipModule,
     DatePipe,
     FormsModule,
     TableModule,
@@ -79,7 +90,9 @@ export class HitoList implements OnInit {
   protected readonly editing = signal<Hito | null>(null);
   protected readonly resetKey = signal(0);
 
-  protected readonly campaniasPorId = computed(() => new Map(this.campanias().map((c) => [c.id, c.nombre])));
+  protected readonly campaniasPorId = computed(
+    () => new Map(this.campanias().map((c) => [c.id, c.nombre])),
+  );
   protected readonly campaniaOptions = computed<Option<number>[]>(() => [
     { id: null, nombre: 'Todas las campañas' },
     ...this.campanias().map((c) => ({ id: c.id, nombre: c.nombre })),
@@ -92,19 +105,34 @@ export class HitoList implements OnInit {
   ];
 
   // Cuenta sobre todos los hitos cargados, no sobre los filtrados.
-  protected readonly abiertosCount = computed(() => this.rows().filter((h) => h.estado === 'ABIERTO').length);
+  protected readonly abiertosCount = computed(
+    () => this.rows().filter((h) => h.estado === 'ABIERTO').length,
+  );
 
   protected readonly visibleRows = computed(() => {
     const campaniaId = this.campaniaFilter();
     const estado = this.estadoFilter();
     const nombres = this.campaniasPorId();
     const base = this.rows().filter(
-      (h) => (campaniaId === null || h.campania_id === campaniaId) && (estado === null || h.estado === estado),
+      (h) =>
+        (campaniaId === null || h.campania_id === campaniaId) &&
+        (estado === null || h.estado === estado),
     );
-    return filterRows(base, this.filter(), (h) => [h.nombre, h.descripcion, nombres.get(h.campania_id)]);
+    return filterRows(base, this.filter(), (h) => [
+      h.nombre,
+      h.descripcion,
+      nombres.get(h.campania_id),
+    ]);
   });
   // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
-  protected readonly hasActions = computed(() => this.session.canAny(['GET /api/tareas', 'PATCH /api/hitos/:id', 'PATCH /api/hitos/:id/deactivate', 'DELETE /api/hitos/:id']));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'GET /api/tareas',
+      'PATCH /api/hitos/:id',
+      'PATCH /api/hitos/:id/deactivate',
+      'DELETE /api/hitos/:id',
+    ]),
+  );
   protected readonly title = computed(() => (this.editing() ? 'Editar hito' : 'Nuevo hito'));
 
   constructor() {
@@ -178,7 +206,9 @@ export class HitoList implements OnInit {
       next: (hito) => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.notify.success(editing ? `Hito «${hito.nombre}» actualizado.` : `Hito «${hito.nombre}» creado.`);
+        this.notify.success(
+          editing ? `Hito «${hito.nombre}» actualizado.` : `Hito «${hito.nombre}» creado.`,
+        );
         this.load();
       },
       error: (err: unknown) => {

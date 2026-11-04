@@ -21,6 +21,7 @@ import { HasPermission } from '../../../../shared/directives/has-permission';
 import { EmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { PageHeader } from '../../../../shared/ui/page-header/page-header';
 import { StatusTag } from '../../../../shared/ui/status-tag/status-tag';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface Opcion {
   label: string;
@@ -33,7 +34,19 @@ interface Fila extends ConcesionRol {
 }
 
 @Component({
-  imports: [FormsModule, TableModule, ButtonModule, DialogModule, SelectModule, MessageModule, PageHeader, EmptyState, StatusTag, HasPermission],
+  imports: [
+    TooltipModule,
+    FormsModule,
+    TableModule,
+    ButtonModule,
+    DialogModule,
+    SelectModule,
+    MessageModule,
+    PageHeader,
+    EmptyState,
+    StatusTag,
+    HasPermission,
+  ],
   selector: 'app-concesion-list',
   styleUrl: './concesion-list.css',
   templateUrl: './concesion-list.html',
@@ -59,11 +72,16 @@ export class ConcesionList implements OnInit {
   protected readonly newRecurso = signal<number | null>(null);
   protected readonly newRole = signal<number | null>(null);
 
+  protected readonly canSave = computed(
+    () => this.newRecurso() !== null && this.newRole() !== null,
+  );
   protected readonly visibleRows = computed(() => {
     const filtro = this.roleFilter();
     return filtro === null ? this.rows() : this.rows().filter((row) => row.role_id === filtro);
   });
-  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/concesiones-rol/:id/deactivate']));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny(['PATCH /api/concesiones-rol/:id/deactivate']),
+  );
 
   ngOnInit(): void {
     this.load();
@@ -77,9 +95,13 @@ export class ConcesionList implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ rows, recursos, roles }) => {
-          const recursoMap = new Map<number, string>(recursos.map((item) => [item.id, `${item.method} ${item.path}`]));
+          const recursoMap = new Map<number, string>(
+            recursos.map((item) => [item.id, `${item.method} ${item.path}`]),
+          );
           const roleMap = new Map<number, string>(roles.map((rol: Rol) => [rol.id, rol.name]));
-          this.recursoOptions.set(recursos.map((item) => ({ label: `${item.method} ${item.path}`, value: item.id })));
+          this.recursoOptions.set(
+            recursos.map((item) => ({ label: `${item.method} ${item.path}`, value: item.id })),
+          );
           this.roleOptions.set(roles.map((rol: Rol) => ({ label: rol.name, value: rol.id })));
           this.rows.set(
             rows.map((row) => ({
@@ -104,13 +126,9 @@ export class ConcesionList implements OnInit {
     this.dialogVisible.set(true);
   }
 
-  protected get canSave(): boolean {
-    return this.newRecurso() !== null && this.newRole() !== null;
-  }
-
   // POST también reactiva un vínculo retirado (el backend no duplica la fila).
   protected save(): void {
-    if (!this.canSave) return;
+    if (!this.canSave()) return;
     this.saving.set(true);
     this.dialogError.set(null);
     this.api

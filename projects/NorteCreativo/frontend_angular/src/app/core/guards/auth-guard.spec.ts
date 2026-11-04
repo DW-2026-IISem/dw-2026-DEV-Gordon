@@ -28,7 +28,11 @@ describe('authGuard', () => {
   it('con sesión deja pasar', () => {
     environment.requireAuth = true;
     TestBed.inject(SessionStore).setTokens({
-      access_token: 'a', token_type: 'Bearer', expires_in: 1, refresh_token: 'r', refresh_expires_in: 1,
+      access_token: 'a',
+      token_type: 'Bearer',
+      expires_in: 1,
+      refresh_token: 'r',
+      refresh_expires_in: 1,
     });
     expect(run()).toBe(true);
   });

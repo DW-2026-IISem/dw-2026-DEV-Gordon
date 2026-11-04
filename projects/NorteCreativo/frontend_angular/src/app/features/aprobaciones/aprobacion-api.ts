@@ -11,11 +11,15 @@ export class AprobacionApi {
   private readonly base = `${environment.apiUrl}/aprobaciones`;
 
   list(): Observable<Aprobacion[]> {
-    return this.http.get<{ aprobaciones: Aprobacion[] }>(this.base).pipe(map((res) => res.aprobaciones));
+    return this.http
+      .get<{ aprobaciones: Aprobacion[] }>(this.base)
+      .pipe(map((res) => res.aprobaciones));
   }
 
   get(id: number): Observable<Aprobacion> {
-    return this.http.get<{ aprobacion: Aprobacion }>(`${this.base}/${id}`).pipe(map((res) => res.aprobacion));
+    return this.http
+      .get<{ aprobacion: Aprobacion }>(`${this.base}/${id}`)
+      .pipe(map((res) => res.aprobacion));
   }
 
   // Devuelve { aprobacion, hito_cerrado, hito_id, fecha_cierre }: no lleva sobre que desenvolver.

@@ -16,7 +16,10 @@ const campania = (id: number, nombre: string, status: 'active' | 'inactive'): Ca
 describe('HitoForm', () => {
   const setup = async () => {
     const fixture = TestBed.createComponent(HitoForm);
-    fixture.componentRef.setInput('campanias', [campania(1, 'Activa', 'active'), campania(2, 'Inactiva', 'inactive')]);
+    fixture.componentRef.setInput('campanias', [
+      campania(1, 'Activa', 'active'),
+      campania(2, 'Inactiva', 'inactive'),
+    ]);
     const emitidos: HitoPayload[] = [];
     fixture.componentInstance.saved.subscribe((payload) => emitidos.push(payload));
     await fixture.whenStable();

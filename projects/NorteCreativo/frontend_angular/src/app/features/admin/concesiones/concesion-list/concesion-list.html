@@ -1,5 +1,10 @@
 <app-page-header title="Concesiones" subtitle="Qué operaciones de la API puede hacer cada rol.">
-  <p-button *appHasPermission="'POST /api/concesiones-rol'" label="Nueva concesión" icon="pi pi-plus" (onClick)="openNew()" />
+  <p-button
+    *appHasPermission="'POST /api/concesiones-rol'"
+    label="Nueva concesión"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
 </app-page-header>
 
 @if (error(); as message) {
@@ -25,7 +30,15 @@
   />
 </div>
 
-<p-table [value]="visibleRows()" [loading]="loading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25]" dataKey="id" [tableStyle]="{ 'min-width': '36rem' }">
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '36rem' }"
+>
   <ng-template #header>
     <tr>
       <th>Rol</th>
@@ -40,7 +53,9 @@
   <ng-template #body let-row>
     <tr>
       <td>{{ row.roleLabel }}</td>
-      <td><span class="font-mono">{{ row.recursoLabel }}</span></td>
+      <td>
+        <span class="font-mono">{{ row.recursoLabel }}</span>
+      </td>
       <td><app-status-tag [value]="row.status" /></td>
       @if (hasActions()) {
         <td class="text-right whitespace-nowrap">
@@ -52,6 +67,8 @@
             [text]="true"
             [ariaLabel]="'Retirar concesión ' + row.recursoLabel + ' a ' + row.roleLabel"
             (onClick)="confirmDeactivate(row)"
+            [pTooltip]="'Retirar concesión ' + row.recursoLabel + ' a ' + row.roleLabel"
+            tooltipPosition="top"
           />
         </td>
       }
@@ -62,29 +79,73 @@
     <tr>
       <td colspan="4">
         @if (!loading()) {
-          <app-empty-state icon="pi pi-shield" title="Sin concesiones" message="Concede un recurso a un rol con «Nueva concesión»." />
+          <app-empty-state
+            icon="pi pi-shield"
+            title="Sin concesiones"
+            message="Concede un recurso a un rol con «Nueva concesión»."
+          />
         }
       </td>
     </tr>
   </ng-template>
 </p-table>
 
-<p-dialog header="Nueva concesión" [(visible)]="dialogVisible" [modal]="true" [draggable]="false" styleClass="w-full max-w-lg mx-4">
+<p-dialog
+  header="Nueva concesión"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-lg mx-4"
+>
   @if (dialogError(); as message) {
     <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
   }
   <div class="grid gap-4">
     <div class="flex flex-col gap-1">
       <label for="concesion-nuevo-a" class="font-medium">Recurso</label>
-      <p-select inputId="concesion-nuevo-a" [options]="recursoOptions()" optionLabel="label" optionValue="value" [ngModel]="newRecurso()" (ngModelChange)="newRecurso.set($event)" [filter]="true" placeholder="Elige un recurso" styleClass="w-full" appendTo="body" />
+      <p-select
+        inputId="concesion-nuevo-a"
+        [options]="recursoOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="newRecurso()"
+        (ngModelChange)="newRecurso.set($event)"
+        [filter]="true"
+        placeholder="Elige un recurso"
+        styleClass="w-full"
+        appendTo="body"
+      />
     </div>
     <div class="flex flex-col gap-1">
       <label for="concesion-nuevo-rol" class="font-medium">Rol</label>
-      <p-select inputId="concesion-nuevo-rol" [options]="roleOptions()" optionLabel="label" optionValue="value" [ngModel]="newRole()" (ngModelChange)="newRole.set($event)" [filter]="true" placeholder="Elige un rol" styleClass="w-full" appendTo="body" />
+      <p-select
+        inputId="concesion-nuevo-rol"
+        [options]="roleOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="newRole()"
+        (ngModelChange)="newRole.set($event)"
+        [filter]="true"
+        placeholder="Elige un rol"
+        styleClass="w-full"
+        appendTo="body"
+      />
     </div>
     <div class="flex justify-end gap-2">
-      <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="dialogVisible.set(false)" />
-      <p-button label="Guardar" icon="pi pi-check" [loading]="saving()" [disabled]="!canSave" (onClick)="save()" />
+      <p-button
+        label="Cancelar"
+        severity="secondary"
+        [outlined]="true"
+        type="button"
+        (onClick)="dialogVisible.set(false)"
+      />
+      <p-button
+        label="Guardar"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="!canSave()"
+        (onClick)="save()"
+      />
     </div>
   </div>
 </p-dialog>

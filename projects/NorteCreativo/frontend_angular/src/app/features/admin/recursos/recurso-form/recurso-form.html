@@ -1,27 +1,50 @@
 <form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4 sm:grid-cols-3" novalidate>
   <div class="flex flex-col gap-1">
     <label for="recurso-method" class="font-medium">Método</label>
-    <p-select inputId="recurso-method" formControlName="method" [options]="metodos" optionLabel="label" optionValue="value" styleClass="w-full" />
+    <p-select
+      inputId="recurso-method"
+      formControlName="method"
+      [options]="metodos"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="w-full"
+    />
   </div>
 
   <div class="flex flex-col gap-1 sm:col-span-2">
     <label for="recurso-path" class="font-medium">Ruta</label>
-    <input pInputText id="recurso-path" formControlName="path" placeholder="/api/clientes/:id" autocomplete="off" />
+    <input
+      pInputText
+      id="recurso-path"
+      formControlName="path"
+      placeholder="/api/clientes/:id"
+      autocomplete="off"
+    />
     @if (invalid('path', 'required')) {
       <p-message severity="error" size="small" variant="simple">La ruta es obligatoria.</p-message>
     }
     @if (invalid('path', 'apiPath')) {
-      <p-message severity="error" size="small" variant="simple">La ruta debe empezar por /api/.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >La ruta debe empezar por /api/.</p-message
+      >
     }
   </div>
 
   <div class="flex flex-col gap-1 sm:col-span-3">
-    <label for="recurso-description" class="font-medium">Descripción <span class="text-slate-500">(opcional)</span></label>
+    <label for="recurso-description" class="font-medium"
+      >Descripción <span class="text-slate-500">(opcional)</span></label
+    >
     <input pInputText id="recurso-description" formControlName="description" autocomplete="off" />
   </div>
 
   <div class="flex justify-end gap-2 sm:col-span-3">
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelled.emit()" />
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      type="button"
+      (onClick)="cancelled.emit()"
+    />
     <p-button label="Guardar" type="submit" icon="pi pi-check" [loading]="saving()" />
   </div>
 </form>

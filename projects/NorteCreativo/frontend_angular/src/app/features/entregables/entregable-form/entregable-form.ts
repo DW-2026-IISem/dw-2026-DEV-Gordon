@@ -12,10 +12,19 @@ import { Entregable, EntregablePayload, EstadoEntregable } from '../../../core/m
 import { toNumber } from '../../../core/models/api';
 import { rangoFechas, toDate, toIso } from '../../../core/utils/dates';
 
-type CampoEntregable = 'tarea_id' | 'fecha_inicio' | 'fecha_fin' | 'total' | 'estado' | 'observaciones';
+type CampoEntregable =
+  'tarea_id' | 'fecha_inicio' | 'fecha_fin' | 'total' | 'estado' | 'observaciones';
 
 @Component({
-  imports: [ReactiveFormsModule, SelectModule, DatePickerModule, InputNumberModule, TextareaModule, MessageModule, ButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    SelectModule,
+    DatePickerModule,
+    InputNumberModule,
+    TextareaModule,
+    MessageModule,
+    ButtonModule,
+  ],
   selector: 'app-entregable-form',
   styleUrl: './entregable-form.css',
   templateUrl: './entregable-form.html',

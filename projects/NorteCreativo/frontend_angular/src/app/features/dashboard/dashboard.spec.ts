@@ -10,8 +10,20 @@ import { environment } from '../../../environments/environment';
 import { Dashboard } from './dashboard';
 
 const hito = (id: number, estado: string) => ({ id, estado, status: 'active' });
-const version = (id: number, estado: string, createdAt: string) => ({ id, entregable_id: id, numero_version: 1, total: 10, estado, createdAt });
-const aprobacion = (id: number, fecha: string) => ({ id, version_entregable_id: 1, estado: 'APROBADA', fecha });
+const version = (id: number, estado: string, createdAt: string) => ({
+  id,
+  entregable_id: id,
+  numero_version: 1,
+  total: 10,
+  estado,
+  createdAt,
+});
+const aprobacion = (id: number, fecha: string) => ({
+  id,
+  version_entregable_id: 1,
+  estado: 'APROBADA',
+  fecha,
+});
 
 type Internals = {
   resumen: () => Record<string, number>;
@@ -28,9 +40,29 @@ describe('Dashboard', () => {
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
-        { provide: ClienteApi, useValue: { list: () => of([{ id: 1, status: 'active' }, { id: 2, status: 'active' }]) } },
+        {
+          provide: ClienteApi,
+          useValue: {
+            list: () =>
+              of([
+                { id: 1, status: 'active' },
+                { id: 2, status: 'active' },
+              ]),
+          },
+        },
         { provide: CampaniaApi, useValue: { list: () => of([{ id: 1, status: 'active' }]) } },
-        { provide: HitoApi, useValue: { list: () => of([hito(1, 'ABIERTO'), hito(2, 'ABIERTO'), hito(3, 'CERRADO'), hito(4, 'FACTURADO')]) } },
+        {
+          provide: HitoApi,
+          useValue: {
+            list: () =>
+              of([
+                hito(1, 'ABIERTO'),
+                hito(2, 'ABIERTO'),
+                hito(3, 'CERRADO'),
+                hito(4, 'FACTURADO'),
+              ]),
+          },
+        },
         {
           provide: VersionEntregableApi,
           useValue: {
@@ -43,7 +75,12 @@ describe('Dashboard', () => {
               ]),
           },
         },
-        { provide: AprobacionApi, useValue: { list: () => of([1, 2, 3, 4, 5, 6, 7].map((i) => aprobacion(i, `2026-03-0${i}`))) } },
+        {
+          provide: AprobacionApi,
+          useValue: {
+            list: () => of([1, 2, 3, 4, 5, 6, 7].map((i) => aprobacion(i, `2026-03-0${i}`))),
+          },
+        },
       ],
     });
     const fixture = TestBed.createComponent(Dashboard);

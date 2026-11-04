@@ -29,23 +29,78 @@ const NAV: NavGroup[] = [
     label: 'Operación',
     items: [
       { label: 'Panel', icon: 'pi pi-home', route: '/dashboard' },
-      { label: 'Clientes', icon: 'pi pi-users', route: '/clientes', permission: 'GET /api/clientes' },
-      { label: 'Campañas', icon: 'pi pi-megaphone', route: '/campanias', permission: 'GET /api/campanias' },
+      {
+        label: 'Clientes',
+        icon: 'pi pi-users',
+        route: '/clientes',
+        permission: 'GET /api/clientes',
+      },
+      {
+        label: 'Campañas',
+        icon: 'pi pi-megaphone',
+        route: '/campanias',
+        permission: 'GET /api/campanias',
+      },
       { label: 'Hitos', icon: 'pi pi-flag', route: '/hitos', permission: 'GET /api/hitos' },
-      { label: 'Tareas', icon: 'pi pi-check-square', route: '/tareas', permission: 'GET /api/tareas' },
-      { label: 'Entregables', icon: 'pi pi-box', route: '/entregables', permission: 'GET /api/entregables' },
-      { label: 'Versiones', icon: 'pi pi-clone', route: '/versiones', permission: 'GET /api/version-entregables' },
-      { label: 'Aprobaciones', icon: 'pi pi-verified', route: '/aprobaciones', permission: 'GET /api/aprobaciones' },
+      {
+        label: 'Tareas',
+        icon: 'pi pi-check-square',
+        route: '/tareas',
+        permission: 'GET /api/tareas',
+      },
+      {
+        label: 'Entregables',
+        icon: 'pi pi-box',
+        route: '/entregables',
+        permission: 'GET /api/entregables',
+      },
+      {
+        label: 'Versiones',
+        icon: 'pi pi-clone',
+        route: '/versiones',
+        permission: 'GET /api/version-entregables',
+      },
+      {
+        label: 'Aprobaciones',
+        icon: 'pi pi-verified',
+        route: '/aprobaciones',
+        permission: 'GET /api/aprobaciones',
+      },
     ],
   },
   {
     label: 'Seguridad',
     items: [
-      { label: 'Usuarios', icon: 'pi pi-user', route: '/admin/usuarios', permission: 'GET /api/usuarios' },
-      { label: 'Roles', icon: 'pi pi-id-card', route: '/admin/roles', permission: 'GET /api/roles' },
-      { label: 'Recursos', icon: 'pi pi-server', route: '/admin/recursos', permission: 'GET /api/recursos' },
-      { label: 'Asignaciones', icon: 'pi pi-user-plus', route: '/admin/asignaciones', permission: 'GET /api/asignaciones-rol' },
-      { label: 'Permisos', icon: 'pi pi-shield', route: '/admin/permisos', permission: 'GET /api/concesiones-rol' },
+      {
+        label: 'Usuarios',
+        icon: 'pi pi-user',
+        route: '/admin/usuarios',
+        permission: 'GET /api/usuarios',
+      },
+      {
+        label: 'Roles',
+        icon: 'pi pi-id-card',
+        route: '/admin/roles',
+        permission: 'GET /api/roles',
+      },
+      {
+        label: 'Recursos',
+        icon: 'pi pi-server',
+        route: '/admin/recursos',
+        permission: 'GET /api/recursos',
+      },
+      {
+        label: 'Asignaciones',
+        icon: 'pi pi-user-plus',
+        route: '/admin/asignaciones',
+        permission: 'GET /api/asignaciones-rol',
+      },
+      {
+        label: 'Permisos',
+        icon: 'pi pi-shield',
+        route: '/admin/permisos',
+        permission: 'GET /api/concesiones-rol',
+      },
     ],
   },
 ];
@@ -67,7 +122,9 @@ export class Shell {
   protected readonly navGroups = computed<NavGroup[]>(() =>
     NAV.map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.permission || this.session.canPermission(item.permission)),
+      items: group.items.filter(
+        (item) => !item.permission || this.session.canPermission(item.permission),
+      ),
     })).filter((group) => group.items.length > 0),
   );
 
@@ -75,7 +132,11 @@ export class Shell {
     this.navGroups().map((group) => ({
       label: group.label,
       expanded: true,
-      items: group.items.map((item) => ({ label: item.label, icon: item.icon, routerLink: item.route })),
+      items: group.items.map((item) => ({
+        label: item.label,
+        icon: item.icon,
+        routerLink: item.route,
+      })),
     })),
   );
 

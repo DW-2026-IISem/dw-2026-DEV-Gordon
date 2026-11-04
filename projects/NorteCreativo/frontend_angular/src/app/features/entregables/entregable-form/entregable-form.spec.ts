@@ -18,7 +18,10 @@ type Controls = Record<string, { setValue: (v: unknown) => void }>;
 describe('EntregableForm', () => {
   const setup = async () => {
     const fixture = TestBed.createComponent(EntregableForm);
-    fixture.componentRef.setInput('tareas', [tarea(1, 'Brief', 'active'), tarea(2, 'Vieja', 'inactive')]);
+    fixture.componentRef.setInput('tareas', [
+      tarea(1, 'Brief', 'active'),
+      tarea(2, 'Vieja', 'inactive'),
+    ]);
     fixture.componentRef.setInput('hitosPorId', new Map([[5, 'Redes']]));
     const emitidos: EntregablePayload[] = [];
     fixture.componentInstance.saved.subscribe((p) => emitidos.push(p));

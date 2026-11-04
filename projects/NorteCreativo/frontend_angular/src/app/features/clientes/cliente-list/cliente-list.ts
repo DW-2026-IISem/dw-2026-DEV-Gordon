@@ -19,9 +19,11 @@ import { PageHeader } from '../../../shared/ui/page-header/page-header';
 import { StatusTag } from '../../../shared/ui/status-tag/status-tag';
 import { ClienteForm } from '../cliente-form/cliente-form';
 import { ClienteApi } from '../cliente-api';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   imports: [
+    TooltipModule,
     TableModule,
     ButtonModule,
     DialogModule,
@@ -58,10 +60,21 @@ export class ClienteList implements OnInit {
   protected readonly resetKey = signal(0);
 
   protected readonly visibleRows = computed(() =>
-    filterRows(this.rows(), this.filter(), (c) => [c.nombre, c.numero_documento, c.email, c.telefono]),
+    filterRows(this.rows(), this.filter(), (c) => [
+      c.nombre,
+      c.numero_documento,
+      c.email,
+      c.telefono,
+    ]),
   );
   // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
-  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/clientes/:id', 'PATCH /api/clientes/:id/deactivate', 'DELETE /api/clientes/:id']));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'PATCH /api/clientes/:id',
+      'PATCH /api/clientes/:id/deactivate',
+      'DELETE /api/clientes/:id',
+    ]),
+  );
   protected readonly title = computed(() => (this.editing() ? 'Editar cliente' : 'Nuevo cliente'));
 
   ngOnInit(): void {
@@ -115,7 +128,11 @@ export class ClienteList implements OnInit {
       next: (cliente) => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.notify.success(editing ? `Cliente «${cliente.nombre}» actualizado.` : `Cliente «${cliente.nombre}» creado.`);
+        this.notify.success(
+          editing
+            ? `Cliente «${cliente.nombre}» actualizado.`
+            : `Cliente «${cliente.nombre}» creado.`,
+        );
         this.load();
       },
       error: (err: unknown) => {
@@ -135,7 +152,8 @@ export class ClienteList implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: { label: 'Desactivar', severity: 'warn' },
       rejectButtonProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
-      accept: () => this.run(this.api.deactivate(cliente.id), `Cliente «${cliente.nombre}» desactivado.`),
+      accept: () =>
+        this.run(this.api.deactivate(cliente.id), `Cliente «${cliente.nombre}» desactivado.`),
     });
   }
 

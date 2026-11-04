@@ -1,4 +1,7 @@
-<app-page-header title="Campañas" subtitle="Las campañas de cada cliente, con sus hitos y entregables.">
+<app-page-header
+  title="Campañas"
+  subtitle="Las campañas de cada cliente, con sus hitos y entregables."
+>
   <p-button
     *appHasPermission="'POST /api/campanias'"
     label="Nueva campaña"
@@ -78,6 +81,8 @@
             severity="secondary"
             [ariaLabel]="'Ver hitos de ' + campania.nombre"
             (onClick)="verHitos(campania)"
+            [pTooltip]="'Ver hitos de ' + campania.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/campanias/:id'"
@@ -86,6 +91,8 @@
             [text]="true"
             [ariaLabel]="'Editar ' + campania.nombre"
             (onClick)="openEdit(campania)"
+            [pTooltip]="'Editar ' + campania.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/campanias/:id/deactivate'"
@@ -95,6 +102,8 @@
             [text]="true"
             [ariaLabel]="'Desactivar ' + campania.nombre"
             (onClick)="confirmDeactivate(campania)"
+            [pTooltip]="'Desactivar ' + campania.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'DELETE /api/campanias/:id'"
@@ -104,6 +113,8 @@
             [text]="true"
             [ariaLabel]="'Eliminar ' + campania.nombre"
             (onClick)="confirmRemove(campania)"
+            [pTooltip]="'Eliminar ' + campania.nombre"
+            tooltipPosition="top"
           />
         </td>
       }

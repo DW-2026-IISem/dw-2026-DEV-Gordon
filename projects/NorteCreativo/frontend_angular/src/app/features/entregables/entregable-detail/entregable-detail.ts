@@ -41,9 +41,14 @@ export class EntregableDetail {
 
   protected readonly entregableId = computed(() => Number(this.id()));
   protected readonly ultimaVersion = computed(() =>
-    this.versiones().reduce<VersionEntregable | null>((max, v) => (!max || v.numero_version > max.numero_version ? v : max), null),
+    this.versiones().reduce<VersionEntregable | null>(
+      (max, v) => (!max || v.numero_version > max.numero_version ? v : max),
+      null,
+    ),
   );
-  protected readonly pendientes = computed(() => this.versiones().filter((v) => v.estado === 'EN_REVISION').length);
+  protected readonly pendientes = computed(
+    () => this.versiones().filter((v) => v.estado === 'EN_REVISION').length,
+  );
   protected readonly total = computed(() => {
     const e = this.entregable();
     return e && e.total !== null ? formatCop(e.total) : '—';

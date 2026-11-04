@@ -49,14 +49,22 @@ describe('authInterceptor', () => {
     http.get(`${api}/clientes`).subscribe();
     http.post(`${api}/sesion/login`, {}).subscribe();
     http.post(`${api}/sesion/refresh`, {}).subscribe();
-    expect(backend.expectOne(`${api}/clientes`).request.headers.get('Authorization')).toBe('Bearer access-viejo');
-    expect(backend.expectOne(`${api}/sesion/login`).request.headers.has('Authorization')).toBe(false);
-    expect(backend.expectOne(`${api}/sesion/refresh`).request.headers.has('Authorization')).toBe(false);
+    expect(backend.expectOne(`${api}/clientes`).request.headers.get('Authorization')).toBe(
+      'Bearer access-viejo',
+    );
+    expect(backend.expectOne(`${api}/sesion/login`).request.headers.has('Authorization')).toBe(
+      false,
+    );
+    expect(backend.expectOne(`${api}/sesion/refresh`).request.headers.has('Authorization')).toBe(
+      false,
+    );
   });
 
   it('no agrega Bearer a otros orígenes', () => {
     http.get('https://otro.example/datos').subscribe();
-    expect(backend.expectOne('https://otro.example/datos').request.headers.has('Authorization')).toBe(false);
+    expect(
+      backend.expectOne('https://otro.example/datos').request.headers.has('Authorization'),
+    ).toBe(false);
   });
 
   it('varios 401 a la vez comparten un solo refresh y reintentan con el token nuevo', () => {
@@ -64,7 +72,9 @@ describe('authInterceptor', () => {
     for (const recurso of ['clientes', 'campanias', 'hitos']) {
       http.get(`${api}/${recurso}`).subscribe((r) => resultados.push(r));
     }
-    for (const req of backend.match((r) => r.url.startsWith(`${api}/`) && !r.url.includes('/sesion/'))) {
+    for (const req of backend.match(
+      (r) => r.url.startsWith(`${api}/`) && !r.url.includes('/sesion/'),
+    )) {
       req.flush({ message: 'vencido' }, { status: 401, statusText: 'Unauthorized' });
     }
 
@@ -88,7 +98,9 @@ describe('authInterceptor', () => {
     const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     http.get(`${api}/clientes`).subscribe({ error: () => undefined });
     backend.expectOne(`${api}/clientes`).flush({}, { status: 401, statusText: 'Unauthorized' });
-    backend.expectOne(`${api}/sesion/refresh`).flush({ message: 'rotado' }, { status: 401, statusText: 'Unauthorized' });
+    backend
+      .expectOne(`${api}/sesion/refresh`)
+      .flush({ message: 'rotado' }, { status: 401, statusText: 'Unauthorized' });
     expect(session.isAuthenticated()).toBe(false);
     expect(localStorage.getItem('nortecreativo.session.v1')).toBeNull();
     expect(navegar).toHaveBeenCalledWith(['/login'], expect.anything());

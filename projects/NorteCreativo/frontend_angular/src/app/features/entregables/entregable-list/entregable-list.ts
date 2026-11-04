@@ -29,6 +29,7 @@ import { HitoApi } from '../../hitos/hito-api';
 import { TareaApi } from '../../tareas/tarea-api';
 import { EntregableApi } from '../entregable-api';
 import { EntregableForm } from '../entregable-form/entregable-form';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface Option<T> {
   id: T | null;
@@ -37,6 +38,7 @@ interface Option<T> {
 
 @Component({
   imports: [
+    TooltipModule,
     DatePipe,
     FormsModule,
     TableModule,
@@ -81,8 +83,12 @@ export class EntregableList implements OnInit {
   protected readonly editing = signal<Entregable | null>(null);
   protected readonly resetKey = signal(0);
 
-  protected readonly tareasPorId = computed(() => new Map(this.tareas().map((t) => [t.id, t.nombre])));
-  protected readonly hitosPorId = computed(() => new Map(this.hitos().map((h) => [h.id, h.nombre])));
+  protected readonly tareasPorId = computed(
+    () => new Map(this.tareas().map((t) => [t.id, t.nombre])),
+  );
+  protected readonly hitosPorId = computed(
+    () => new Map(this.hitos().map((h) => [h.id, h.nombre])),
+  );
   protected readonly tareaOptions = computed<Option<number>[]>(() => [
     { id: null, nombre: 'Todas las tareas' },
     ...this.tareas().map((t) => ({ id: t.id, nombre: t.nombre })),
@@ -98,13 +104,23 @@ export class EntregableList implements OnInit {
     const estado = this.estadoFilter();
     const nombres = this.tareasPorId();
     const base = this.rows().filter(
-      (e) => (tareaId === null || e.tarea_id === tareaId) && (estado === null || e.estado === estado),
+      (e) =>
+        (tareaId === null || e.tarea_id === tareaId) && (estado === null || e.estado === estado),
     );
     return filterRows(base, this.filter(), (e) => [nombres.get(e.tarea_id), e.observaciones]);
   });
   // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
-  protected readonly hasActions = computed(() => this.session.canAny(['GET /api/entregables/:id', 'PATCH /api/entregables/:id', 'PATCH /api/entregables/:id/deactivate', 'DELETE /api/entregables/:id']));
-  protected readonly title = computed(() => (this.editing() ? 'Editar entregable' : 'Nuevo entregable'));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'GET /api/entregables/:id',
+      'PATCH /api/entregables/:id',
+      'PATCH /api/entregables/:id/deactivate',
+      'DELETE /api/entregables/:id',
+    ]),
+  );
+  protected readonly title = computed(() =>
+    this.editing() ? 'Editar entregable' : 'Nuevo entregable',
+  );
 
   ngOnInit(): void {
     this.load();
@@ -121,8 +137,12 @@ export class EntregableList implements OnInit {
   protected load(): void {
     this.loading.set(true);
     this.error.set(null);
-    const tareas$: Observable<Tarea[]> = this.session.canPermission('GET /api/tareas') ? this.tareaApi.list() : of([]);
-    const hitos$: Observable<Hito[]> = this.session.canPermission('GET /api/hitos') ? this.hitoApi.list() : of([]);
+    const tareas$: Observable<Tarea[]> = this.session.canPermission('GET /api/tareas')
+      ? this.tareaApi.list()
+      : of([]);
+    const hitos$: Observable<Hito[]> = this.session.canPermission('GET /api/hitos')
+      ? this.hitoApi.list()
+      : of([]);
 
     forkJoin({ entregables: this.api.list(), tareas: tareas$, hitos: hitos$ })
       .pipe(takeUntilDestroyed(this.destroyRef))

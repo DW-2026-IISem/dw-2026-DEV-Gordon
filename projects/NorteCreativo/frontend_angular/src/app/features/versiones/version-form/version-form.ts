@@ -6,12 +6,22 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { TextareaModule } from 'primeng/textarea';
 import { toNumber } from '../../../core/models/api';
-import { VersionEntregable, VersionEntregablePayload } from '../../../core/models/version-entregable';
+import {
+  VersionEntregable,
+  VersionEntregablePayload,
+} from '../../../core/models/version-entregable';
 import { rangoFechas, toDate, toIso } from '../../../core/utils/dates';
 
 // Sin numero_version ni estado: los asigna el backend (siguiente número, EN_REVISION).
 @Component({
-  imports: [ReactiveFormsModule, DatePickerModule, InputNumberModule, TextareaModule, MessageModule, ButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    DatePickerModule,
+    InputNumberModule,
+    TextareaModule,
+    MessageModule,
+    ButtonModule,
+  ],
   selector: 'app-version-form',
   styleUrl: './version-form.css',
   templateUrl: './version-form.html',

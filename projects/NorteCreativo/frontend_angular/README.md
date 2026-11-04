@@ -1,59 +1,68 @@
-# FrontNorteCreativo
+# Norte Creativo — frontend Angular
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.5.
+Angular 22 (standalone + signals), PrimeNG 22 (tema Aura) y Tailwind v4. Consume `backend_Express` (puerto 3012).
 
-## Development server
+## Arranque
 
-To start a local development server, run:
+1. Base de datos y backend (`projects/NorteCreativo/backend_Express`):
+   ```bash
+   docker start nc-mysql
+   npm install && npm run db:seed
+   npm run dev          # escucha en http://localhost:3012 (Swagger en /api/docs)
+   ```
+2. Frontend (esta carpeta):
+   ```bash
+   npm install
+   npm start            # http://localhost:4200
+   ```
 
-```bash
-ng serve
-```
+## Usuarios del seeder
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+| Usuario | Contraseña | Rol | Qué ve |
+|---|---|---|---|
+| `admin` | `Admin123!` | ADMIN | Operación completa + Seguridad (no puede aprobar: RN-05) |
+| `cuentas` | `Cuentas123!` | CUENTAS (+ CREATIVO) | Clientes (lectura), campañas, hitos y tareas (CRUD) |
+| `creativo` | `Creativo123!` | CREATIVO | Entregables y versiones (crear/editar) |
+| `aprobador` | `Aprobador123!` | CLIENTE_APROBADOR | Aprobaciones (solo él puede registrarlas) |
+| `finanzas` | `Finanzas123!` | FINANZAS | Clientes, campañas y hitos (lectura) |
 
-## Code scaffolding
+## Interruptores de fase
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+| Fase | `requireAuth` (en `src/environments/environment.ts` **y** `environment.development.ts`) | Backend | Storage |
+|---|---|---|---|
+| II (por defecto) | `true` | `AUTH_ENABLED=true` (o sin definir) | — |
+| I (práctica, sin login) | `false` | `AUTH_ENABLED=false` | borrar la clave `nortecreativo.session.v1` |
 
-```bash
-ng generate component component-name
-```
+Si solo se cambia un lado aparecen 401. Con `AUTH_ENABLED=false` el backend solo abre el negocio: `POST /api/aprobaciones`, administración, perfil y permisos siguen pidiendo JWT.
+Arranca siempre el backend con la variable explícita (`AUTH_ENABLED=true npm run dev`) para no heredar un valor de otra sesión.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Calidad
 
 ```bash
-ng test
+npm run build          # presupuestos: initial 750 kB aviso / 1 MB error; estilo por componente 4 kB / 8 kB
+npm test               # Vitest (ng test)
+npm run format:check   # Prettier sobre src/**/*.{ts,html,css}
+npm run format         # aplica Prettier
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+## Publicación
 
 ```bash
-ng e2e
+npx ng build
+npx serve -s dist/front-norte-creativo/browser   # -s = fallback SPA a index.html
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+El servidor estático debe devolver `index.html` para cualquier ruta (por ejemplo `/entregables/5`); sin ese fallback, F5 en una ruta profunda da 404.
 
-## Additional Resources
+## Flujo para dar un permiso nuevo
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+1. Confirmar el recurso en **Seguridad → Recursos**.
+2. Conceder el recurso al rol en **Seguridad → Permisos**.
+3. «Ver permisos» del usuario en **Seguridad → Usuarios**.
+4. Entrar como ese usuario y pulsar **Actualizar permisos** (menú de usuario).
+
+Crear un recurso no crea una pantalla: solo habilita una ruta que ya existe en el menú.
+
+## Problemas conocidos
+
+Ver [`docs/problemas.md`](docs/problemas.md).

@@ -9,7 +9,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) =>
         return throwError(
           () =>
             new HttpErrorResponse({
-              error: { message: 'Backend no disponible. Verifica que esté encendido en el puerto 3012.' },
+              error: {
+                message: 'Backend no disponible. Verifica que esté encendido en el puerto 3012.',
+              },
               status: 0,
               statusText: error.statusText,
               url: error.url ?? undefined,

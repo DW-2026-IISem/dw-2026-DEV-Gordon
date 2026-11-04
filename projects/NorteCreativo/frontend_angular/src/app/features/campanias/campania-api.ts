@@ -15,23 +15,33 @@ export class CampaniaApi {
   }
 
   get(id: number): Observable<Campania> {
-    return this.http.get<{ campania: Campania }>(`${this.base}/${id}`).pipe(map((res) => res.campania));
+    return this.http
+      .get<{ campania: Campania }>(`${this.base}/${id}`)
+      .pipe(map((res) => res.campania));
   }
 
   create(payload: CampaniaPayload): Observable<Campania> {
-    return this.http.post<{ campania: Campania }>(this.base, payload).pipe(map((res) => res.campania));
+    return this.http
+      .post<{ campania: Campania }>(this.base, payload)
+      .pipe(map((res) => res.campania));
   }
 
   update(id: number, payload: Partial<CampaniaPayload>): Observable<Campania> {
-    return this.http.patch<{ campania: Campania }>(`${this.base}/${id}`, payload).pipe(map((res) => res.campania));
+    return this.http
+      .patch<{ campania: Campania }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.campania));
   }
 
   replace(id: number, payload: CampaniaPayload): Observable<Campania> {
-    return this.http.put<{ campania: Campania }>(`${this.base}/${id}`, payload).pipe(map((res) => res.campania));
+    return this.http
+      .put<{ campania: Campania }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.campania));
   }
 
   deactivate(id: number): Observable<Campania> {
-    return this.http.patch<{ campania: Campania }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.campania));
+    return this.http
+      .patch<{ campania: Campania }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.campania));
   }
 
   remove(id: number): Observable<void> {

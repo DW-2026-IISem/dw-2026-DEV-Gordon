@@ -12,7 +12,14 @@ type CampoCampania = 'cliente_id' | 'nombre' | 'descripcion';
 
 // Formulario sin llamadas a la API: valida y emite; la pantalla decide qué hacer.
 @Component({
-  imports: [ReactiveFormsModule, InputTextModule, SelectModule, TextareaModule, MessageModule, ButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    InputTextModule,
+    SelectModule,
+    TextareaModule,
+    MessageModule,
+    ButtonModule,
+  ],
   selector: 'app-campania-form',
   styleUrl: './campania-form.css',
   templateUrl: './campania-form.html',
@@ -30,7 +37,9 @@ export class CampaniaForm {
   readonly cancelled = output<void>();
 
   // Una campaña solo se abre para un cliente activo.
-  protected readonly clientesActivos = computed(() => this.clientes().filter((cliente) => cliente.status === 'active'));
+  protected readonly clientesActivos = computed(() =>
+    this.clientes().filter((cliente) => cliente.status === 'active'),
+  );
 
   protected readonly form = this.fb.group({
     cliente_id: this.fb.control<number | null>(null, Validators.required),

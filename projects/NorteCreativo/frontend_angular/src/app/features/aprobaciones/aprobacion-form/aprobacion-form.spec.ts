@@ -38,14 +38,22 @@ describe('AprobacionForm', () => {
         MessageService,
         {
           provide: VersionEntregableApi,
-          useValue: { list: () => of([version(1, 'EN_REVISION'), version(2, 'APROBADA'), version(3, 'RECHAZADA')]) },
+          useValue: {
+            list: () =>
+              of([version(1, 'EN_REVISION'), version(2, 'APROBADA'), version(3, 'RECHAZADA')]),
+          },
         },
         {
           provide: AprobacionApi,
           useValue: {
             create: (p: AprobacionPayload) => {
               enviados.push(p);
-              return of({ aprobacion: { estado: p.estado }, hito_cerrado: false, hito_id: 1, fecha_cierre: null });
+              return of({
+                aprobacion: { estado: p.estado },
+                hito_cerrado: false,
+                hito_id: 1,
+                fecha_cierre: null,
+              });
             },
           },
         },
@@ -61,7 +69,9 @@ describe('AprobacionForm', () => {
 
   it('el select solo ofrece versiones EN_REVISION con etiqueta sin tareas', async () => {
     const { internals } = await setup();
-    expect(internals.opciones().map((o) => o.etiqueta.replace(/\s/g, ' '))).toEqual(['Entregable #11 · v1 · $ 1.000']);
+    expect(internals.opciones().map((o) => o.etiqueta.replace(/\s/g, ' '))).toEqual([
+      'Entregable #11 · v1 · $ 1.000',
+    ]);
   });
 
   it('?version=<id> preselecciona la versión en revisión', async () => {
@@ -85,7 +95,9 @@ describe('AprobacionForm', () => {
     internals.estado.set('RECHAZADA');
     internals.comentario.set(' Falta el logo ');
     internals.enviar();
-    expect(enviados).toEqual([{ version_entregable_id: 1, estado: 'RECHAZADA', comentario: 'Falta el logo' }]);
+    expect(enviados).toEqual([
+      { version_entregable_id: 1, estado: 'RECHAZADA', comentario: 'Falta el logo' },
+    ]);
     expect('aprobador_id' in enviados[0]).toBe(false);
   });
 });

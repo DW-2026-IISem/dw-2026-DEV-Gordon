@@ -40,7 +40,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(outgoing).pipe(
     catchError((error: unknown) => {
       const is401 = error instanceof HttpErrorResponse && error.status === 401;
-      if (!is401 || !isApi || isAuthEndpoint || !environment.requireAuth) return throwError(() => error);
+      if (!is401 || !isApi || isAuthEndpoint || !environment.requireAuth)
+        return throwError(() => error);
 
       if (!session.refreshToken()) {
         expire();

@@ -1,5 +1,13 @@
-<app-page-header title="Hitos" subtitle="Las etapas de cada campaña. El estado lo cambia una aprobación, no se edita a mano.">
-  <p-button *appHasPermission="'POST /api/hitos'" label="Nuevo hito" icon="pi pi-plus" (onClick)="openNew()" />
+<app-page-header
+  title="Hitos"
+  subtitle="Las etapas de cada campaña. El estado lo cambia una aprobación, no se edita a mano."
+>
+  <p-button
+    *appHasPermission="'POST /api/hitos'"
+    label="Nuevo hito"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
 </app-page-header>
 
 @if (error(); as message) {
@@ -86,6 +94,8 @@
             severity="secondary"
             [ariaLabel]="'Ver tareas de ' + hito.nombre"
             (onClick)="verTareas(hito)"
+            [pTooltip]="'Ver tareas de ' + hito.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/hitos/:id'"
@@ -94,6 +104,8 @@
             [text]="true"
             [ariaLabel]="'Editar ' + hito.nombre"
             (onClick)="openEdit(hito)"
+            [pTooltip]="'Editar ' + hito.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/hitos/:id/deactivate'"
@@ -103,6 +115,8 @@
             [text]="true"
             [ariaLabel]="'Desactivar ' + hito.nombre"
             (onClick)="confirmDeactivate(hito)"
+            [pTooltip]="'Desactivar ' + hito.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'DELETE /api/hitos/:id'"
@@ -112,6 +126,8 @@
             [text]="true"
             [ariaLabel]="'Eliminar ' + hito.nombre"
             (onClick)="confirmRemove(hito)"
+            [pTooltip]="'Eliminar ' + hito.nombre"
+            tooltipPosition="top"
           />
         </td>
       }
@@ -123,7 +139,11 @@
       <td colspan="5">
         @if (!loading()) {
           @if (rows().length === 0) {
-            <app-empty-state icon="pi pi-flag" title="Aún no hay hitos" message="Crea el primero con «Nuevo hito»." />
+            <app-empty-state
+              icon="pi pi-flag"
+              title="Aún no hay hitos"
+              message="Crea el primero con «Nuevo hito»."
+            />
           } @else {
             <app-empty-state
               icon="pi pi-search"

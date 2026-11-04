@@ -1,4 +1,7 @@
-<app-page-header title="Aprobaciones" subtitle="Historial de veredictos. Es un registro de auditoría: no se edita ni se elimina.">
+<app-page-header
+  title="Aprobaciones"
+  subtitle="Historial de veredictos. Es un registro de auditoría: no se edita ni se elimina."
+>
   <p-button
     *appHasPermission="'POST /api/aprobaciones'"
     label="Registrar veredicto"
@@ -71,9 +74,17 @@
       <td colspan="4">
         @if (!loading()) {
           @if (rows().length === 0) {
-            <app-empty-state icon="pi pi-verified" title="Aún no hay aprobaciones" message="Aparecen aquí cuando se registra un veredicto." />
+            <app-empty-state
+              icon="pi pi-verified"
+              title="Aún no hay aprobaciones"
+              message="Aparecen aquí cuando se registra un veredicto."
+            />
           } @else {
-            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Ninguna aprobación coincide con los filtros elegidos." />
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ninguna aprobación coincide con los filtros elegidos."
+            />
           }
         }
       </td>

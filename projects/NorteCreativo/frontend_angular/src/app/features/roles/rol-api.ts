@@ -31,7 +31,9 @@ export class RolApi {
   }
 
   deactivate(id: number): Observable<Rol> {
-    return this.http.patch<{ rol: Rol }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.rol));
+    return this.http
+      .patch<{ rol: Rol }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.rol));
   }
 
   remove(id: number): Observable<void> {

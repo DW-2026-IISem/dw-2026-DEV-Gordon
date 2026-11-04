@@ -1,5 +1,13 @@
-<app-page-header title="Entregables" subtitle="Lo que se entrega por cada tarea, con su total y sus versiones.">
-  <p-button *appHasPermission="'POST /api/entregables'" label="Nuevo entregable" icon="pi pi-plus" (onClick)="openNew()" />
+<app-page-header
+  title="Entregables"
+  subtitle="Lo que se entrega por cada tarea, con su total y sus versiones."
+>
+  <p-button
+    *appHasPermission="'POST /api/entregables'"
+    label="Nuevo entregable"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
 </app-page-header>
 
 @if (error(); as message) {
@@ -84,6 +92,8 @@
             severity="secondary"
             [ariaLabel]="'Ver detalle del entregable ' + entregable.id"
             (onClick)="verDetalle(entregable)"
+            [pTooltip]="'Ver detalle del entregable ' + entregable.id"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/entregables/:id'"
@@ -92,6 +102,8 @@
             [text]="true"
             [ariaLabel]="'Editar entregable ' + entregable.id"
             (onClick)="openEdit(entregable)"
+            [pTooltip]="'Editar entregable ' + entregable.id"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/entregables/:id/deactivate'"
@@ -101,6 +113,8 @@
             [text]="true"
             [ariaLabel]="'Desactivar entregable ' + entregable.id"
             (onClick)="confirmDeactivate(entregable)"
+            [pTooltip]="'Desactivar entregable ' + entregable.id"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'DELETE /api/entregables/:id'"
@@ -110,6 +124,8 @@
             [text]="true"
             [ariaLabel]="'Eliminar entregable ' + entregable.id"
             (onClick)="confirmRemove(entregable)"
+            [pTooltip]="'Eliminar entregable ' + entregable.id"
+            tooltipPosition="top"
           />
         </td>
       }
@@ -121,9 +137,17 @@
       <td colspan="6">
         @if (!loading()) {
           @if (rows().length === 0) {
-            <app-empty-state icon="pi pi-box" title="Aún no hay entregables" message="Crea el primero con «Nuevo entregable»." />
+            <app-empty-state
+              icon="pi pi-box"
+              title="Aún no hay entregables"
+              message="Crea el primero con «Nuevo entregable»."
+            />
           } @else {
-            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Ningún entregable coincide con los filtros elegidos." />
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ningún entregable coincide con los filtros elegidos."
+            />
           }
         }
       </td>

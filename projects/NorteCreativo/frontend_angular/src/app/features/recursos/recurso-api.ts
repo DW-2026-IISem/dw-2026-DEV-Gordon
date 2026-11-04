@@ -15,7 +15,9 @@ export class RecursoApi {
   }
 
   get(id: number): Observable<Recurso> {
-    return this.http.get<{ recurso: Recurso }>(`${this.base}/${id}`).pipe(map((res) => res.recurso));
+    return this.http
+      .get<{ recurso: Recurso }>(`${this.base}/${id}`)
+      .pipe(map((res) => res.recurso));
   }
 
   create(payload: RecursoPayload): Observable<Recurso> {
@@ -23,15 +25,21 @@ export class RecursoApi {
   }
 
   update(id: number, payload: Partial<RecursoPayload>): Observable<Recurso> {
-    return this.http.patch<{ recurso: Recurso }>(`${this.base}/${id}`, payload).pipe(map((res) => res.recurso));
+    return this.http
+      .patch<{ recurso: Recurso }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.recurso));
   }
 
   replace(id: number, payload: RecursoPayload): Observable<Recurso> {
-    return this.http.put<{ recurso: Recurso }>(`${this.base}/${id}`, payload).pipe(map((res) => res.recurso));
+    return this.http
+      .put<{ recurso: Recurso }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.recurso));
   }
 
   deactivate(id: number): Observable<Recurso> {
-    return this.http.patch<{ recurso: Recurso }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.recurso));
+    return this.http
+      .patch<{ recurso: Recurso }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.recurso));
   }
 
   remove(id: number): Observable<void> {

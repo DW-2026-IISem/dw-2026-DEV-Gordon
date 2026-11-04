@@ -2,32 +2,71 @@
   <div class="grid gap-4 sm:grid-cols-2">
     <div class="flex flex-col gap-1">
       <label for="version-inicio" class="font-medium">Fecha de inicio</label>
-      <p-datepicker inputId="version-inicio" formControlName="fecha_inicio" dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true" styleClass="w-full" />
+      <p-datepicker
+        inputId="version-inicio"
+        formControlName="fecha_inicio"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showButtonBar]="true"
+        styleClass="w-full"
+      />
     </div>
     <div class="flex flex-col gap-1">
       <label for="version-fin" class="font-medium">Fecha de fin</label>
-      <p-datepicker inputId="version-fin" formControlName="fecha_fin" dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true" styleClass="w-full" />
+      <p-datepicker
+        inputId="version-fin"
+        formControlName="fecha_fin"
+        dateFormat="dd/mm/yy"
+        [showIcon]="true"
+        [showButtonBar]="true"
+        styleClass="w-full"
+      />
       @if (rangoInvalido) {
-        <p-message severity="error" size="small" variant="simple">La fecha de fin no puede ser anterior a la de inicio.</p-message>
+        <p-message severity="error" size="small" variant="simple"
+          >La fecha de fin no puede ser anterior a la de inicio.</p-message
+        >
       }
     </div>
   </div>
 
   <div class="flex flex-col gap-1">
     <label for="version-total" class="font-medium">Total</label>
-    <p-inputnumber inputId="version-total" formControlName="total" mode="currency" currency="COP" locale="es-CO" [maxFractionDigits]="0" styleClass="w-full" />
+    <p-inputnumber
+      inputId="version-total"
+      formControlName="total"
+      mode="currency"
+      currency="COP"
+      locale="es-CO"
+      [maxFractionDigits]="0"
+      styleClass="w-full"
+    />
     @if (totalNegativo) {
-      <p-message severity="error" size="small" variant="simple">El total no puede ser negativo.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >El total no puede ser negativo.</p-message
+      >
     }
   </div>
 
   <div class="flex flex-col gap-1">
-    <label for="version-observaciones" class="font-medium">Observaciones <span class="text-slate-500">(opcional)</span></label>
-    <textarea pTextarea id="version-observaciones" formControlName="observaciones" rows="3"></textarea>
+    <label for="version-observaciones" class="font-medium"
+      >Observaciones <span class="text-slate-500">(opcional)</span></label
+    >
+    <textarea
+      pTextarea
+      id="version-observaciones"
+      formControlName="observaciones"
+      rows="3"
+    ></textarea>
   </div>
 
   <div class="flex justify-end gap-2">
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelled.emit()" />
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      type="button"
+      (onClick)="cancelled.emit()"
+    />
     <p-button label="Guardar" type="submit" icon="pi pi-check" [loading]="saving()" />
   </div>
 </form>

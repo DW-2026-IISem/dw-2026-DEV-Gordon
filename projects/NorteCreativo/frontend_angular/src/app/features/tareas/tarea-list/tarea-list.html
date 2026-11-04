@@ -1,5 +1,10 @@
 <app-page-header title="Tareas" subtitle="El trabajo concreto de cada hito.">
-  <p-button *appHasPermission="'POST /api/tareas'" label="Nueva tarea" icon="pi pi-plus" (onClick)="openNew()" />
+  <p-button
+    *appHasPermission="'POST /api/tareas'"
+    label="Nueva tarea"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
 </app-page-header>
 
 @if (error(); as message) {
@@ -72,6 +77,8 @@
             [text]="true"
             [ariaLabel]="'Editar ' + tarea.nombre"
             (onClick)="openEdit(tarea)"
+            [pTooltip]="'Editar ' + tarea.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/tareas/:id/deactivate'"
@@ -81,6 +88,8 @@
             [text]="true"
             [ariaLabel]="'Desactivar ' + tarea.nombre"
             (onClick)="confirmDeactivate(tarea)"
+            [pTooltip]="'Desactivar ' + tarea.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'DELETE /api/tareas/:id'"
@@ -90,6 +99,8 @@
             [text]="true"
             [ariaLabel]="'Eliminar ' + tarea.nombre"
             (onClick)="confirmRemove(tarea)"
+            [pTooltip]="'Eliminar ' + tarea.nombre"
+            tooltipPosition="top"
           />
         </td>
       }
@@ -101,7 +112,11 @@
       <td colspan="5">
         @if (!loading()) {
           @if (rows().length === 0) {
-            <app-empty-state icon="pi pi-check-square" title="Aún no hay tareas" message="Crea la primera con «Nueva tarea»." />
+            <app-empty-state
+              icon="pi pi-check-square"
+              title="Aún no hay tareas"
+              message="Crea la primera con «Nueva tarea»."
+            />
           } @else {
             <app-empty-state
               icon="pi pi-search"

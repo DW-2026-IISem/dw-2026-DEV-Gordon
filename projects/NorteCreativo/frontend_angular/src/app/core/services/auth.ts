@@ -1,6 +1,16 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
-import { catchError, finalize, forkJoin, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
+import {
+  catchError,
+  finalize,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+  throwError,
+} from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Perfil, PermisosRespuesta, SessionTokens } from '../models/auth';
 import { SessionStore } from './session-store';
@@ -14,17 +24,23 @@ export class AuthService {
 
   // Guarda los tokens y completa el acceso (perfil + permisos) antes de entregar el perfil.
   login(identifier: string, password: string): Observable<Perfil> {
-    return this.http.post<SessionTokens>(`${this.base}/sesion/login`, { identifier, password }).pipe(
-      tap((tokens) => this.session.setTokens(tokens)),
-      switchMap(() => this.me()),
-    );
+    return this.http
+      .post<SessionTokens>(`${this.base}/sesion/login`, { identifier, password })
+      .pipe(
+        tap((tokens) => this.session.setTokens(tokens)),
+        switchMap(() => this.me()),
+      );
   }
 
   // Perfil y permisos en paralelo; si falla, la sesión no queda a medias.
   me(): Observable<Perfil> {
     return forkJoin({
-      perfil: this.http.get<{ usuario: Perfil }>(`${this.base}/sesion/perfil`).pipe(map((res) => res.usuario)),
-      permisos: this.http.get<PermisosRespuesta>(`${this.base}/permisos`).pipe(map((res) => res.permisos)),
+      perfil: this.http
+        .get<{ usuario: Perfil }>(`${this.base}/sesion/perfil`)
+        .pipe(map((res) => res.usuario)),
+      permisos: this.http
+        .get<PermisosRespuesta>(`${this.base}/permisos`)
+        .pipe(map((res) => res.permisos)),
     }).pipe(
       tap(({ perfil, permisos }) => this.session.setAccess(perfil, permisos)),
       map(({ perfil }) => perfil),

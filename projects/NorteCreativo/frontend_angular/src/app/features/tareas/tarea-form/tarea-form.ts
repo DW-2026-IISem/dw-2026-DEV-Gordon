@@ -11,7 +11,14 @@ import { Tarea, TareaPayload } from '../../../core/models/tarea';
 type CampoTarea = 'hito_id' | 'nombre' | 'descripcion';
 
 @Component({
-  imports: [ReactiveFormsModule, InputTextModule, SelectModule, TextareaModule, MessageModule, ButtonModule],
+  imports: [
+    ReactiveFormsModule,
+    InputTextModule,
+    SelectModule,
+    TextareaModule,
+    MessageModule,
+    ButtonModule,
+  ],
   selector: 'app-tarea-form',
   styleUrl: './tarea-form.css',
   templateUrl: './tarea-form.html',

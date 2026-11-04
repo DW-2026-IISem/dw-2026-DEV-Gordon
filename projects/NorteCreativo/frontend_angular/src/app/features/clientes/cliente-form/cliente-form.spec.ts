@@ -50,7 +50,13 @@ describe('ClienteForm', () => {
     await escribir('cliente-email', 'demo@empresa.com');
     await enviar();
     expect(emitidos).toEqual([
-      { tipo_documento: 'CC', numero_documento: '900123456', nombre: 'Cliente demo', telefono: null, email: 'demo@empresa.com' },
+      {
+        tipo_documento: 'CC',
+        numero_documento: '900123456',
+        nombre: 'Cliente demo',
+        telefono: null,
+        email: 'demo@empresa.com',
+      },
     ]);
     expect('status' in emitidos[0]).toBe(false);
   });

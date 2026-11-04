@@ -11,20 +11,24 @@ interface PersistedSession {
   permisos: Permiso[];
 }
 
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
 
 const isPersisted = (value: unknown): value is PersistedSession =>
   isRecord(value) &&
   (value['accessToken'] === null || typeof value['accessToken'] === 'string') &&
   (value['refreshToken'] === null || typeof value['refreshToken'] === 'string') &&
-  (value['usuario'] === null || (isRecord(value['usuario']) && Array.isArray(value['usuario']['roles']))) &&
+  (value['usuario'] === null ||
+    (isRecord(value['usuario']) && Array.isArray(value['usuario']['roles']))) &&
   Array.isArray(value['permisos']);
 
 // "/api/hitos/:id" -> /^\/api\/hitos\/[^/]+$/ ; cada ":param" cubre exactamente un segmento.
 const toMatcher = (path: string): RegExp => {
   const source = normalizePath(path)
     .split('/')
-    .map((segment) => (segment.startsWith(':') ? '[^/]+' : segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    .map((segment) =>
+      segment.startsWith(':') ? '[^/]+' : segment.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+    )
     .join('/');
   return new RegExp(`^${source}$`);
 };
@@ -53,7 +57,10 @@ export class SessionStore {
   readonly permissionCount = computed(() => this._permisos().length);
 
   private readonly matchers = computed(() =>
-    this._permisos().map((permiso) => ({ method: permiso.method.toUpperCase(), regex: toMatcher(permiso.path) })),
+    this._permisos().map((permiso) => ({
+      method: permiso.method.toUpperCase(),
+      regex: toMatcher(permiso.path),
+    })),
   );
 
   constructor() {

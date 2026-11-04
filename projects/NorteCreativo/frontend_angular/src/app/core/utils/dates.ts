@@ -7,7 +7,8 @@ export const toDate = (value: string | null | undefined): Date | null => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-export const toIso = (value: Date | null | undefined): string | null => (value ? value.toISOString() : null);
+export const toIso = (value: Date | null | undefined): string | null =>
+  value ? value.toISOString() : null;
 
 // Validador de grupo: fecha_fin no puede ser anterior a fecha_inicio.
 export const rangoFechas = (group: AbstractControl): ValidationErrors | null => {

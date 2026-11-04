@@ -1,5 +1,8 @@
 @if (entregableId() === undefined) {
-  <app-page-header title="Versiones" subtitle="Todas las versiones de entregable. Una versión aprobada ya no se puede tocar." />
+  <app-page-header
+    title="Versiones"
+    subtitle="Todas las versiones de entregable. Una versión aprobada ya no se puede tocar."
+  />
 }
 
 @if (error(); as message) {
@@ -107,6 +110,8 @@
               severity="success"
               [ariaLabel]="'Revisar versión ' + version.numero_version"
               (onClick)="revisar(version)"
+              [pTooltip]="'Revisar versión ' + version.numero_version"
+              tooltipPosition="top"
             />
           }
           <!-- RN-04: una versión APROBADA no se modifica, desactiva ni elimina. -->
@@ -118,6 +123,8 @@
               [text]="true"
               [ariaLabel]="'Editar versión ' + version.numero_version"
               (onClick)="openEdit(version)"
+              [pTooltip]="'Editar versión ' + version.numero_version"
+              tooltipPosition="top"
             />
             <p-button
               *appHasPermission="'PATCH /api/version-entregables/:id/deactivate'"
@@ -127,6 +134,8 @@
               [text]="true"
               [ariaLabel]="'Desactivar versión ' + version.numero_version"
               (onClick)="confirmDeactivate(version)"
+              [pTooltip]="'Desactivar versión ' + version.numero_version"
+              tooltipPosition="top"
             />
             <p-button
               *appHasPermission="'DELETE /api/version-entregables/:id'"
@@ -136,6 +145,8 @@
               [text]="true"
               [ariaLabel]="'Eliminar versión ' + version.numero_version"
               (onClick)="confirmRemove(version)"
+              [pTooltip]="'Eliminar versión ' + version.numero_version"
+              tooltipPosition="top"
             />
           } @else {
             <span class="text-slate-500"><i class="pi pi-lock mr-1"></i>Aprobada</span>
@@ -149,10 +160,24 @@
     <tr>
       <td [attr.colspan]="entregableId() === undefined ? 7 : 6">
         @if (!loading()) {
-          @if (rows().length === 0 || entregableId() !== undefined && visibleRows().length === 0 && !filter() && estadoFilter() === null) {
-            <app-empty-state icon="pi pi-copy" title="Aún no hay versiones" message="Las versiones se crean desde el detalle de un entregable." />
+          @if (
+            rows().length === 0 ||
+            (entregableId() !== undefined &&
+              visibleRows().length === 0 &&
+              !filter() &&
+              estadoFilter() === null)
+          ) {
+            <app-empty-state
+              icon="pi pi-copy"
+              title="Aún no hay versiones"
+              message="Las versiones se crean desde el detalle de un entregable."
+            />
           } @else {
-            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Ninguna versión coincide con los filtros elegidos." />
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ninguna versión coincide con los filtros elegidos."
+            />
           }
         }
       </td>

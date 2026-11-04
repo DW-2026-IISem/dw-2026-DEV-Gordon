@@ -22,7 +22,12 @@ describe('VersionForm', () => {
 
   it('no tiene campos de numero_version ni de estado', async () => {
     const { internals } = await setup();
-    expect(Object.keys(internals.form.controls)).toEqual(['fecha_inicio', 'fecha_fin', 'total', 'observaciones']);
+    expect(Object.keys(internals.form.controls)).toEqual([
+      'fecha_inicio',
+      'fecha_fin',
+      'total',
+      'observaciones',
+    ]);
   });
 
   it('emite el entregable fijo sin numero_version, estado ni status', async () => {
@@ -30,7 +35,8 @@ describe('VersionForm', () => {
     await enviar();
     expect(emitidos).toHaveLength(1);
     expect(emitidos[0].entregable_id).toBe(9);
-    for (const campo of ['numero_version', 'estado', 'status']) expect(campo in emitidos[0]).toBe(false);
+    for (const campo of ['numero_version', 'estado', 'status'])
+      expect(campo in emitidos[0]).toBe(false);
   });
 
   it('con total negativo bloquea el envío', async () => {

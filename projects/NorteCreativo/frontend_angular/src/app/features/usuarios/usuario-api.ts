@@ -16,7 +16,9 @@ export class UsuarioApi {
   }
 
   get(id: number): Observable<Usuario> {
-    return this.http.get<{ usuario: Usuario }>(`${this.base}/${id}`).pipe(map((res) => res.usuario));
+    return this.http
+      .get<{ usuario: Usuario }>(`${this.base}/${id}`)
+      .pipe(map((res) => res.usuario));
   }
 
   // Permisos efectivos de cualquier usuario (cadena completa activa), con los roles que los conceden.
@@ -29,15 +31,21 @@ export class UsuarioApi {
   }
 
   update(id: number, payload: UsuarioPatch): Observable<Usuario> {
-    return this.http.patch<{ usuario: Usuario }>(`${this.base}/${id}`, payload).pipe(map((res) => res.usuario));
+    return this.http
+      .patch<{ usuario: Usuario }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.usuario));
   }
 
   replace(id: number, payload: UsuarioPayload): Observable<Usuario> {
-    return this.http.put<{ usuario: Usuario }>(`${this.base}/${id}`, payload).pipe(map((res) => res.usuario));
+    return this.http
+      .put<{ usuario: Usuario }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.usuario));
   }
 
   deactivate(id: number): Observable<Usuario> {
-    return this.http.patch<{ usuario: Usuario }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.usuario));
+    return this.http
+      .patch<{ usuario: Usuario }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.usuario));
   }
 
   remove(id: number): Observable<void> {

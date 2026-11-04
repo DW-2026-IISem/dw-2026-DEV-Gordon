@@ -67,6 +67,8 @@
             [text]="true"
             [ariaLabel]="'Editar ' + cliente.nombre"
             (onClick)="openEdit(cliente)"
+            [pTooltip]="'Editar ' + cliente.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'PATCH /api/clientes/:id/deactivate'"
@@ -76,6 +78,8 @@
             [text]="true"
             [ariaLabel]="'Desactivar ' + cliente.nombre"
             (onClick)="confirmDeactivate(cliente)"
+            [pTooltip]="'Desactivar ' + cliente.nombre"
+            tooltipPosition="top"
           />
           <p-button
             *appHasPermission="'DELETE /api/clientes/:id'"
@@ -85,6 +89,8 @@
             [text]="true"
             [ariaLabel]="'Eliminar ' + cliente.nombre"
             (onClick)="confirmRemove(cliente)"
+            [pTooltip]="'Eliminar ' + cliente.nombre"
+            tooltipPosition="top"
           />
         </td>
       }

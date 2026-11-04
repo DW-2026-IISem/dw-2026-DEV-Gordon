@@ -1353,35 +1353,148 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 con el usuario de cada paso); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (build): `npx ng build 2>&1 | tail -20`
 
-<!-- pegar captura -->
+`ng build` sin errores ni avisos; el bundle inicial pesa 669,44 kB (aviso a 750 kB, error a 1 MB):
+
+![build](images/iss-11-ac-1.png)
 
 3. comprobamos AC-2 (checklist de humo): los 15 puntos, una captura por punto con el usuario visible en el header
 
-<!-- pegar captura -->
+Recorrido real contra el backend y MySQL (`AUTH_ENABLED=true`), con el usuario visible en el header de cada captura.
+
+**1.** `/dashboard` sin sesión → `/login?returnUrl=%2Fdashboard`
+
+![punto 1](images/iss-11-ac-2-01-sin-sesion.png)
+
+**2.** Login `admin`: menú completo (Operación + Seguridad)
+
+![punto 2](images/iss-11-ac-2-02-admin-menu.png)
+
+**3.** CRUD de cliente con `admin`: creado, editado (teléfono) y desactivado
+
+![punto 3](images/iss-11-ac-2-03-cliente-creado.png)
+
+![punto 3](images/iss-11-ac-2-03-cliente-editado.png)
+
+![punto 3](images/iss-11-ac-2-03-cliente-baja.png)
+
+**4.** `cuentas`: campaña, hito y tarea con selects por nombre; el hito nace ABIERTO
+
+![punto 4](images/iss-11-ac-2-04-hito-form.png)
+
+![punto 4](images/iss-11-ac-2-04-hito-abierto.png)
+
+**5.** `creativo`: entregable con total en moneda y versión 1 numerada por el backend
+
+![punto 5](images/iss-11-ac-2-05-entregable-form.png)
+
+![punto 5](images/iss-11-ac-2-05-entregable-lista.png)
+
+![punto 5](images/iss-11-ac-2-05-version1.png)
+
+**6.** `aprobador` rechaza la versión 1; el hito sigue ABIERTO
+
+![punto 6](images/iss-11-ac-2-06-rechazo-form.png)
+
+![punto 6](images/iss-11-ac-2-06-rechazo-resultado.png)
+
+![punto 6](images/iss-11-ac-2-06-hito-sigue-abierto.png)
+
+**7.** `creativo` sube la versión 2 y `aprobador` la aprueba: toast y hito CERRADO
+
+![punto 7](images/iss-11-ac-2-07-version2.png)
+
+![punto 7](images/iss-11-ac-2-07-hito-cerrado-toast.png)
+
+![punto 7](images/iss-11-ac-2-07-hito-cerrado.png)
+
+**8.** `creativo` intenta la versión 3 sobre el hito cerrado: 409 RN-06 visible
+
+![punto 8](images/iss-11-ac-2-08-409.png)
+
+**9.** Dashboard de `admin`: 37 clientes, 2 campañas, 6 hitos abiertos, 27 cerrados y 9 versiones en revisión, igual que los listados de la API
+
+![punto 9](images/iss-11-ac-2-09-dashboard.png)
+
+**10.** RBAC con `admin`: rol, recurso, concesión y asignación nuevos; «Ver permisos» muestra `GET /api/front11/prueba`
+
+![punto 10](images/iss-11-ac-2-10-asignacion.png)
+
+![punto 10](images/iss-11-ac-2-10-ver-permisos.png)
+
+**11.** Logout: `POST /api/sesion/logout` 200, vuelve a `/login` y no queda token
+
+![punto 11](images/iss-11-ac-2-11-logout.png)
+
+![punto 11](images/iss-11-ac-2-11-red.png)
+
+**12.** `finanzas`: menú reducido; `/tareas` y `/admin/usuarios` llevan a `/forbidden`
+
+![punto 12](images/iss-11-ac-2-12-finanzas-menu.png)
+
+![punto 12](images/iss-11-ac-2-12-finanzas-forbidden.png)
+
+**13.** F5 en `/entregables/110` (`creativo`): la sesión persiste
+
+![punto 13](images/iss-11-ac-2-13-f5.png)
+
+**14.** Access alterado: tres 401 en paralelo, **un solo** `POST /sesion/refresh` y tres reintentos 200
+
+![punto 14](images/iss-11-ac-2-14-refresh.png)
+
+![punto 14](images/iss-11-ac-2-14-red.png)
+
+**15.** Refresh revocado con `curl` y access alterado: sesión cerrada con toast «Sesión expirada»
+
+![punto 15](images/iss-11-ac-2-15-toast.png)
+
+Pruebas unitarias en verde (65):
+
+![tests](images/iss-11-ac-2-test.png)
 
 4. comprobamos AC-3 (cambio de fase): `requireAuth=false` + `AUTH_ENABLED=false` + storage limpio, y de vuelta a `true`
 
-<!-- pegar captura -->
+Fase I: `requireAuth=false` en los dos entornos, backend con `AUTH_ENABLED=false` y storage limpio; el panel abre sin login y la petición no lleva `Authorization`:
+
+![fase I](images/iss-11-ac-3-fase1.png)
+
+![clientes](images/iss-11-ac-3-fase1-clientes.png)
+
+![evidencia](images/iss-11-ac-3-red.png)
+
+De vuelta a `true` (backend con `AUTH_ENABLED=true`): `/dashboard` redirige a `/login`:
+
+![fase II](images/iss-11-ac-3-fase2.png)
 
 5. comprobamos AC-4 (refresh revocado): copiar `refreshToken` del storage + `curl -X POST localhost:3012/api/sesion/logout -H 'Content-Type: application/json' -d '{"refresh_token":"<token>"}'` + alterar el access y pulsar cualquier acción
 
-<!-- pegar captura -->
+`curl` con el refresh token copiado del storage (200 y sesión revocada):
+
+![curl](images/iss-11-ac-4-curl.png)
+
+Con el access alterado, el primer `401` provoca un refresh que falla y la app cierra la sesión con toast:
+
+![toast](images/iss-11-ac-4-toast.png)
 
 6. comprobamos AC-5 (formato): `npm run format:check`
 
-<!-- pegar captura -->
+Sin archivos sin formatear:
+
+![format](images/iss-11-ac-5.png)
 
 7. comprobamos AC-6 (fallback SPA): `npx serve -s dist/front-norte-creativo/browser` + F5 en `/entregables/<id>`
 
-<!-- pegar captura -->
+`serve -s` sobre `dist/front-norte-creativo/browser`: la ruta profunda responde 200 y F5 conserva la sesión:
+
+![curl](images/iss-11-ac-6-curl.png)
+
+![F5](images/iss-11-ac-6-f5.png)
 
 8. comprobamos AC-7 (documentación): `docs/problemas.md` y `README.md` del frontend
 
-<!-- pegar captura -->
+`README.md` y `docs/problemas.md` existen; la tabla incluye los problemas que salieron en el recorrido (por ejemplo el backend heredando `AUTH_ENABLED=false`):
+
+![docs](images/iss-11-ac-7.png)
 
 

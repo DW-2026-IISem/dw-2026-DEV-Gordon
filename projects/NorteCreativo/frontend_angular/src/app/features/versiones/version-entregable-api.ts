@@ -11,27 +11,39 @@ export class VersionEntregableApi {
   private readonly base = `${environment.apiUrl}/version-entregables`;
 
   list(): Observable<VersionEntregable[]> {
-    return this.http.get<{ versiones: VersionEntregable[] }>(this.base).pipe(map((res) => res.versiones));
+    return this.http
+      .get<{ versiones: VersionEntregable[] }>(this.base)
+      .pipe(map((res) => res.versiones));
   }
 
   get(id: number): Observable<VersionEntregable> {
-    return this.http.get<{ version: VersionEntregable }>(`${this.base}/${id}`).pipe(map((res) => res.version));
+    return this.http
+      .get<{ version: VersionEntregable }>(`${this.base}/${id}`)
+      .pipe(map((res) => res.version));
   }
 
   create(payload: VersionEntregablePayload): Observable<VersionEntregable> {
-    return this.http.post<{ version: VersionEntregable }>(this.base, payload).pipe(map((res) => res.version));
+    return this.http
+      .post<{ version: VersionEntregable }>(this.base, payload)
+      .pipe(map((res) => res.version));
   }
 
   update(id: number, payload: Partial<VersionEntregablePayload>): Observable<VersionEntregable> {
-    return this.http.patch<{ version: VersionEntregable }>(`${this.base}/${id}`, payload).pipe(map((res) => res.version));
+    return this.http
+      .patch<{ version: VersionEntregable }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.version));
   }
 
   replace(id: number, payload: VersionEntregablePayload): Observable<VersionEntregable> {
-    return this.http.put<{ version: VersionEntregable }>(`${this.base}/${id}`, payload).pipe(map((res) => res.version));
+    return this.http
+      .put<{ version: VersionEntregable }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.version));
   }
 
   deactivate(id: number): Observable<VersionEntregable> {
-    return this.http.patch<{ version: VersionEntregable }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.version));
+    return this.http
+      .patch<{ version: VersionEntregable }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.version));
   }
 
   remove(id: number): Observable<void> {

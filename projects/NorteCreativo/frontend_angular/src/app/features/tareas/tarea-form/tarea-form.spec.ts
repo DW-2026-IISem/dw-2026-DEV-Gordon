@@ -18,7 +18,10 @@ const hito = (id: number, nombre: string, status: 'active' | 'inactive'): Hito =
 describe('TareaForm', () => {
   const setup = async () => {
     const fixture = TestBed.createComponent(TareaForm);
-    fixture.componentRef.setInput('hitos', [hito(1, 'Brief', 'active'), hito(2, 'Viejo', 'inactive')]);
+    fixture.componentRef.setInput('hitos', [
+      hito(1, 'Brief', 'active'),
+      hito(2, 'Viejo', 'inactive'),
+    ]);
     fixture.componentRef.setInput('campaniasPorId', new Map([[7, 'Carnaval']]));
     const emitidos: TareaPayload[] = [];
     fixture.componentInstance.saved.subscribe((payload) => emitidos.push(payload));

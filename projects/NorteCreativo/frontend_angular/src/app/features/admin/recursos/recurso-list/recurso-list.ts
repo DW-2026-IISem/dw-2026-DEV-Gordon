@@ -20,9 +20,24 @@ import { PageHeader } from '../../../../shared/ui/page-header/page-header';
 import { StatusTag } from '../../../../shared/ui/status-tag/status-tag';
 import { RecursoApi } from '../../../recursos/recurso-api';
 import { RecursoForm } from '../recurso-form/recurso-form';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
-  imports: [TableModule, ButtonModule, DialogModule, InputTextModule, IconFieldModule, InputIconModule, MessageModule, PageHeader, EmptyState, StatusTag, HasPermission, RecursoForm],
+  imports: [
+    TooltipModule,
+    TableModule,
+    ButtonModule,
+    DialogModule,
+    InputTextModule,
+    IconFieldModule,
+    InputIconModule,
+    MessageModule,
+    PageHeader,
+    EmptyState,
+    StatusTag,
+    HasPermission,
+    RecursoForm,
+  ],
   selector: 'app-recurso-list',
   styleUrl: './recurso-list.css',
   templateUrl: './recurso-list.html',
@@ -44,8 +59,16 @@ export class RecursoList implements OnInit {
   protected readonly editing = signal<Recurso | null>(null);
   protected readonly resetKey = signal(0);
 
-  protected readonly visibleRows = computed(() => filterRows(this.rows(), this.filter(), (r) => [r.method, r.path, r.description]));
-  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/recursos/:id', 'PATCH /api/recursos/:id/deactivate', 'DELETE /api/recursos/:id']));
+  protected readonly visibleRows = computed(() =>
+    filterRows(this.rows(), this.filter(), (r) => [r.method, r.path, r.description]),
+  );
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'PATCH /api/recursos/:id',
+      'PATCH /api/recursos/:id/deactivate',
+      'DELETE /api/recursos/:id',
+    ]),
+  );
   protected readonly title = computed(() => (this.editing() ? 'Editar recurso' : 'Nuevo recurso'));
 
   ngOnInit(): void {
@@ -91,7 +114,9 @@ export class RecursoList implements OnInit {
   // Crear usa POST; editar usa PATCH.
   protected save(payload: RecursoPayload): void {
     const editing = this.editing();
-    const request = editing ? this.api.update(editing.id, payload as RecursoPayload) : this.api.create(payload as RecursoPayload);
+    const request = editing
+      ? this.api.update(editing.id, payload as RecursoPayload)
+      : this.api.create(payload as RecursoPayload);
 
     this.saving.set(true);
     this.dialogError.set(null);
@@ -99,7 +124,9 @@ export class RecursoList implements OnInit {
       next: (row) => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.notify.success(editing ? `Recurso «${row.path}» actualizado.` : `Recurso «${row.path}» creado.`);
+        this.notify.success(
+          editing ? `Recurso «${row.path}» actualizado.` : `Recurso «${row.path}» creado.`,
+        );
         this.load();
       },
       error: (err: unknown) => {
@@ -118,7 +145,11 @@ export class RecursoList implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: { label: 'Desactivar', severity: 'warn' },
       rejectButtonProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
-      accept: () => this.run(this.api.deactivate(row.id), `Recurso «${row.method + ' ' + row.path}» desactivado.`),
+      accept: () =>
+        this.run(
+          this.api.deactivate(row.id),
+          `Recurso «${row.method + ' ' + row.path}» desactivado.`,
+        ),
     });
   }
 
@@ -129,7 +160,8 @@ export class RecursoList implements OnInit {
       icon: 'pi pi-trash',
       acceptButtonProps: { label: 'Eliminar', severity: 'danger' },
       rejectButtonProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
-      accept: () => this.run(this.api.remove(row.id), `Recurso «${row.method + ' ' + row.path}» eliminado.`),
+      accept: () =>
+        this.run(this.api.remove(row.id), `Recurso «${row.method + ' ' + row.path}» eliminado.`),
     });
   }
 

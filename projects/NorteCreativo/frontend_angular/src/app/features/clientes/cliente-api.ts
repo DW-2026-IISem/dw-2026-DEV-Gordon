@@ -15,7 +15,9 @@ export class ClienteApi {
   }
 
   get(id: number): Observable<Cliente> {
-    return this.http.get<{ cliente: Cliente }>(`${this.base}/${id}`).pipe(map((res) => res.cliente));
+    return this.http
+      .get<{ cliente: Cliente }>(`${this.base}/${id}`)
+      .pipe(map((res) => res.cliente));
   }
 
   create(payload: ClientePayload): Observable<Cliente> {
@@ -23,15 +25,21 @@ export class ClienteApi {
   }
 
   update(id: number, payload: Partial<ClientePayload>): Observable<Cliente> {
-    return this.http.patch<{ cliente: Cliente }>(`${this.base}/${id}`, payload).pipe(map((res) => res.cliente));
+    return this.http
+      .patch<{ cliente: Cliente }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.cliente));
   }
 
   replace(id: number, payload: ClientePayload): Observable<Cliente> {
-    return this.http.put<{ cliente: Cliente }>(`${this.base}/${id}`, payload).pipe(map((res) => res.cliente));
+    return this.http
+      .put<{ cliente: Cliente }>(`${this.base}/${id}`, payload)
+      .pipe(map((res) => res.cliente));
   }
 
   deactivate(id: number): Observable<Cliente> {
-    return this.http.patch<{ cliente: Cliente }>(`${this.base}/${id}/deactivate`, {}).pipe(map((res) => res.cliente));
+    return this.http
+      .patch<{ cliente: Cliente }>(`${this.base}/${id}/deactivate`, {})
+      .pipe(map((res) => res.cliente));
   }
 
   remove(id: number): Observable<void> {

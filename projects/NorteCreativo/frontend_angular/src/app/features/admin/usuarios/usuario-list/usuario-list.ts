@@ -21,9 +21,24 @@ import { PageHeader } from '../../../../shared/ui/page-header/page-header';
 import { StatusTag } from '../../../../shared/ui/status-tag/status-tag';
 import { UsuarioApi } from '../../../usuarios/usuario-api';
 import { UsuarioForm } from '../usuario-form/usuario-form';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
-  imports: [TableModule, ButtonModule, DialogModule, InputTextModule, IconFieldModule, InputIconModule, MessageModule, PageHeader, EmptyState, StatusTag, HasPermission, UsuarioForm],
+  imports: [
+    TooltipModule,
+    TableModule,
+    ButtonModule,
+    DialogModule,
+    InputTextModule,
+    IconFieldModule,
+    InputIconModule,
+    MessageModule,
+    PageHeader,
+    EmptyState,
+    StatusTag,
+    HasPermission,
+    UsuarioForm,
+  ],
   selector: 'app-usuario-list',
   styleUrl: './usuario-list.css',
   templateUrl: './usuario-list.html',
@@ -51,8 +66,17 @@ export class UsuarioList implements OnInit {
   protected readonly permisosLoading = signal(false);
   protected readonly permisosError = signal<string | null>(null);
 
-  protected readonly visibleRows = computed(() => filterRows(this.rows(), this.filter(), (r) => [r.username, r.email]));
-  protected readonly hasActions = computed(() => this.session.canAny(['GET /api/usuarios/:id/permisos', 'PATCH /api/usuarios/:id', 'PATCH /api/usuarios/:id/deactivate', 'DELETE /api/usuarios/:id']));
+  protected readonly visibleRows = computed(() =>
+    filterRows(this.rows(), this.filter(), (r) => [r.username, r.email]),
+  );
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'GET /api/usuarios/:id/permisos',
+      'PATCH /api/usuarios/:id',
+      'PATCH /api/usuarios/:id/deactivate',
+      'DELETE /api/usuarios/:id',
+    ]),
+  );
   protected readonly title = computed(() => (this.editing() ? 'Editar usuario' : 'Nuevo usuario'));
 
   ngOnInit(): void {
@@ -98,7 +122,9 @@ export class UsuarioList implements OnInit {
   // Crear usa POST; editar usa PATCH.
   protected save(payload: UsuarioPayload | UsuarioPatch): void {
     const editing = this.editing();
-    const request = editing ? this.api.update(editing.id, payload as UsuarioPatch) : this.api.create(payload as UsuarioPayload);
+    const request = editing
+      ? this.api.update(editing.id, payload as UsuarioPatch)
+      : this.api.create(payload as UsuarioPayload);
 
     this.saving.set(true);
     this.dialogError.set(null);
@@ -106,7 +132,9 @@ export class UsuarioList implements OnInit {
       next: (row) => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.notify.success(editing ? `Usuario «${row.username}» actualizado.` : `Usuario «${row.username}» creado.`);
+        this.notify.success(
+          editing ? `Usuario «${row.username}» actualizado.` : `Usuario «${row.username}» creado.`,
+        );
         this.load();
       },
       error: (err: unknown) => {

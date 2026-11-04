@@ -1,4 +1,13 @@
-import { Component, computed, DestroyRef, effect, inject, input, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -21,7 +30,15 @@ type Veredicto = Extract<Aprobacion['estado'], 'APROBADA' | 'RECHAZADA'>;
 
 // Formulario transaccional en tres bloques con signals; un solo POST y luego vuelve al historial.
 @Component({
-  imports: [FormsModule, ButtonModule, MessageModule, SelectModule, SelectButtonModule, TextareaModule, PageHeader],
+  imports: [
+    FormsModule,
+    ButtonModule,
+    MessageModule,
+    SelectModule,
+    SelectButtonModule,
+    TextareaModule,
+    PageHeader,
+  ],
   selector: 'app-aprobacion-form',
   styleUrl: './aprobacion-form.css',
   templateUrl: './aprobacion-form.html',
@@ -58,8 +75,12 @@ export class AprobacionForm implements OnInit {
       .map((v) => ({ id: v.id, etiqueta: this.etiqueta(v) })),
   );
 
-  protected readonly seleccionada = computed(() => this.opciones().find((o) => o.id === this.versionId()) ?? null);
-  protected readonly versionInvalida = computed(() => this.submitted() && this.versionId() === null);
+  protected readonly seleccionada = computed(
+    () => this.opciones().find((o) => o.id === this.versionId()) ?? null,
+  );
+  protected readonly versionInvalida = computed(
+    () => this.submitted() && this.versionId() === null,
+  );
   // La UI exige comentario si se rechaza; el backend no lo exige.
   protected readonly comentarioInvalido = computed(
     () => this.submitted() && this.estado() === 'RECHAZADA' && this.comentario().trim() === '',
@@ -69,7 +90,12 @@ export class AprobacionForm implements OnInit {
     effect(() => {
       const id = Number(this.version());
       const disponibles = this.opciones();
-      if (Number.isInteger(id) && id > 0 && this.versionId() === null && disponibles.some((o) => o.id === id)) {
+      if (
+        Number.isInteger(id) &&
+        id > 0 &&
+        this.versionId() === null &&
+        disponibles.some((o) => o.id === id)
+      ) {
         this.versionId.set(id);
       }
     });
@@ -118,8 +144,13 @@ export class AprobacionForm implements OnInit {
         next: (res) => {
           this.saving.set(false);
           if (res.hito_cerrado) {
-            const fecha = res.fecha_cierre ? new Date(res.fecha_cierre).toLocaleDateString('es-CO') : '';
-            this.notify.success(`El hito #${res.hito_id} quedó cerrado${fecha ? ` el ${fecha}` : ''}.`, 'Hito cerrado');
+            const fecha = res.fecha_cierre
+              ? new Date(res.fecha_cierre).toLocaleDateString('es-CO')
+              : '';
+            this.notify.success(
+              `El hito #${res.hito_id} quedó cerrado${fecha ? ` el ${fecha}` : ''}.`,
+              'Hito cerrado',
+            );
           } else {
             this.notify.success(
               res.aprobacion.estado === 'APROBADA' ? 'Versión aprobada.' : 'Versión rechazada.',

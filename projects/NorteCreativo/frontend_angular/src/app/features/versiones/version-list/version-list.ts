@@ -1,4 +1,14 @@
-import { Component, computed, DestroyRef, effect, inject, input, OnInit, output, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  OnInit,
+  output,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +25,11 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { Entregable } from '../../../core/models/entregable';
 import { Tarea } from '../../../core/models/tarea';
-import { EstadoVersion, VersionEntregable, VersionEntregablePayload } from '../../../core/models/version-entregable';
+import {
+  EstadoVersion,
+  VersionEntregable,
+  VersionEntregablePayload,
+} from '../../../core/models/version-entregable';
 import { NotificationService } from '../../../core/services/notification';
 import { SessionStore } from '../../../core/services/session-store';
 import { toApiMessage } from '../../../core/utils/api-error';
@@ -29,6 +43,7 @@ import { EntregableApi } from '../../entregables/entregable-api';
 import { TareaApi } from '../../tareas/tarea-api';
 import { VersionEntregableApi } from '../version-entregable-api';
 import { VersionForm } from '../version-form/version-form';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface Option<T> {
   id: T | null;
@@ -38,6 +53,7 @@ interface Option<T> {
 // Sirve como pantalla /versiones (global) y, con entregableId, como tabla del detalle de un entregable.
 @Component({
   imports: [
+    TooltipModule,
     DatePipe,
     FormsModule,
     TableModule,
@@ -89,8 +105,12 @@ export class VersionList implements OnInit {
   // En el diálogo: el entregable fijo (detalle) o el de la versión que se edita (lista global).
   protected readonly dialogEntregableId = signal<number | null>(null);
 
-  protected readonly tareasPorId = computed(() => new Map(this.tareas().map((t) => [t.id, t.nombre])));
-  protected readonly entregablesPorId = computed(() => new Map(this.entregables().map((e) => [e.id, e])));
+  protected readonly tareasPorId = computed(
+    () => new Map(this.tareas().map((t) => [t.id, t.nombre])),
+  );
+  protected readonly entregablesPorId = computed(
+    () => new Map(this.entregables().map((e) => [e.id, e])),
+  );
 
   protected readonly estadoOptions: Option<EstadoVersion>[] = [
     { id: null, nombre: 'Todos los estados' },
@@ -109,14 +129,29 @@ export class VersionList implements OnInit {
     const estado = this.estadoFilter();
     const fijo = this.entregableId();
     const base = this.rows()
-      .filter((v) => (fijo === undefined || v.entregable_id === fijo))
-      .filter((v) => (entregableId === null || v.entregable_id === entregableId) && (estado === null || v.estado === estado));
+      .filter((v) => fijo === undefined || v.entregable_id === fijo)
+      .filter(
+        (v) =>
+          (entregableId === null || v.entregable_id === entregableId) &&
+          (estado === null || v.estado === estado),
+      );
     const ordenadas = [...base].sort((a, b) => b.numero_version - a.numero_version || b.id - a.id);
-    return filterRows(ordenadas, this.filter(), (v) => [this.entregableLabel(v.entregable_id), v.observaciones, `v${v.numero_version}`]);
+    return filterRows(ordenadas, this.filter(), (v) => [
+      this.entregableLabel(v.entregable_id),
+      v.observaciones,
+      `v${v.numero_version}`,
+    ]);
   });
 
   // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
-  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/version-entregables/:id', 'PATCH /api/version-entregables/:id/deactivate', 'DELETE /api/version-entregables/:id', 'POST /api/aprobaciones']));
+  protected readonly hasActions = computed(() =>
+    this.session.canAny([
+      'PATCH /api/version-entregables/:id',
+      'PATCH /api/version-entregables/:id/deactivate',
+      'DELETE /api/version-entregables/:id',
+      'POST /api/aprobaciones',
+    ]),
+  );
   protected readonly title = computed(() => (this.editing() ? 'Editar versión' : 'Nueva versión'));
 
   constructor() {
@@ -148,7 +183,9 @@ export class VersionList implements OnInit {
     this.error.set(null);
     const global = this.entregableId() === undefined;
     const entregables$: Observable<Entregable[]> =
-      global && this.session.canPermission('GET /api/entregables') ? this.entregableApi.list() : of([]);
+      global && this.session.canPermission('GET /api/entregables')
+        ? this.entregableApi.list()
+        : of([]);
     const tareas$: Observable<Tarea[]> =
       global && this.session.canPermission('GET /api/tareas') ? this.tareaApi.list() : of([]);
 
@@ -204,7 +241,11 @@ export class VersionList implements OnInit {
       next: (version) => {
         this.saving.set(false);
         this.dialogVisible.set(false);
-        this.notify.success(editing ? `Versión ${version.numero_version} actualizada.` : `Versión ${version.numero_version} creada.`);
+        this.notify.success(
+          editing
+            ? `Versión ${version.numero_version} actualizada.`
+            : `Versión ${version.numero_version} creada.`,
+        );
         this.load();
       },
       error: (err: unknown) => {
@@ -224,7 +265,8 @@ export class VersionList implements OnInit {
       icon: 'pi pi-exclamation-triangle',
       acceptButtonProps: { label: 'Desactivar', severity: 'warn' },
       rejectButtonProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
-      accept: () => this.run(this.api.deactivate(version.id), `Versión ${version.numero_version} desactivada.`),
+      accept: () =>
+        this.run(this.api.deactivate(version.id), `Versión ${version.numero_version} desactivada.`),
     });
   }
 
@@ -235,7 +277,8 @@ export class VersionList implements OnInit {
       icon: 'pi pi-trash',
       acceptButtonProps: { label: 'Eliminar', severity: 'danger' },
       rejectButtonProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
-      accept: () => this.run(this.api.remove(version.id), `Versión ${version.numero_version} eliminada.`),
+      accept: () =>
+        this.run(this.api.remove(version.id), `Versión ${version.numero_version} eliminada.`),
     });
   }
 

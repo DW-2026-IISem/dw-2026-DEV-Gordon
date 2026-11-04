@@ -3,10 +3,14 @@
     <label for="usuario-username" class="font-medium">Usuario</label>
     <input pInputText id="usuario-username" formControlName="username" autocomplete="off" />
     @if (invalid('username', 'required')) {
-      <p-message severity="error" size="small" variant="simple">El usuario es obligatorio.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >El usuario es obligatorio.</p-message
+      >
     }
     @if (invalid('username', 'maxlength')) {
-      <p-message severity="error" size="small" variant="simple">El usuario no puede superar 60 caracteres.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >El usuario no puede superar 60 caracteres.</p-message
+      >
     }
   </div>
 
@@ -14,14 +18,18 @@
     <label for="usuario-email" class="font-medium">Correo electrónico</label>
     <input pInputText id="usuario-email" type="email" formControlName="email" autocomplete="off" />
     @if (invalid('email', 'required')) {
-      <p-message severity="error" size="small" variant="simple">El correo es obligatorio.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >El correo es obligatorio.</p-message
+      >
     }
     @if (invalid('email', 'email')) {
-      <p-message severity="error" size="small" variant="simple">Escribe un correo válido, por ejemplo nombre@empresa.com.</p-message>
+      <p-message severity="error" size="small" variant="simple"
+        >Escribe un correo válido, por ejemplo nombre@empresa.com.</p-message
+      >
     }
   </div>
 
-  @if (!editing) {
+  @if (!editing()) {
     <div class="flex flex-col gap-1">
       <label for="usuario-password" class="font-medium">Contraseña</label>
       <p-password
@@ -34,23 +42,42 @@
         inputStyleClass="w-full"
       />
       @if (invalid('password', 'required')) {
-        <p-message severity="error" size="small" variant="simple">La contraseña es obligatoria.</p-message>
+        <p-message severity="error" size="small" variant="simple"
+          >La contraseña es obligatoria.</p-message
+        >
       }
       @if (invalid('password', 'minlength')) {
-        <p-message severity="error" size="small" variant="simple">La contraseña debe tener al menos 8 caracteres.</p-message>
+        <p-message severity="error" size="small" variant="simple"
+          >La contraseña debe tener al menos 8 caracteres.</p-message
+        >
       }
     </div>
 
     <div class="flex flex-col gap-1">
       <label for="usuario-status" class="font-medium">Estado inicial</label>
-      <p-select inputId="usuario-status" formControlName="status" [options]="estados" optionLabel="label" optionValue="value" styleClass="w-full" />
+      <p-select
+        inputId="usuario-status"
+        formControlName="status"
+        [options]="estados"
+        optionLabel="label"
+        optionValue="value"
+        styleClass="w-full"
+      />
     </div>
   } @else {
-    <p class="text-sm text-slate-600 sm:col-span-2">La contraseña y el estado no se cambian aquí: solo se envían al crear.</p>
+    <p class="text-sm text-slate-600 sm:col-span-2">
+      La contraseña y el estado no se cambian aquí: solo se envían al crear.
+    </p>
   }
 
   <div class="flex justify-end gap-2 sm:col-span-2">
-    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelled.emit()" />
+    <p-button
+      label="Cancelar"
+      severity="secondary"
+      [outlined]="true"
+      type="button"
+      (onClick)="cancelled.emit()"
+    />
     <p-button label="Guardar" type="submit" icon="pi pi-check" [loading]="saving()" />
   </div>
 </form>
