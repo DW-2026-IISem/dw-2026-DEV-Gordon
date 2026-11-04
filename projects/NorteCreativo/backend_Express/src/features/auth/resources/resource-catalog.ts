@@ -45,6 +45,7 @@ export const RESOURCE_CATALOG: CatalogResource[] = [
   { method: 'GET', path: '/api/aprobaciones/:id', description: 'Obtener aprobación por id' },
   // --- administración de seguridad ---
   ...crud('/api/usuarios', 'usuario', 'usuarios'),
+  { method: 'GET', path: '/api/usuarios/:id/permisos', description: 'Ver permisos efectivos de un usuario' },
   ...crud('/api/roles', 'rol', 'roles'),
   ...crud('/api/recursos', 'recurso', 'recursos'),
   ...asignacionYConcesion('/api/asignaciones-rol', 'asignación de rol', 'asignaciones de rol'),

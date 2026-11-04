@@ -1,0 +1,138 @@
+<app-page-header title="Usuarios" subtitle="Cuentas que pueden entrar a Norte Creativo.">
+  <p-button *appHasPermission="'POST /api/usuarios'" label="Nuevo usuario" icon="pi pi-plus" (onClick)="openNew()" />
+</app-page-header>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<div class="mb-4 max-w-md">
+  <p-iconfield>
+    <p-inputicon class="pi pi-search" />
+    <input pInputText type="search" class="w-full" placeholder="Buscar por usuario o correo" aria-label="Buscar usuarios" [value]="filter()" (input)="onFilter($event)" />
+  </p-iconfield>
+</div>
+
+<p-table [value]="visibleRows()" [loading]="loading()" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[5, 10, 25]" dataKey="id" [tableStyle]="{ 'min-width': '40rem' }">
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="username">Usuario <p-sort-icon field="username" /></th>
+      <th pSortableColumn="email">Correo <p-sort-icon field="email" /></th>
+      <th>Estado</th>
+      @if (hasActions()) {
+        <th class="text-right">Acciones</th>
+      }
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-row>
+    <tr>
+      <td>{{ row.username }}</td>
+      <td>{{ row.email }}</td>
+      <td><app-status-tag [value]="row.status" /></td>
+      @if (hasActions()) {
+        <td class="text-right whitespace-nowrap">
+          <p-button
+            *appHasPermission="'GET /api/usuarios/:id/permisos'"
+            icon="pi pi-key"
+            severity="secondary"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Ver permisos de ' + row.username"
+            (onClick)="verPermisos(row)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/usuarios/:id'"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Editar ' + row.username"
+            (onClick)="openEdit(row)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/usuarios/:id/deactivate'"
+            icon="pi pi-ban"
+            severity="warn"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Desactivar ' + row.username"
+            [disabled]="isSelf(row)"
+            (onClick)="confirmDeactivate(row)"
+          />
+          <p-button
+            *appHasPermission="'DELETE /api/usuarios/:id'"
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Eliminar ' + row.username"
+            [disabled]="isSelf(row)"
+            (onClick)="confirmRemove(row)"
+          />
+        </td>
+      }
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="4">
+        @if (!loading()) {
+          @if (rows().length === 0) {
+            <app-empty-state icon="pi pi-users" title="Aún no hay usuarios" message="Crea el primero con «Nuevo usuario»." />
+          } @else {
+            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Nada coincide con la búsqueda. Prueba con otro término." />
+          }
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog [header]="title()" [(visible)]="dialogVisible" [modal]="true" [draggable]="false" styleClass="w-full max-w-2xl mx-4">
+  @if (dialogError(); as message) {
+    <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+  }
+  <app-usuario-form [usuario]="editing()" [resetKey]="resetKey()" [saving]="saving()" (saved)="save($event)" (cancelled)="closeDialog()" />
+</p-dialog>
+
+<p-dialog
+  [header]="'Permisos de ' + (permisosUsuario()?.username ?? '')"
+  [(visible)]="permisosVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-3xl mx-4"
+>
+  @if (permisosError(); as message) {
+    <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+  }
+  <p class="mb-3 text-sm text-slate-600">{{ permisos().length }} permisos efectivos (la cadena usuario → rol → concesión → recurso está activa).</p>
+  <p-table [value]="permisos()" [loading]="permisosLoading()" [scrollable]="true" scrollHeight="24rem" dataKey="path">
+    <ng-template #header>
+      <tr>
+        <th>Método</th>
+        <th>Ruta</th>
+        <th>Concedido por</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-permiso>
+      <tr>
+        <td class="font-mono">{{ permiso.method }}</td>
+        <td class="font-mono">{{ permiso.path }}</td>
+        <td>{{ permiso.roles.join(', ') }}</td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="3">
+          @if (!permisosLoading()) {
+            <app-empty-state icon="pi pi-lock" title="Sin permisos" message="Este usuario no tiene ninguna concesión activa." />
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-dialog>

@@ -38,6 +38,16 @@ const NAV: NavGroup[] = [
       { label: 'Aprobaciones', icon: 'pi pi-verified', route: '/aprobaciones', permission: 'GET /api/aprobaciones' },
     ],
   },
+  {
+    label: 'Seguridad',
+    items: [
+      { label: 'Usuarios', icon: 'pi pi-user', route: '/admin/usuarios', permission: 'GET /api/usuarios' },
+      { label: 'Roles', icon: 'pi pi-id-card', route: '/admin/roles', permission: 'GET /api/roles' },
+      { label: 'Recursos', icon: 'pi pi-server', route: '/admin/recursos', permission: 'GET /api/recursos' },
+      { label: 'Asignaciones', icon: 'pi pi-user-plus', route: '/admin/asignaciones', permission: 'GET /api/asignaciones-rol' },
+      { label: 'Permisos', icon: 'pi pi-shield', route: '/admin/permisos', permission: 'GET /api/concesiones-rol' },
+    ],
+  },
 ];
 
 @Component({

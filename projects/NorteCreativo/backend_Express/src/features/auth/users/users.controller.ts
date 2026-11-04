@@ -1,10 +1,14 @@
 import { Request, Response } from 'express';
 import { BaseController } from '../../../shared/http/base-controller';
 import { toCreateUserDto, toPatchUserDto, toUpdateUserDto } from './dto';
+import { SessionService } from '../session/session.service';
 import { UsersService } from './users.service';
 
 export class UsersController extends BaseController {
-  constructor(private readonly service: UsersService = new UsersService()) {
+  constructor(
+    private readonly service: UsersService = new UsersService(),
+    private readonly session: SessionService = new SessionService(),
+  ) {
     super();
   }
 
@@ -17,6 +21,16 @@ export class UsersController extends BaseController {
   public async getOne(req: Request, res: Response): Promise<void> {
     await this.run(res, async () => {
       res.status(200).json({ usuario: await this.service.getOne(this.paramId(req)) });
+    });
+  }
+
+  // Permisos efectivos de cualquier usuario (misma forma que /api/permisos). 404 si el usuario no existe.
+  public async getPermissions(req: Request, res: Response): Promise<void> {
+    await this.run(res, async () => {
+      const id = this.paramId(req);
+      await this.service.getOne(id);
+      const permisos = await this.session.myPermissions(id);
+      res.status(200).json({ total: permisos.length, permisos });
     });
   }
 

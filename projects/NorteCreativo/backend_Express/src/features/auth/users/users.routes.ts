@@ -10,6 +10,7 @@ const controller = new UsersController();
 router.get('/', ...protegido, controller.getAll.bind(controller));
 router.post('/', ...protegido, controller.create.bind(controller));
 router.patch('/:id/deactivate', ...protegido, controller.deleteLogical.bind(controller));
+router.get('/:id/permisos', ...protegido, controller.getPermissions.bind(controller));
 router.get('/:id', ...protegido, controller.getOne.bind(controller));
 router.put('/:id', ...protegido, controller.updatePut.bind(controller));
 router.patch('/:id', ...protegido, controller.updatePatch.bind(controller));

@@ -2,7 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Usuario, UsuarioPayload } from '../../core/models/usuario';
+import { PermisosRespuesta } from '../../core/models/auth';
+import { Usuario, UsuarioPatch, UsuarioPayload } from '../../core/models/usuario';
 
 // El backend envuelve cada respuesta en español ({ usuarios } / { usuario }); el servicio la desenvuelve.
 @Service()
@@ -18,11 +19,16 @@ export class UsuarioApi {
     return this.http.get<{ usuario: Usuario }>(`${this.base}/${id}`).pipe(map((res) => res.usuario));
   }
 
+  // Permisos efectivos de cualquier usuario (cadena completa activa), con los roles que los conceden.
+  permisos(id: number): Observable<PermisosRespuesta> {
+    return this.http.get<PermisosRespuesta>(`${this.base}/${id}/permisos`);
+  }
+
   create(payload: UsuarioPayload): Observable<Usuario> {
     return this.http.post<{ usuario: Usuario }>(this.base, payload).pipe(map((res) => res.usuario));
   }
 
-  update(id: number, payload: Partial<UsuarioPayload>): Observable<Usuario> {
+  update(id: number, payload: UsuarioPatch): Observable<Usuario> {
     return this.http.patch<{ usuario: Usuario }>(`${this.base}/${id}`, payload).pipe(map((res) => res.usuario));
   }
 

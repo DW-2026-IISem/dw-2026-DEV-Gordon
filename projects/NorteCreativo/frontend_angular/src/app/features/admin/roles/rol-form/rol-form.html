@@ -1,0 +1,26 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4" novalidate>
+  <div class="flex flex-col gap-1">
+    <label for="rol-name" class="font-medium">Nombre</label>
+    <input pInputText id="rol-name" formControlName="name" autocomplete="off" />
+    <small class="text-slate-500">El backend lo guarda en MAYÚSCULAS (auditor → AUDITOR).</small>
+    @if (invalid('name', 'required')) {
+      <p-message severity="error" size="small" variant="simple">El nombre es obligatorio.</p-message>
+    }
+    @if (invalid('name', 'maxlength')) {
+      <p-message severity="error" size="small" variant="simple">El nombre no puede superar 60 caracteres.</p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label for="rol-description" class="font-medium">Descripción <span class="text-slate-500">(opcional)</span></label>
+    <input pInputText id="rol-description" formControlName="description" autocomplete="off" />
+    @if (invalid('description', 'maxlength')) {
+      <p-message severity="error" size="small" variant="simple">La descripción no puede superar 255 caracteres.</p-message>
+    }
+  </div>
+
+  <div class="flex justify-end gap-2">
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelled.emit()" />
+    <p-button label="Guardar" type="submit" icon="pi pi-check" [loading]="saving()" />
+  </div>
+</form>

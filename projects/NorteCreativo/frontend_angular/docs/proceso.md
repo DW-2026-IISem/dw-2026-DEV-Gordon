@@ -1171,36 +1171,141 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos en 
 exactos); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (usuarios): crear `prueba_front` + Network → Payload y respuesta; editarlo; fila de `admin` sin bajas
 
-<!-- pegar captura -->
+Lista de usuarios con la fila de `admin`: Desactivar y Eliminar deshabilitados (`isSelf`):
+
+![lista](images/iss-10-ac-1-lista.png)
+
+Formulario de creación (contraseña con `toggleMask` y estado inicial):
+
+![form](images/iss-10-ac-1-form.png)
+
+Usuario creado:
+
+![creado](images/iss-10-ac-1-creado.png)
+
+Formulario de edición: solo usuario y correo, la contraseña y el estado no se piden:
+
+![editar](images/iss-10-ac-1-editar.png)
+
+Network: el POST lleva los cuatro campos y la respuesta no trae `password`; el PATCH solo `username` y `email`:
+
+![red](images/iss-10-ac-1-red.png)
 
 3. comprobamos AC-2 (ver permisos): "Ver permisos" de `finanzas` + `npx ts-node scripts/check-resource-catalog.ts` en `backend_Express`
 
-<!-- pegar captura -->
+«Ver permisos» de `finanzas`: 11 permisos con método, ruta y rol que lo concede:
+
+![permisos](images/iss-10-ac-2-permisos.png)
+
+El mismo dato desde el backend y el verificador del catálogo (87 endpoints, 87 entradas, OK):
+
+![backend](images/iss-10-ac-2-backend.png)
 
 4. comprobamos AC-3 (roles): crear "auditor" y ver la fila
 
-<!-- pegar captura -->
+Rol «auditor» guardado como `AUDITOR`:
+
+![roles](images/iss-10-ac-3-roles.png)
+
+Payload y respuesta:
+
+![red](images/iss-10-ac-3-red.png)
+
+Eliminación física con confirmación (limpieza de la prueba):
+
+![eliminar](images/iss-10-ac-3-eliminar.png)
 
 5. comprobamos AC-4 (recursos): path `clientes` sin `/api/`; repetir `GET /api/clientes`
 
-<!-- pegar captura -->
+Ruta `clientes` sin `/api/`: el formulario no deja enviar:
+
+![path](images/iss-10-ac-4-path.png)
+
+Repetir `GET /api/clientes` muestra el 409 en el diálogo:
+
+![409](images/iss-10-ac-4-409.png)
+
+Crear y editar un recurso de prueba (`GET /api/front10/prueba`):
+
+![crud](images/iss-10-ac-4-crud.png)
+
+Confirmación para desactivar:
+
+![confirmar](images/iss-10-ac-4-confirmar.png)
+
+Peticiones del recurso (POST 409, PATCH, PATCH deactivate):
+
+![red](images/iss-10-ac-4-red.png)
 
 6. comprobamos AC-5 (asignaciones y 403): asignar FINANZAS a `prueba_front`, entrar con él, retirar la asignación desde `admin` y recargar `/clientes` con `prueba_front`
 
-<!-- pegar captura -->
+Nueva asignación, con selects filtrables:
+
+![select](images/iss-10-ac-5-select.png)
+
+![dialogo](images/iss-10-ac-5-dialogo.png)
+
+`prueba_front` con FINANZAS ve `/clientes` (200):
+
+![ok](images/iss-10-ac-5-pf-ok.png)
+
+Filtro por usuario y retiro con confirmación:
+
+![filtro](images/iss-10-ac-5-filtro.png)
+
+![retirar](images/iss-10-ac-5-retirar.png)
+
+Sin reiniciar el backend, la recarga de `/clientes` de `prueba_front` responde 403:
+
+![403](images/iss-10-ac-5-pf-403.png)
+
+Peticiones: el POST a una asignación retirada responde 200 (reactiva, no duplica) y el PATCH retira; el siguiente GET de `prueba_front` da 403:
+
+![red](images/iss-10-ac-5-red.png)
 
 7. comprobamos AC-6 (concesiones): retirar una concesión de FINANZAS + "Actualizar permisos" con `finanzas`; luego reactivarla
 
-<!-- pegar captura -->
+`finanzas` antes (con Hitos):
+
+![antes](images/iss-10-ac-6-antes.png)
+
+Concesiones filtradas por rol FINANZAS:
+
+![filtro](images/iss-10-ac-6-filtro.png)
+
+El select de recurso muestra «MÉTODO ruta»:
+
+![select](images/iss-10-ac-6-select.png)
+
+Tras retirar `GET /api/hitos` y pulsar «Actualizar permisos», Hitos desaparece:
+
+![retirada](images/iss-10-ac-6-retirada.png)
+
+Reactivación desde «Nueva concesión» (POST responde 200, misma fila):
+
+![reactivar](images/iss-10-ac-6-reactivar.png)
+
+![repuesta](images/iss-10-ac-6-repuesta.png)
+
+Peticiones:
+
+![red](images/iss-10-ac-6-red.png)
 
 8. comprobamos AC-7 (forbidden y build): `cuentas` + `localhost:4200/admin/usuarios` + `npx ng build 2>&1 | tail -15`
 
-<!-- pegar captura -->
+`cuentas` no ve el grupo Seguridad:
+
+![menu](images/iss-10-ac-7-menu.png)
+
+`/admin/usuarios` por URL lo lleva a `/forbidden`:
+
+![forbidden](images/iss-10-ac-7-forbidden.png)
+
+Pruebas de los formularios nuevos y build sin errores:
+
+![build](images/iss-10-ac-7-build.png)
 
 
 ## ISS - 11

@@ -96,6 +96,19 @@ export const usersSwagger: SwaggerModule = {
         },
       },
     },
+    '/api/usuarios/{id}/permisos': {
+      get: {
+        tags: ['Usuarios'],
+        summary: 'Permisos efectivos de un usuario (JWT + RBAC)',
+        description: `Concesiones activas del usuario (cadena completa activa), sin duplicados y con los roles que las otorgan. ${SIN_AUTH}`,
+        parameters: [idParam],
+        responses: {
+          '200': { description: 'Permisos efectivos', content: { 'application/json': { schema: { $ref: '#/components/schemas/PermissionsResponse' } } } },
+          '400': badRequest,
+          '404': notFound,
+        },
+      },
+    },
     '/api/usuarios/{id}/deactivate': {
       patch: {
         tags: ['Usuarios'],
