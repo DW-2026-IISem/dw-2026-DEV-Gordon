@@ -787,36 +787,65 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos en 
 de aprobador para el cierre de hito); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (historial): `/aprobaciones`
 
-<!-- pegar captura -->
+![AC-1: el historial de aprobaciones con «Entregable #id · vN», el veredicto con color y sin acciones de editar ni eliminar](images/iss-07-ac-1-historial.png)
+
+![AC-1: contenido real de la API de aprobaciones](images/iss-07-ac-1.png)
+
+Salen `GET /api/aprobaciones` y `GET /api/version-entregables` en paralelo. Una versión que ya no está activa se muestra como `Versión #id`.
 
 3. comprobamos AC-2 (payload): abrir `/aprobaciones/nueva`, elegir RECHAZADA sin comentario; luego enviar una válida y revisar Network → Payload
 
-<!-- pegar captura -->
+![AC-2: el select de versiones solo ofrece las EN_REVISION, con la etiqueta «Entregable #id · vN · total»](images/iss-07-ac-2-select.png)
+
+![AC-2: RECHAZADA sin comentario no deja enviar y muestra el error; ningún POST](images/iss-07-ac-2-sin-comentario.png)
+
+![AC-2: formulario válido con los tres bloques y el resumen](images/iss-07-ac-2-valido.png)
+
+![AC-2: pruebas del formulario (solo EN_REVISION, preselección por ?version, comentario obligatorio, payload sin aprobador_id)](images/iss-07-ac-2.png)
+
+![«Revisar» en el detalle del entregable lleva al formulario](images/iss-07-revisar-detalle.png)
+
+![El formulario abre con la versión ya elegida en /aprobaciones/nueva?version=112](images/iss-07-revisar-form.png)
+
+El cuerpo del POST fue `{"version_entregable_id":113,"estado":"RECHAZADA","comentario":"Falta ajustar el logo"}`: sin `aprobador_id`.
 
 4. comprobamos AC-3 (401 RN-05): enviar el formulario con el backend en `AUTH_ENABLED=false`
 
-<!-- pegar captura -->
+![AC-3: el 401 de RN-05 en el mensaje del formulario y en el toast, explicando que requiere sesión de CLIENTE_APROBADOR](images/iss-07-ac-3-401.png)
+
+![AC-3: el POST sin token responde 401 y el conteo de aprobaciones no cambia](images/iss-07-ac-3.png)
 
 5. comprobamos AC-4 (cierre de hito): `TOKEN=$(curl -s -X POST localhost:3012/api/sesion/login -H 'Content-Type: application/json' -d '{"identifier":"aprobador","password":"Aprobador123!"}' | jq -r .access_token)` + `curl -i -X POST localhost:3012/api/aprobaciones -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{"version_entregable_id":<id>,"estado":"APROBADA"}'` + recargar `/hitos` y `/aprobaciones`
 
-<!-- pegar captura -->
+![AC-4: antes del veredicto el hito de prueba sigue ABIERTO](images/iss-07-ac-4-hito-antes.png)
+
+![AC-4: el POST con el token de aprobador responde 201 con hito_cerrado true y el hito queda CERRADO](images/iss-07-ac-4.png)
+
+![AC-4: al recargar, /hitos muestra el hito CERRADO con su fecha y el contador baja a 6](images/iss-07-ac-4-hito-despues.png)
+
+![AC-4: /aprobaciones muestra la fila nueva](images/iss-07-ac-4-historial.png)
+
+Los datos fueron un hito con un solo entregable y dos versiones; se aprobó la última (v2), que es la que evalúa el cierre.
 
 6. comprobamos AC-5 (409 hito cerrado): repetir el POST sobre otra versión del hito ya CERRADO
 
-<!-- pegar captura -->
+![AC-5: otra aprobación sobre una versión del hito ya cerrado responde 409 y el conteo no cambia](images/iss-07-ac-5.png)
 
 7. comprobamos AC-6 (dashboard): comparar KPIs con los listados; crear o desactivar un registro y volver
 
-<!-- pegar captura -->
+![AC-6: el panel con los cinco KPIs, las versiones pendientes y las últimas aprobaciones](images/iss-07-ac-6-dashboard.png)
+
+![AC-6: tras crear un cliente y volver al panel, «Clientes activos» sube de 37 a 38](images/iss-07-ac-6-mas-uno.png)
+
+![AC-6: los KPIs del panel frente a los conteos de la API](images/iss-07-ac-6.png)
+
+El panel pide `GET /api/clientes`, `campanias`, `hitos`, `version-entregables` y `aprobaciones` en paralelo. Al desactivar el cliente de prueba y volver, el KPI regresó a 37.
 
 8. comprobamos AC-7 (cierre Fase I): `for p in clientes campanias hitos tareas entregables version-entregables aprobaciones; do echo "== $p"; curl -s -o /dev/null -w "%{http_code}\n" localhost:3012/api/$p; done` + recorrido por `/dashboard`, `/clientes`, `/campanias`, `/hitos`, `/tareas`, `/entregables`, `/entregables/<id>`, `/versiones`, `/aprobaciones` + `npx ng build 2>&1 | tail -20`
 
-<!-- pegar captura -->
+![AC-7: los siete endpoints de negocio responden 200 sin token, el recorrido de diez pantallas sin errores de consola y el build completo](images/iss-07-ac-7.png)
 
 
 ## FASE 2 - AUTH CON RBAC

@@ -95,6 +95,17 @@
       <td><app-status-tag [value]="version.estado" /></td>
       <td>{{ version.observaciones || '—' }}</td>
       <td class="text-right whitespace-nowrap">
+        @if (version.estado === 'EN_REVISION') {
+          <p-button
+            *appHasPermission="'POST /api/aprobaciones'"
+            icon="pi pi-check-circle"
+            [rounded]="true"
+            [text]="true"
+            severity="success"
+            [ariaLabel]="'Revisar versión ' + version.numero_version"
+            (onClick)="revisar(version)"
+          />
+        }
         <!-- RN-04: una versión APROBADA no se modifica, desactiva ni elimina. -->
         @if (version.estado !== 'APROBADA') {
           <p-button

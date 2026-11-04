@@ -19,6 +19,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/clientes/cliente-list/cliente-list').then((m) => m.ClienteList),
       },
       {
+        path: 'aprobaciones',
+        loadComponent: () => import('./features/aprobaciones/aprobacion-list/aprobacion-list').then((m) => m.AprobacionList),
+      },
+      {
+        path: 'aprobaciones/nueva',
+        loadComponent: () => import('./features/aprobaciones/aprobacion-form/aprobacion-form').then((m) => m.AprobacionForm),
+      },
+      {
         path: 'entregables',
         loadComponent: () => import('./features/entregables/entregable-list/entregable-list').then((m) => m.EntregableList),
       },

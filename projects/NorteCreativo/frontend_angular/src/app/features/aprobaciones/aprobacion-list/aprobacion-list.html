@@ -1,0 +1,82 @@
+<app-page-header title="Aprobaciones" subtitle="Historial de veredictos. Es un registro de auditoría: no se edita ni se elimina.">
+  <p-button
+    *appHasPermission="'POST /api/aprobaciones'"
+    label="Registrar veredicto"
+    icon="pi pi-check-circle"
+    (onClick)="registrar()"
+  />
+</app-page-header>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<div class="mb-4 flex flex-wrap gap-3">
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por versión o comentario"
+      aria-label="Buscar aprobaciones"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
+  </p-iconfield>
+
+  <p-select
+    ariaLabel="Filtrar por estado"
+    [options]="estadoOptions"
+    optionLabel="nombre"
+    optionValue="id"
+    [ngModel]="estadoFilter()"
+    (ngModelChange)="estadoFilter.set($event)"
+    styleClass="w-56 max-w-full"
+  />
+</div>
+
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '48rem' }"
+>
+  <ng-template #header>
+    <tr>
+      <th>Versión</th>
+      <th>Veredicto</th>
+      <th>Comentario</th>
+      <th>Fecha</th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-aprobacion>
+    <tr>
+      <td>{{ versionLabel(aprobacion.version_entregable_id) }}</td>
+      <td><app-status-tag [value]="aprobacion.estado" /></td>
+      <td>{{ aprobacion.comentario || '—' }}</td>
+      <td>{{ aprobacion.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="4">
+        @if (!loading()) {
+          @if (rows().length === 0) {
+            <app-empty-state icon="pi pi-verified" title="Aún no hay aprobaciones" message="Aparecen aquí cuando se registra un veredicto." />
+          } @else {
+            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Ninguna aprobación coincide con los filtros elegidos." />
+          }
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>

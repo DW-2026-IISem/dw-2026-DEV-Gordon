@@ -4,6 +4,5 @@ export interface DashboardResumen {
   campanias_activas: number;
   hitos_abiertos: number;
   hitos_cerrados: number;
-  entregables_en_proceso: number;
-  aprobaciones_pendientes: number;
+  versiones_en_revision: number;
 }

@@ -2,6 +2,7 @@ import { Component, computed, DestroyRef, effect, inject, input, OnInit, output,
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -65,6 +66,7 @@ export class VersionList implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly confirmation = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   // Con entregableId la tabla es la del detalle: solo sus versiones y "Nueva versión" con ese entregable fijo.
   readonly entregableId = input<number | undefined>();
@@ -162,6 +164,11 @@ export class VersionList implements OnInit {
           this.loading.set(false);
         },
       });
+  }
+
+  // Lleva al formulario de veredicto con esta versión ya elegida.
+  protected revisar(version: VersionEntregable): void {
+    void this.router.navigate(['/aprobaciones/nueva'], { queryParams: { version: version.id } });
   }
 
   protected onFilter(event: Event): void {

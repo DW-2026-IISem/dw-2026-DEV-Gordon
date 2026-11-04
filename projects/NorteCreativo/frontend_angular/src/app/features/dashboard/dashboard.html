@@ -1,6 +1,71 @@
 <app-page-header title="Panel" subtitle="Resumen de la operación de Norte Creativo." />
-<app-empty-state
-  icon="pi pi-chart-bar"
-  title="El panel se completa en el ISS-07"
-  message="Por ahora solo está la infraestructura: servicios, sesión y menú."
-/>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5" aria-label="Indicadores">
+  @if (loading()) {
+    @for (n of skeletons; track n) {
+      <p-card><p-skeleton width="60%" styleClass="mb-2" /><p-skeleton height="2rem" width="40%" /></p-card>
+    }
+  } @else {
+    @for (kpi of kpis(); track kpi.id) {
+      <p-card>
+        <p class="text-sm text-slate-500"><i [class]="kpi.icon + ' mr-1'"></i>{{ kpi.label }}</p>
+        <p class="text-3xl font-bold" [attr.data-testid]="'kpi-' + kpi.id">{{ kpi.value }}</p>
+      </p-card>
+    }
+  }
+</section>
+
+<div class="grid gap-6 lg:grid-cols-2">
+  <section aria-labelledby="titulo-pendientes">
+    <h2 id="titulo-pendientes" class="mb-3 text-xl font-semibold">Pendientes de revisión</h2>
+    <p-table [value]="pendientes()" [loading]="loading()" dataKey="id">
+      <ng-template #header>
+        <tr><th>Versión</th><th>Total</th><th class="text-right">Acción</th></tr>
+      </ng-template>
+      <ng-template #body let-version>
+        <tr>
+          <td>{{ versionLabel(version.id) }}</td>
+          <td>{{ money(version) }}</td>
+          <td class="text-right">
+            <p-button
+              *appHasPermission="'POST /api/aprobaciones'"
+              label="Revisar"
+              size="small"
+              [text]="true"
+              (onClick)="revisar(version)"
+            />
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr><td colspan="3">@if (!loading()) { <app-empty-state icon="pi pi-check" title="Nada pendiente" message="No hay versiones en revisión." /> }</td></tr>
+      </ng-template>
+    </p-table>
+  </section>
+
+  <section aria-labelledby="titulo-ultimas">
+    <h2 id="titulo-ultimas" class="mb-3 text-xl font-semibold">Últimas aprobaciones</h2>
+    <p-table [value]="ultimasAprobaciones()" [loading]="loading()" dataKey="id">
+      <ng-template #header>
+        <tr><th>Versión</th><th>Veredicto</th><th>Fecha</th></tr>
+      </ng-template>
+      <ng-template #body let-aprobacion>
+        <tr>
+          <td>{{ versionLabel(aprobacion.version_entregable_id) }}</td>
+          <td><app-status-tag [value]="aprobacion.estado" /></td>
+          <td>{{ aprobacion.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr><td colspan="3">@if (!loading()) { <app-empty-state icon="pi pi-verified" title="Sin aprobaciones" message="Aún no se ha registrado ningún veredicto." /> }</td></tr>
+      </ng-template>
+    </p-table>
+  </section>
+</div>

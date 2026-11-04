@@ -1,0 +1,75 @@
+<app-page-header title="Registrar veredicto" subtitle="Aprueba o rechaza una versión en revisión. Aprobar la última versión puede cerrar el hito." />
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+}
+
+<form class="grid max-w-3xl gap-6" (ngSubmit)="enviar()" novalidate>
+  <section class="rounded-lg border border-slate-200 p-4" aria-labelledby="bloque-version">
+    <h2 id="bloque-version" class="mb-3 text-lg font-semibold">1. Versión</h2>
+    <label for="version-select" class="mb-1 block font-medium">Versión en revisión</label>
+    <p-select
+      inputId="version-select"
+      name="version"
+      [options]="opciones()"
+      optionLabel="etiqueta"
+      optionValue="id"
+      [filter]="true"
+      filterBy="etiqueta"
+      [ngModel]="versionId()"
+      (ngModelChange)="versionId.set($event)"
+      [loading]="loading()"
+      placeholder="Selecciona una versión"
+      emptyMessage="No hay versiones en revisión"
+      emptyFilterMessage="Ninguna versión coincide"
+      styleClass="w-full"
+    />
+    @if (versionInvalida()) {
+      <p-message severity="error" size="small" variant="simple" class="mt-1 block">Elige una versión.</p-message>
+    }
+  </section>
+
+  <section class="rounded-lg border border-slate-200 p-4" aria-labelledby="bloque-veredicto">
+    <h2 id="bloque-veredicto" class="mb-3 text-lg font-semibold">2. Veredicto</h2>
+    <p-selectbutton
+      [options]="veredictos"
+      optionLabel="label"
+      optionValue="value"
+      [allowEmpty]="false"
+      ariaLabelledBy="bloque-veredicto"
+      [ngModel]="estado()"
+      (ngModelChange)="estado.set($event)"
+      name="estado"
+    />
+    <label for="comentario" class="mt-4 mb-1 block font-medium">
+      Comentario @if (estado() === 'RECHAZADA') { <span class="text-red-600">(obligatorio al rechazar)</span> } @else { <span class="text-slate-500">(opcional)</span> }
+    </label>
+    <textarea
+      pTextarea
+      id="comentario"
+      name="comentario"
+      rows="3"
+      class="w-full"
+      [ngModel]="comentario()"
+      (ngModelChange)="comentario.set($event)"
+    ></textarea>
+    @if (comentarioInvalido()) {
+      <p-message severity="error" size="small" variant="simple" class="mt-1 block">Explica por qué se rechaza la versión.</p-message>
+    }
+  </section>
+
+  <section class="rounded-lg border border-slate-200 p-4" aria-labelledby="bloque-resumen">
+    <h2 id="bloque-resumen" class="mb-3 text-lg font-semibold">3. Resumen</h2>
+    <dl class="grid gap-1" data-testid="resumen">
+      <div class="flex gap-2"><dt class="text-slate-500">Versión:</dt><dd>{{ seleccionada()?.etiqueta ?? 'sin elegir' }}</dd></div>
+      <div class="flex gap-2"><dt class="text-slate-500">Veredicto:</dt><dd>{{ estado() === 'APROBADA' ? 'Aprobada' : 'Rechazada' }}</dd></div>
+      <div class="flex gap-2"><dt class="text-slate-500">Comentario:</dt><dd>{{ comentario().trim() || '—' }}</dd></div>
+    </dl>
+    <p class="mt-2 text-sm text-slate-500">El aprobador lo toma el sistema del usuario con sesión; no se envía desde aquí.</p>
+  </section>
+
+  <div class="flex justify-end gap-2">
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelar()" />
+    <p-button label="Registrar veredicto" type="submit" icon="pi pi-check" [loading]="saving()" />
+  </div>
+</form>
