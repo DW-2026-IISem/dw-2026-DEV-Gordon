@@ -1,0 +1,56 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="grid gap-4 sm:grid-cols-2" novalidate>
+  <div class="flex flex-col gap-1">
+    <label for="cliente-tipo" class="font-medium">Tipo de documento</label>
+    <p-select
+      inputId="cliente-tipo"
+      formControlName="tipo_documento"
+      [options]="tipos"
+      optionLabel="label"
+      optionValue="value"
+      styleClass="w-full"
+    />
+    @if (invalid('tipo_documento')) {
+      <p-message severity="error" size="small" variant="simple">Elige un tipo de documento.</p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label for="cliente-numero" class="font-medium">Número de documento</label>
+    <input pInputText id="cliente-numero" formControlName="numero_documento" autocomplete="off" />
+    @if (invalid('numero_documento')) {
+      <p-message severity="error" size="small" variant="simple">El número de documento es obligatorio.</p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1 sm:col-span-2">
+    <label for="cliente-nombre" class="font-medium">Nombre</label>
+    <input pInputText id="cliente-nombre" formControlName="nombre" autocomplete="off" />
+    @if (invalid('nombre', 'required')) {
+      <p-message severity="error" size="small" variant="simple">El nombre es obligatorio.</p-message>
+    }
+    @if (invalid('nombre', 'maxlength')) {
+      <p-message severity="error" size="small" variant="simple">El nombre no puede superar 120 caracteres.</p-message>
+    }
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label for="cliente-telefono" class="font-medium">Teléfono <span class="text-slate-500">(opcional)</span></label>
+    <input pInputText id="cliente-telefono" formControlName="telefono" autocomplete="off" />
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label for="cliente-email" class="font-medium">Correo electrónico</label>
+    <input pInputText id="cliente-email" type="email" formControlName="email" autocomplete="off" />
+    @if (invalid('email', 'required')) {
+      <p-message severity="error" size="small" variant="simple">El correo es obligatorio.</p-message>
+    }
+    @if (invalid('email', 'email')) {
+      <p-message severity="error" size="small" variant="simple">Escribe un correo válido, por ejemplo nombre@empresa.com.</p-message>
+    }
+  </div>
+
+  <div class="flex justify-end gap-2 sm:col-span-2">
+    <p-button label="Cancelar" severity="secondary" [outlined]="true" type="button" (onClick)="cancelled.emit()" />
+    <p-button label="Guardar" type="submit" icon="pi pi-check" [loading]="saving()" />
+  </div>
+</form>

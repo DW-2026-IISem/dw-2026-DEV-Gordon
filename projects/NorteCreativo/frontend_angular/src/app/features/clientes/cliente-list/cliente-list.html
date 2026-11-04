@@ -1,0 +1,130 @@
+<app-page-header title="Clientes" subtitle="Personas y empresas para las que trabaja la agencia.">
+  <p-button
+    *appHasPermission="'POST /api/clientes'"
+    label="Nuevo cliente"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
+</app-page-header>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<div class="mb-4 max-w-md">
+  <p-iconfield>
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por nombre, documento, correo o teléfono"
+      aria-label="Buscar clientes"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
+  </p-iconfield>
+</div>
+
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '48rem' }"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="numero_documento">Documento <p-sort-icon field="numero_documento" /></th>
+      <th pSortableColumn="nombre">Nombre <p-sort-icon field="nombre" /></th>
+      <th>Teléfono</th>
+      <th pSortableColumn="email">Correo <p-sort-icon field="email" /></th>
+      <th>Estado</th>
+      <th class="text-right">Acciones</th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-cliente>
+    <tr>
+      <td>{{ cliente.tipo_documento }} {{ cliente.numero_documento }}</td>
+      <td>{{ cliente.nombre }}</td>
+      <td>{{ cliente.telefono || '—' }}</td>
+      <td>{{ cliente.email || '—' }}</td>
+      <td><app-status-tag [value]="cliente.status" /></td>
+      <td class="text-right whitespace-nowrap">
+        <p-button
+          *appHasPermission="'PATCH /api/clientes/:id'"
+          icon="pi pi-pencil"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Editar ' + cliente.nombre"
+          (onClick)="openEdit(cliente)"
+        />
+        <p-button
+          *appHasPermission="'PATCH /api/clientes/:id/deactivate'"
+          icon="pi pi-ban"
+          severity="warn"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Desactivar ' + cliente.nombre"
+          (onClick)="confirmDeactivate(cliente)"
+        />
+        <p-button
+          *appHasPermission="'DELETE /api/clientes/:id'"
+          icon="pi pi-trash"
+          severity="danger"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Eliminar ' + cliente.nombre"
+          (onClick)="confirmRemove(cliente)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="6">
+        @if (!loading()) {
+          @if (rows().length === 0) {
+            <app-empty-state
+              icon="pi pi-users"
+              title="Aún no hay clientes"
+              message="Crea el primero con «Nuevo cliente»."
+            />
+          } @else {
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ningún cliente coincide con la búsqueda. Prueba con otro término."
+            />
+          }
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="title()"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  @if (dialogError(); as message) {
+    <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+  }
+  <app-cliente-form
+    [cliente]="editing()"
+    [resetKey]="resetKey()"
+    [saving]="saving()"
+    (saved)="save($event)"
+    (cancelled)="closeDialog()"
+  />
+</p-dialog>

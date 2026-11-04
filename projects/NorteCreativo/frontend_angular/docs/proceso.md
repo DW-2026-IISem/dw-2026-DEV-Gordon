@@ -343,36 +343,61 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
+2. comprobamos AC-1 (listado + Network): backend con `AUTH_ENABLED=false` + `npm start` + `/clientes` con Network abierta; la primera petición es `GET /api/clientes` (200), el backend devuelve 36 clientes activos y la tabla pinta 10 por página en 4 páginas
 
-2. comprobamos AC-1 (listado + Network): backend con `AUTH_ENABLED=false` + `npm start` + `/clientes` con Network abierta
+![AC-1: la tabla de clientes, paginada, con el buscador y las acciones por fila](images/iss-03-ac-1-tabla.png)
 
-<!-- pegar captura -->
+![AC-1: GET /api/clientes con 200, 36 clientes activos y 10 filas por página](images/iss-03-ac-1.png)
 
-3. comprobamos AC-2 (alta y validación): "Nuevo cliente" con email sin `@` y luego con datos válidos + `curl -s localhost:3012/api/clientes | head -c 400`
+3. comprobamos AC-2 (alta y validación): "Nuevo cliente" con los campos vacíos, luego con un email sin `@` y luego con datos válidos; en Network solo sale el `POST` cuando el formulario es válido, y la fila aparece sin recargar la página (el `POST` devuelve 201 y la lista se vuelve a pedir con un `GET`)
 
-<!-- pegar captura -->
+![AC-2: con los campos vacíos el formulario bloquea el envío y muestra los errores](images/iss-03-ac-2-vacios.png)
 
-4. comprobamos AC-3 (PATCH): editar un cliente + Network → la petición PATCH → Payload y respuesta
+![AC-2: con un email inválido el formulario bloquea el envío](images/iss-03-ac-2-email-invalido.png)
 
-<!-- pegar captura -->
+![AC-2: con datos válidos el POST crea el cliente y aparece el toast de éxito](images/iss-03-ac-2-creado.png)
 
-5. comprobamos AC-4 (filtro): escribir en el buscador y comprobar que Network no registra peticiones nuevas
+![AC-2: la fila del cliente nuevo aparece en la tabla sin recargar](images/iss-03-ac-2-fila.png)
 
-<!-- pegar captura -->
+![AC-2: pruebas del formulario y la petición POST con su cuerpo y su respuesta 201](images/iss-03-ac-2.png)
 
-6. comprobamos AC-5 (bajas): desactivar un cliente y eliminar otro creado para la prueba + `curl -i localhost:3012/api/clientes/<id>`
+4. comprobamos AC-3 (PATCH): editar un cliente + Network → la petición PATCH → Payload y respuesta; el diálogo se abre con los datos cargados, el `PATCH /api/clientes/:id` devuelve 200 y el cuerpo no lleva `status`
 
-<!-- pegar captura -->
+![AC-3: el formulario de edición abre con los datos del cliente cargados](images/iss-03-ac-3-dialogo.png)
 
-7. comprobamos AC-6 (409): crear un cliente con un `numero_documento` del seeder
+![AC-3: el cliente editado con su nuevo nombre y teléfono](images/iss-03-ac-3-editado.png)
 
-<!-- pegar captura -->
+![AC-3: PATCH con 200 y el cuerpo sin status](images/iss-03-ac-3.png)
 
-8. comprobamos AC-7 (build): `npx ng build 2>&1 | tail -15` + consola del navegador
+5. comprobamos AC-4 (filtro): escribir en el buscador (por ejemplo `benitez`, sin tilde ni mayúsculas) y comprobar que Network no registra peticiones nuevas: la lista de peticiones es la misma antes y después de escribir
 
-<!-- pegar captura -->
+![AC-4: el buscador filtra la tabla sin recargar](images/iss-03-ac-4-filtro.png)
+
+![AC-4: pruebas de filterRows y Network sin peticiones nuevas antes y después de escribir](images/iss-03-ac-4.png)
+
+6. comprobamos AC-5 (bajas): desactivar un cliente y eliminar otro creado para la prueba, cada uno con su diálogo de confirmación (el de la baja física avisa que es irreversible) + `curl -s -i -w "\n" localhost:3012/api/clientes/<id>`; el cliente desactivado y el eliminado salen de la tabla, y el eliminado responde 404
+
+![AC-5: antes de las bajas hay dos clientes de prueba en la tabla](images/iss-03-ac-5-antes.png)
+
+![AC-5: confirmación de la baja lógica](images/iss-03-ac-5-confirmar-baja.png)
+
+![AC-5: después de la baja lógica el cliente desaparece de la tabla](images/iss-03-ac-5-baja-logica.png)
+
+![AC-5: confirmación de la baja física, que dice que es irreversible](images/iss-03-ac-5-confirmar-fisica.png)
+
+![AC-5: después de la baja física el cliente también desaparece](images/iss-03-ac-5-despues.png)
+
+![AC-5: el desactivado queda inactive, ya no sale en la lista y el eliminado responde 404](images/iss-03-ac-5.png)
+
+7. comprobamos AC-6 (409): crear un cliente con un `numero_documento` del seeder; el mensaje sale en el `p-message` del diálogo y en un toast, y el diálogo sigue abierto
+
+![AC-6: el 409 en el p-message del diálogo y en el toast, con el diálogo abierto](images/iss-03-ac-6-409.png)
+
+![AC-6: POST con 409 y el mensaje del backend](images/iss-03-ac-6.png)
+
+8. comprobamos AC-7 (build): `npx ng build 2>&1 | tail -15` + consola del navegador; `ng serve` también arrancó sin errores
+
+![AC-7: build completo sin errores y consola del navegador sin errores](images/iss-03-ac-7.png)
 
 
 ## ISS - 04
