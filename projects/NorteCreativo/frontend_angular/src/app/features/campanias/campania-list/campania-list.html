@@ -1,0 +1,142 @@
+<app-page-header title="Campañas" subtitle="Las campañas de cada cliente, con sus hitos y entregables.">
+  <p-button
+    *appHasPermission="'POST /api/campanias'"
+    label="Nueva campaña"
+    icon="pi pi-plus"
+    (onClick)="openNew()"
+  />
+</app-page-header>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<div class="mb-4 flex flex-wrap gap-3">
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por campaña, descripción o cliente"
+      aria-label="Buscar campañas"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
+  </p-iconfield>
+
+  <p-select
+    inputId="filtro-cliente"
+    ariaLabel="Filtrar por cliente"
+    [options]="clienteOptions()"
+    optionLabel="nombre"
+    optionValue="id"
+    [filter]="true"
+    filterBy="nombre"
+    [ngModel]="clienteFilter()"
+    (ngModelChange)="clienteFilter.set($event)"
+    styleClass="w-72 max-w-full"
+  />
+</div>
+
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '48rem' }"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="nombre">Campaña <p-sort-icon field="nombre" /></th>
+      <th>Cliente</th>
+      <th>Descripción</th>
+      <th>Estado</th>
+      <th class="text-right">Acciones</th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-campania>
+    <tr>
+      <td>{{ campania.nombre }}</td>
+      <td>{{ clienteNombre(campania.cliente_id) }}</td>
+      <td>{{ campania.descripcion || '—' }}</td>
+      <td><app-status-tag [value]="campania.status" /></td>
+      <td class="text-right whitespace-nowrap">
+        <p-button
+          *appHasPermission="'PATCH /api/campanias/:id'"
+          icon="pi pi-pencil"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Editar ' + campania.nombre"
+          (onClick)="openEdit(campania)"
+        />
+        <p-button
+          *appHasPermission="'PATCH /api/campanias/:id/deactivate'"
+          icon="pi pi-ban"
+          severity="warn"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Desactivar ' + campania.nombre"
+          (onClick)="confirmDeactivate(campania)"
+        />
+        <p-button
+          *appHasPermission="'DELETE /api/campanias/:id'"
+          icon="pi pi-trash"
+          severity="danger"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Eliminar ' + campania.nombre"
+          (onClick)="confirmRemove(campania)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="5">
+        @if (!loading()) {
+          @if (rows().length === 0) {
+            <app-empty-state
+              icon="pi pi-megaphone"
+              title="Aún no hay campañas"
+              message="Crea la primera con «Nueva campaña»."
+            />
+          } @else {
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ninguna campaña coincide con la búsqueda y el cliente elegidos. Prueba con otros criterios."
+            />
+          }
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="title()"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  @if (dialogError(); as message) {
+    <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+  }
+  <app-campania-form
+    [campania]="editing()"
+    [clientes]="clientes()"
+    [resetKey]="resetKey()"
+    [saving]="saving()"
+    (saved)="save($event)"
+    (cancelled)="closeDialog()"
+  />
+</p-dialog>

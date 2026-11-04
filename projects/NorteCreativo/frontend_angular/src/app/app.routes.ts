@@ -11,6 +11,10 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
+        path: 'campanias',
+        loadComponent: () => import('./features/campanias/campania-list/campania-list').then((m) => m.CampaniaList),
+      },
+      {
         path: 'clientes',
         loadComponent: () => import('./features/clientes/cliente-list/cliente-list').then((m) => m.ClienteList),
       },

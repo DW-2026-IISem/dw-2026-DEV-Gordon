@@ -447,32 +447,55 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (listado + Network): `/campanias` con Network abierta + `curl -s localhost:3012/api/campanias | head -c 300`
 
-<!-- pegar captura -->
+![AC-1: la tabla de campañas con el nombre del cliente en lugar del id](images/iss-04-ac-1-tabla.png)
+
+![AC-1: GET /api/campanias y GET /api/clientes salen juntos al cargar, ambos con 200](images/iss-04-ac-1.png)
+
+Abajo, el contenido real de la API: 1 campaña activa en la base y su `cliente_id`. La columna «Cliente» sale del `Map` id → nombre; si el cliente ya no está entre los activos, la tabla muestra `Cliente #id`.
 
 3. comprobamos AC-2 (validación y select): "Nueva campaña" sin cliente ni nombre; desplegar el select de clientes
 
-<!-- pegar captura -->
+![AC-2: con cliente y nombre vacíos el formulario bloquea el envío y muestra los dos errores](images/iss-04-ac-2-vacios.png)
+
+![AC-2: el select filtrado por «FRONT Cliente» solo ofrece Alfa y Beta; el cliente desactivado no aparece](images/iss-04-ac-2-select.png)
+
+![AC-2: pruebas del formulario (cliente y nombre obligatorios, máximo 120, solo clientes activos, payload sin status)](images/iss-04-ac-2.png)
 
 4. comprobamos AC-3 (409): desactivar un cliente en `/clientes` (otra pestaña) y, sin recargar, crearle una campaña
 
-<!-- pegar captura -->
+![AC-3: 409 en el p-message del diálogo y en el toast, con el diálogo abierto](images/iss-04-ac-3-409.png)
+
+![AC-3: el mismo POST contra el backend responde 409 «No se crea campaña para un cliente inactivo»](images/iss-04-ac-3.png)
+
+El cliente se desactivó por la API con el diálogo ya abierto (equivale a hacerlo en otra pestaña): el formulario aún lo ofrecía porque la lista de clientes se cargó antes.
 
 5. comprobamos AC-4 (PATCH y baja): editar + Network → Payload; desactivar una campaña
 
-<!-- pegar captura -->
+![AC-4: el formulario de edición abre con cliente, nombre y descripción cargados](images/iss-04-ac-4-dialogo.png)
+
+![AC-4: la campaña editada con su nuevo nombre y el mismo cliente](images/iss-04-ac-4-editado.png)
+
+![AC-4: confirmación de la baja lógica](images/iss-04-ac-4-confirmar-baja.png)
+
+![AC-4: tras la baja lógica la campaña ya no está en la tabla y sale el toast](images/iss-04-ac-4-baja.png)
+
+![AC-4: la API ya no lista la campaña desactivada, pero el registro sigue existiendo](images/iss-04-ac-4.png)
+
+El `PATCH /api/campanias/76` salió con el cuerpo `{"cliente_id":48,"nombre":"FRONT Lanzamiento Alfa v2","descripcion":"Campaña de prueba"}` (sin `status`, `cliente_id` numérico) y respondió 200; la baja fue `PATCH /api/campanias/77/deactivate` con 200.
 
 6. comprobamos AC-5 (filtros): combinar el filtro por cliente y el buscador con Network abierta
 
-<!-- pegar captura -->
+![AC-5: filtro por cliente «FRONT Cliente Alfa» y buscador «carnaval» combinados dan cero resultados](images/iss-04-ac-5-combinado.png)
+
+![AC-5: con el mismo cliente y el buscador «lanzamiento» queda solo la campaña de Alfa, no la de Beta](images/iss-04-ac-5-coincide.png)
+
+![AC-5: Network después de filtrar y buscar solo tiene las dos peticiones de la carga inicial](images/iss-04-ac-5.png)
 
 7. comprobamos AC-6 (URL directa y build): escribir `localhost:4200/campanias` + `npx ng build 2>&1 | tail -15`
 
-<!-- pegar captura -->
+![AC-6: URL directa, consola sin errores y build completo (chunk campania-list aparte)](images/iss-04-ac-6.png)
 
 
 ## ISS - 05
