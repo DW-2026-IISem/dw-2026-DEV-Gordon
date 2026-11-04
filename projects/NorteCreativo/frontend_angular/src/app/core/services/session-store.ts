@@ -98,6 +98,11 @@ export class SessionStore {
     return this.can(method ?? '', rest.join(' '));
   }
 
+  // true si la sesión tiene al menos uno de los permisos (para mostrar u ocultar una columna de acciones).
+  canAny(permissions: readonly string[]): boolean {
+    return permissions.some((permission) => this.canPermission(permission));
+  }
+
   private persist(): void {
     const data: PersistedSession = {
       accessToken: this._accessToken(),

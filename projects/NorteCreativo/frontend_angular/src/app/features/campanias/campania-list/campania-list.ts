@@ -88,6 +88,8 @@ export class CampaniaList implements OnInit {
     const nombres = this.clientesPorId();
     return filterRows(delCliente, this.filter(), (c) => [c.nombre, c.descripcion, nombres.get(c.cliente_id)]);
   });
+  // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
+  protected readonly hasActions = computed(() => this.session.canAny(['GET /api/hitos', 'PATCH /api/campanias/:id', 'PATCH /api/campanias/:id/deactivate', 'DELETE /api/campanias/:id']));
   protected readonly title = computed(() => (this.editing() ? 'Editar campaña' : 'Nueva campaña'));
 
   ngOnInit(): void {

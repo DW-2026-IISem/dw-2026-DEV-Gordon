@@ -103,6 +103,8 @@ export class HitoList implements OnInit {
     );
     return filterRows(base, this.filter(), (h) => [h.nombre, h.descripcion, nombres.get(h.campania_id)]);
   });
+  // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
+  protected readonly hasActions = computed(() => this.session.canAny(['GET /api/tareas', 'PATCH /api/hitos/:id', 'PATCH /api/hitos/:id/deactivate', 'DELETE /api/hitos/:id']));
   protected readonly title = computed(() => (this.editing() ? 'Editar hito' : 'Nuevo hito'));
 
   constructor() {

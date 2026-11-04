@@ -13,7 +13,7 @@ interface NavItem {
   label: string;
   icon: string;
   route: string;
-  permission: string;
+  permission?: string; // sin permiso: visible para cualquier sesión
 }
 
 interface NavGroup {
@@ -28,7 +28,7 @@ const NAV: NavGroup[] = [
   {
     label: 'Operación',
     items: [
-      { label: 'Panel', icon: 'pi pi-home', route: '/dashboard', permission: 'GET /api/campanias' },
+      { label: 'Panel', icon: 'pi pi-home', route: '/dashboard' },
       { label: 'Clientes', icon: 'pi pi-users', route: '/clientes', permission: 'GET /api/clientes' },
       { label: 'Campañas', icon: 'pi pi-megaphone', route: '/campanias', permission: 'GET /api/campanias' },
       { label: 'Hitos', icon: 'pi pi-flag', route: '/hitos', permission: 'GET /api/hitos' },
@@ -57,7 +57,7 @@ export class Shell {
   protected readonly navGroups = computed<NavGroup[]>(() =>
     NAV.map((group) => ({
       ...group,
-      items: group.items.filter((item) => this.session.canPermission(item.permission)),
+      items: group.items.filter((item) => !item.permission || this.session.canPermission(item.permission)),
     })).filter((group) => group.items.length > 0),
   );
 

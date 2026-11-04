@@ -9,6 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { TableModule } from 'primeng/table';
 import { Cliente, ClientePayload } from '../../../core/models/cliente';
+import { SessionStore } from '../../../core/services/session-store';
 import { NotificationService } from '../../../core/services/notification';
 import { toApiMessage } from '../../../core/utils/api-error';
 import { filterRows } from '../../../core/utils/filter-rows';
@@ -40,6 +41,7 @@ import { ClienteApi } from '../cliente-api';
 })
 export class ClienteList implements OnInit {
   private readonly api = inject(ClienteApi);
+  private readonly session = inject(SessionStore);
   private readonly notify = inject(NotificationService);
   private readonly confirmation = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
@@ -58,6 +60,8 @@ export class ClienteList implements OnInit {
   protected readonly visibleRows = computed(() =>
     filterRows(this.rows(), this.filter(), (c) => [c.nombre, c.numero_documento, c.email, c.telefono]),
   );
+  // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
+  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/clientes/:id', 'PATCH /api/clientes/:id/deactivate', 'DELETE /api/clientes/:id']));
   protected readonly title = computed(() => (this.editing() ? 'Editar cliente' : 'Nuevo cliente'));
 
   ngOnInit(): void {

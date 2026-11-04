@@ -102,6 +102,8 @@ export class EntregableList implements OnInit {
     );
     return filterRows(base, this.filter(), (e) => [nombres.get(e.tarea_id), e.observaciones]);
   });
+  // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
+  protected readonly hasActions = computed(() => this.session.canAny(['GET /api/entregables/:id', 'PATCH /api/entregables/:id', 'PATCH /api/entregables/:id/deactivate', 'DELETE /api/entregables/:id']));
   protected readonly title = computed(() => (this.editing() ? 'Editar entregable' : 'Nuevo entregable'));
 
   ngOnInit(): void {

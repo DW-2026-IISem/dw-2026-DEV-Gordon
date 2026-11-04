@@ -62,7 +62,9 @@
       <th>Fin</th>
       <th class="text-right">Total</th>
       <th>Estado</th>
-      <th class="text-right">Acciones</th>
+      @if (hasActions()) {
+        <th class="text-right">Acciones</th>
+      }
     </tr>
   </ng-template>
 
@@ -73,42 +75,44 @@
       <td>{{ entregable.fecha_fin ? (entregable.fecha_fin | date: 'dd/MM/yyyy') : '—' }}</td>
       <td class="text-right">{{ money(entregable.total) }}</td>
       <td><app-status-tag [value]="entregable.estado" /></td>
-      <td class="text-right whitespace-nowrap">
-        <p-button
-          icon="pi pi-eye"
-          [rounded]="true"
-          [text]="true"
-          severity="secondary"
-          [ariaLabel]="'Ver detalle del entregable ' + entregable.id"
-          (onClick)="verDetalle(entregable)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/entregables/:id'"
-          icon="pi pi-pencil"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Editar entregable ' + entregable.id"
-          (onClick)="openEdit(entregable)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/entregables/:id/deactivate'"
-          icon="pi pi-ban"
-          severity="warn"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Desactivar entregable ' + entregable.id"
-          (onClick)="confirmDeactivate(entregable)"
-        />
-        <p-button
-          *appHasPermission="'DELETE /api/entregables/:id'"
-          icon="pi pi-trash"
-          severity="danger"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Eliminar entregable ' + entregable.id"
-          (onClick)="confirmRemove(entregable)"
-        />
-      </td>
+      @if (hasActions()) {
+        <td class="text-right whitespace-nowrap">
+          <p-button
+            icon="pi pi-eye"
+            [rounded]="true"
+            [text]="true"
+            severity="secondary"
+            [ariaLabel]="'Ver detalle del entregable ' + entregable.id"
+            (onClick)="verDetalle(entregable)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/entregables/:id'"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Editar entregable ' + entregable.id"
+            (onClick)="openEdit(entregable)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/entregables/:id/deactivate'"
+            icon="pi pi-ban"
+            severity="warn"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Desactivar entregable ' + entregable.id"
+            (onClick)="confirmDeactivate(entregable)"
+          />
+          <p-button
+            *appHasPermission="'DELETE /api/entregables/:id'"
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Eliminar entregable ' + entregable.id"
+            (onClick)="confirmRemove(entregable)"
+          />
+        </td>
+      }
     </tr>
   </ng-template>
 

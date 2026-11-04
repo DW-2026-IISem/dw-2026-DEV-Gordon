@@ -65,7 +65,9 @@
       <th>Campaña</th>
       <th>Estado</th>
       <th>Cierre</th>
-      <th class="text-right">Acciones</th>
+      @if (hasActions()) {
+        <th class="text-right">Acciones</th>
+      }
     </tr>
   </ng-template>
 
@@ -75,42 +77,44 @@
       <td>{{ campaniaNombre(hito.campania_id) }}</td>
       <td><app-status-tag [value]="hito.estado" /></td>
       <td>{{ hito.fecha_cierre ? (hito.fecha_cierre | date: 'dd/MM/yyyy') : '—' }}</td>
-      <td class="text-right whitespace-nowrap">
-        <p-button
-          icon="pi pi-list"
-          [rounded]="true"
-          [text]="true"
-          severity="secondary"
-          [ariaLabel]="'Ver tareas de ' + hito.nombre"
-          (onClick)="verTareas(hito)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/hitos/:id'"
-          icon="pi pi-pencil"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Editar ' + hito.nombre"
-          (onClick)="openEdit(hito)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/hitos/:id/deactivate'"
-          icon="pi pi-ban"
-          severity="warn"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Desactivar ' + hito.nombre"
-          (onClick)="confirmDeactivate(hito)"
-        />
-        <p-button
-          *appHasPermission="'DELETE /api/hitos/:id'"
-          icon="pi pi-trash"
-          severity="danger"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Eliminar ' + hito.nombre"
-          (onClick)="confirmRemove(hito)"
-        />
-      </td>
+      @if (hasActions()) {
+        <td class="text-right whitespace-nowrap">
+          <p-button
+            icon="pi pi-list"
+            [rounded]="true"
+            [text]="true"
+            severity="secondary"
+            [ariaLabel]="'Ver tareas de ' + hito.nombre"
+            (onClick)="verTareas(hito)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/hitos/:id'"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Editar ' + hito.nombre"
+            (onClick)="openEdit(hito)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/hitos/:id/deactivate'"
+            icon="pi pi-ban"
+            severity="warn"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Desactivar ' + hito.nombre"
+            (onClick)="confirmDeactivate(hito)"
+          />
+          <p-button
+            *appHasPermission="'DELETE /api/hitos/:id'"
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Eliminar ' + hito.nombre"
+            (onClick)="confirmRemove(hito)"
+          />
+        </td>
+      }
     </tr>
   </ng-template>
 

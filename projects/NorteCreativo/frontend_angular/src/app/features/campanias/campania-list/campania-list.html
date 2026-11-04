@@ -57,7 +57,9 @@
       <th>Cliente</th>
       <th>Descripción</th>
       <th>Estado</th>
-      <th class="text-right">Acciones</th>
+      @if (hasActions()) {
+        <th class="text-right">Acciones</th>
+      }
     </tr>
   </ng-template>
 
@@ -67,42 +69,44 @@
       <td>{{ clienteNombre(campania.cliente_id) }}</td>
       <td>{{ campania.descripcion || '—' }}</td>
       <td><app-status-tag [value]="campania.status" /></td>
-      <td class="text-right whitespace-nowrap">
-        <p-button
-          icon="pi pi-flag"
-          [rounded]="true"
-          [text]="true"
-          severity="secondary"
-          [ariaLabel]="'Ver hitos de ' + campania.nombre"
-          (onClick)="verHitos(campania)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/campanias/:id'"
-          icon="pi pi-pencil"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Editar ' + campania.nombre"
-          (onClick)="openEdit(campania)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/campanias/:id/deactivate'"
-          icon="pi pi-ban"
-          severity="warn"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Desactivar ' + campania.nombre"
-          (onClick)="confirmDeactivate(campania)"
-        />
-        <p-button
-          *appHasPermission="'DELETE /api/campanias/:id'"
-          icon="pi pi-trash"
-          severity="danger"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Eliminar ' + campania.nombre"
-          (onClick)="confirmRemove(campania)"
-        />
-      </td>
+      @if (hasActions()) {
+        <td class="text-right whitespace-nowrap">
+          <p-button
+            icon="pi pi-flag"
+            [rounded]="true"
+            [text]="true"
+            severity="secondary"
+            [ariaLabel]="'Ver hitos de ' + campania.nombre"
+            (onClick)="verHitos(campania)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/campanias/:id'"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Editar ' + campania.nombre"
+            (onClick)="openEdit(campania)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/campanias/:id/deactivate'"
+            icon="pi pi-ban"
+            severity="warn"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Desactivar ' + campania.nombre"
+            (onClick)="confirmDeactivate(campania)"
+          />
+          <p-button
+            *appHasPermission="'DELETE /api/campanias/:id'"
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Eliminar ' + campania.nombre"
+            (onClick)="confirmRemove(campania)"
+          />
+        </td>
+      }
     </tr>
   </ng-template>
 

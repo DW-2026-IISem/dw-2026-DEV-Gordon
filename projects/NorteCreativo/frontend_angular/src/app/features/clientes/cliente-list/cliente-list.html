@@ -45,7 +45,9 @@
       <th>Teléfono</th>
       <th pSortableColumn="email">Correo <p-sort-icon field="email" /></th>
       <th>Estado</th>
-      <th class="text-right">Acciones</th>
+      @if (hasActions()) {
+        <th class="text-right">Acciones</th>
+      }
     </tr>
   </ng-template>
 
@@ -56,34 +58,36 @@
       <td>{{ cliente.telefono || '—' }}</td>
       <td>{{ cliente.email || '—' }}</td>
       <td><app-status-tag [value]="cliente.status" /></td>
-      <td class="text-right whitespace-nowrap">
-        <p-button
-          *appHasPermission="'PATCH /api/clientes/:id'"
-          icon="pi pi-pencil"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Editar ' + cliente.nombre"
-          (onClick)="openEdit(cliente)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/clientes/:id/deactivate'"
-          icon="pi pi-ban"
-          severity="warn"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Desactivar ' + cliente.nombre"
-          (onClick)="confirmDeactivate(cliente)"
-        />
-        <p-button
-          *appHasPermission="'DELETE /api/clientes/:id'"
-          icon="pi pi-trash"
-          severity="danger"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Eliminar ' + cliente.nombre"
-          (onClick)="confirmRemove(cliente)"
-        />
-      </td>
+      @if (hasActions()) {
+        <td class="text-right whitespace-nowrap">
+          <p-button
+            *appHasPermission="'PATCH /api/clientes/:id'"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Editar ' + cliente.nombre"
+            (onClick)="openEdit(cliente)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/clientes/:id/deactivate'"
+            icon="pi pi-ban"
+            severity="warn"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Desactivar ' + cliente.nombre"
+            (onClick)="confirmDeactivate(cliente)"
+          />
+          <p-button
+            *appHasPermission="'DELETE /api/clientes/:id'"
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Eliminar ' + cliente.nombre"
+            (onClick)="confirmRemove(cliente)"
+          />
+        </td>
+      }
     </tr>
   </ng-template>
 

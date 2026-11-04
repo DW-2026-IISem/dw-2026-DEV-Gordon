@@ -115,6 +115,8 @@ export class VersionList implements OnInit {
     return filterRows(ordenadas, this.filter(), (v) => [this.entregableLabel(v.entregable_id), v.observaciones, `v${v.numero_version}`]);
   });
 
+  // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
+  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/version-entregables/:id', 'PATCH /api/version-entregables/:id/deactivate', 'DELETE /api/version-entregables/:id', 'POST /api/aprobaciones']));
   protected readonly title = computed(() => (this.editing() ? 'Editar versión' : 'Nueva versión'));
 
   constructor() {

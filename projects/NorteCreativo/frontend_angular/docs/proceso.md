@@ -1011,36 +1011,109 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos con
 exacto para conceder y retirar GET /api/tareas a FINANZAS y el fetch para el 403); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (redirecciones): sin sesión abrir `/hitos`; con sesión abrir `/login`
 
-<!-- pegar captura -->
+Sin sesión, `/hitos` terminó en `/login?returnUrl=%2Fhitos`:
+
+![AC-1 sin sesión](images/iss-09-ac-1-sin-sesion.png)
+
+Con sesión, `/login` terminó en `/dashboard`:
+
+![AC-1 con sesión](images/iss-09-ac-1-con-sesion.png)
 
 3. comprobamos AC-2 (menú ×5): login con `admin`, `cuentas`, `creativo`, `aprobador` y `finanzas`
 
-<!-- pegar captura -->
+El menú coincide con la matriz de cada rol (nota: el usuario `cuentas` del seed también tiene el rol CREATIVO, por eso `/api/permisos` le da 42 y no 36).
+
+`admin` (85 permisos), 8 ítems:
+
+![admin](images/iss-09-ac-2-menu-admin.png)
+
+`cuentas`, 8 ítems:
+
+![cuentas](images/iss-09-ac-2-menu-cuentas.png)
+
+`creativo` (sin Clientes ni Aprobaciones):
+
+![creativo](images/iss-09-ac-2-menu-creativo.png)
+
+`aprobador` (sin Clientes ni Tareas):
+
+![aprobador](images/iss-09-ac-2-menu-aprobador.png)
+
+`finanzas` (solo Clientes, Campañas y Hitos):
+
+![finanzas](images/iss-09-ac-2-menu-finanzas.png)
 
 4. comprobamos AC-3 (forbidden): `finanzas` + escribir `localhost:4200/tareas`
 
-<!-- pegar captura -->
+`finanzas` escribió `localhost:4200/tareas` y la URL quedó en `/forbidden?permission=GET%20%2Fapi%2Ftareas`, con el permiso requerido visible y el botón «Volver al panel»:
+
+![AC-3 forbidden](images/iss-09-ac-3-forbidden.png)
 
 5. comprobamos AC-4 (botones): `cuentas` en `/clientes` y `/campanias`; `creativo`, `aprobador` y `admin` en `/versiones`
 
-<!-- pegar captura -->
+`cuentas` en `/clientes`: sin botón «Nuevo» ni columna «Acciones» (solo tiene GET):
+
+![cuentas clientes](images/iss-09-ac-4-cuentas-clientes.png)
+
+`cuentas` en `/campanias`: Nueva campaña, Ver hitos, Editar, Desactivar y Eliminar:
+
+![cuentas campañas](images/iss-09-ac-4-cuentas-campanias.png)
+
+`creativo` en `/versiones`: solo Editar (sin Desactivar ni Eliminar):
+
+![creativo versiones](images/iss-09-ac-4-creativo-versiones.png)
+
+`creativo` en el detalle de un entregable: aparece «Nueva versión» (el botón de crear vive en el detalle, donde la lista tiene `entregableId`):
+
+![creativo detalle](images/iss-09-ac-4-creativo-detalle.png)
+
+`aprobador` en `/versiones`: solo «Revisar»:
+
+![aprobador versiones](images/iss-09-ac-4-aprobador-versiones.png)
+
+`admin` en `/versiones`: Editar, Desactivar y Eliminar, pero no «Revisar» (POST /api/aprobaciones es solo de CLIENTE_APROBADOR):
+
+![admin versiones](images/iss-09-ac-4-admin-versiones.png)
 
 6. comprobamos AC-5 (actualizar permisos): `curl -s -X POST localhost:3012/api/concesiones-rol -H "Authorization: Bearer $ADMIN" -H 'Content-Type: application/json' -d '{"role_id":<FINANZAS>,"resource_id":<GET /api/tareas>}'` + "Actualizar permisos" + `PATCH /api/concesiones-rol/<id>/deactivate`
 
-<!-- pegar captura -->
+`finanzas` antes (sin Tareas):
+
+![antes](images/iss-09-ac-5-1-antes.png)
+
+Concesión con el token de admin (role 5 = FINANZAS, recurso 22 = `GET /api/tareas`):
+
+![curl concesión](images/iss-09-ac-5-curl.png)
+
+Menú de usuario con «Actualizar permisos»:
+
+![menú usuario](images/iss-09-ac-5-2-menu-usuario.png)
+
+Tras pulsarlo, Tareas aparece sin recargar:
+
+![concedido](images/iss-09-ac-5-3-concedido.png)
+
+Retiro de la concesión:
+
+![curl retiro](images/iss-09-ac-5-curl-retiro.png)
+
+Tras «Actualizar permisos» otra vez, Tareas desaparece:
+
+![retirado](images/iss-09-ac-5-4-retirado.png)
 
 7. comprobamos AC-6 (403 vs 401): `fetch('http://localhost:3012/api/usuarios',{headers:{Authorization:'Bearer '+JSON.parse(localStorage.getItem('nortecreativo.session.v1')).accessToken}}).then(r=>console.log(r.status))` y el mismo sin cabecera
 
-<!-- pegar captura -->
+Con token, 403; sin token, 401:
+
+![AC-6](images/iss-09-ac-6.png)
 
 8. comprobamos AC-7 (build): `npx ng build 2>&1 | tail -15`
 
-<!-- pegar captura -->
+5 pruebas de guards y el build sin errores:
+
+![AC-7](images/iss-09-ac-7.png)
 
 
 ## ISS - 10

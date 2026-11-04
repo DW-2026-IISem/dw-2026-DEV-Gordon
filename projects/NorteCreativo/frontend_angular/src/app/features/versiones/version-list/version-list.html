@@ -77,7 +77,9 @@
       <th>Total</th>
       <th>Estado</th>
       <th>Observaciones</th>
-      <th class="text-right">Acciones</th>
+      @if (hasActions()) {
+        <th class="text-right">Acciones</th>
+      }
     </tr>
   </ng-template>
 
@@ -94,50 +96,52 @@
       <td>{{ money(version.total) }}</td>
       <td><app-status-tag [value]="version.estado" /></td>
       <td>{{ version.observaciones || '—' }}</td>
-      <td class="text-right whitespace-nowrap">
-        @if (version.estado === 'EN_REVISION') {
-          <p-button
-            *appHasPermission="'POST /api/aprobaciones'"
-            icon="pi pi-check-circle"
-            [rounded]="true"
-            [text]="true"
-            severity="success"
-            [ariaLabel]="'Revisar versión ' + version.numero_version"
-            (onClick)="revisar(version)"
-          />
-        }
-        <!-- RN-04: una versión APROBADA no se modifica, desactiva ni elimina. -->
-        @if (version.estado !== 'APROBADA') {
-          <p-button
-            *appHasPermission="'PATCH /api/version-entregables/:id'"
-            icon="pi pi-pencil"
-            [rounded]="true"
-            [text]="true"
-            [ariaLabel]="'Editar versión ' + version.numero_version"
-            (onClick)="openEdit(version)"
-          />
-          <p-button
-            *appHasPermission="'PATCH /api/version-entregables/:id/deactivate'"
-            icon="pi pi-ban"
-            severity="warn"
-            [rounded]="true"
-            [text]="true"
-            [ariaLabel]="'Desactivar versión ' + version.numero_version"
-            (onClick)="confirmDeactivate(version)"
-          />
-          <p-button
-            *appHasPermission="'DELETE /api/version-entregables/:id'"
-            icon="pi pi-trash"
-            severity="danger"
-            [rounded]="true"
-            [text]="true"
-            [ariaLabel]="'Eliminar versión ' + version.numero_version"
-            (onClick)="confirmRemove(version)"
-          />
-        } @else {
-          <span class="text-slate-500"><i class="pi pi-lock mr-1"></i>Aprobada</span>
-        }
-      </td>
+      @if (hasActions()) {
+        <td class="text-right whitespace-nowrap">
+          @if (version.estado === 'EN_REVISION') {
+            <p-button
+              *appHasPermission="'POST /api/aprobaciones'"
+              icon="pi pi-check-circle"
+              [rounded]="true"
+              [text]="true"
+              severity="success"
+              [ariaLabel]="'Revisar versión ' + version.numero_version"
+              (onClick)="revisar(version)"
+            />
+          }
+          <!-- RN-04: una versión APROBADA no se modifica, desactiva ni elimina. -->
+          @if (version.estado !== 'APROBADA') {
+            <p-button
+              *appHasPermission="'PATCH /api/version-entregables/:id'"
+              icon="pi pi-pencil"
+              [rounded]="true"
+              [text]="true"
+              [ariaLabel]="'Editar versión ' + version.numero_version"
+              (onClick)="openEdit(version)"
+            />
+            <p-button
+              *appHasPermission="'PATCH /api/version-entregables/:id/deactivate'"
+              icon="pi pi-ban"
+              severity="warn"
+              [rounded]="true"
+              [text]="true"
+              [ariaLabel]="'Desactivar versión ' + version.numero_version"
+              (onClick)="confirmDeactivate(version)"
+            />
+            <p-button
+              *appHasPermission="'DELETE /api/version-entregables/:id'"
+              icon="pi pi-trash"
+              severity="danger"
+              [rounded]="true"
+              [text]="true"
+              [ariaLabel]="'Eliminar versión ' + version.numero_version"
+              (onClick)="confirmRemove(version)"
+            />
+          } @else {
+            <span class="text-slate-500"><i class="pi pi-lock mr-1"></i>Aprobada</span>
+          }
+        </td>
+      }
     </tr>
   </ng-template>
 

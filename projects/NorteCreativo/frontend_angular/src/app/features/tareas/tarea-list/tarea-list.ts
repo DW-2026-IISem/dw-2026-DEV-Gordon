@@ -91,6 +91,8 @@ export class TareaList implements OnInit {
     const base = hitoId === null ? this.rows() : this.rows().filter((t) => t.hito_id === hitoId);
     return filterRows(base, this.filter(), (t) => [t.nombre, t.descripcion, nombres.get(t.hito_id)]);
   });
+  // Sin ninguna acción permitida, la columna «Acciones» no se muestra.
+  protected readonly hasActions = computed(() => this.session.canAny(['PATCH /api/tareas/:id', 'PATCH /api/tareas/:id/deactivate', 'DELETE /api/tareas/:id']));
   protected readonly title = computed(() => (this.editing() ? 'Editar tarea' : 'Nueva tarea'));
 
   constructor() {

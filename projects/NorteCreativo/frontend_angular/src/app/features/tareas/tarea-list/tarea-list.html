@@ -51,7 +51,9 @@
       <th>Hito</th>
       <th>Descripción</th>
       <th>Estado</th>
-      <th class="text-right">Acciones</th>
+      @if (hasActions()) {
+        <th class="text-right">Acciones</th>
+      }
     </tr>
   </ng-template>
 
@@ -61,34 +63,36 @@
       <td>{{ hitoNombre(tarea.hito_id) }}</td>
       <td>{{ tarea.descripcion || '—' }}</td>
       <td><app-status-tag [value]="tarea.status" /></td>
-      <td class="text-right whitespace-nowrap">
-        <p-button
-          *appHasPermission="'PATCH /api/tareas/:id'"
-          icon="pi pi-pencil"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Editar ' + tarea.nombre"
-          (onClick)="openEdit(tarea)"
-        />
-        <p-button
-          *appHasPermission="'PATCH /api/tareas/:id/deactivate'"
-          icon="pi pi-ban"
-          severity="warn"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Desactivar ' + tarea.nombre"
-          (onClick)="confirmDeactivate(tarea)"
-        />
-        <p-button
-          *appHasPermission="'DELETE /api/tareas/:id'"
-          icon="pi pi-trash"
-          severity="danger"
-          [rounded]="true"
-          [text]="true"
-          [ariaLabel]="'Eliminar ' + tarea.nombre"
-          (onClick)="confirmRemove(tarea)"
-        />
-      </td>
+      @if (hasActions()) {
+        <td class="text-right whitespace-nowrap">
+          <p-button
+            *appHasPermission="'PATCH /api/tareas/:id'"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Editar ' + tarea.nombre"
+            (onClick)="openEdit(tarea)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/tareas/:id/deactivate'"
+            icon="pi pi-ban"
+            severity="warn"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Desactivar ' + tarea.nombre"
+            (onClick)="confirmDeactivate(tarea)"
+          />
+          <p-button
+            *appHasPermission="'DELETE /api/tareas/:id'"
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Eliminar ' + tarea.nombre"
+            (onClick)="confirmRemove(tarea)"
+          />
+        </td>
+      }
     </tr>
   </ng-template>
 
