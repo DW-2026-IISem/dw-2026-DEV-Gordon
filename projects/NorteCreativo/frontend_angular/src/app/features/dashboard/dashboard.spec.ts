@@ -6,6 +6,7 @@ import { CampaniaApi } from '../campanias/campania-api';
 import { ClienteApi } from '../clientes/cliente-api';
 import { HitoApi } from '../hitos/hito-api';
 import { VersionEntregableApi } from '../versiones/version-entregable-api';
+import { environment } from '../../../environments/environment';
 import { Dashboard } from './dashboard';
 
 const hito = (id: number, estado: string) => ({ id, estado, status: 'active' });
@@ -19,6 +20,10 @@ type Internals = {
 };
 
 describe('Dashboard', () => {
+  const original = environment.requireAuth;
+  beforeEach(() => (environment.requireAuth = false));
+  afterEach(() => (environment.requireAuth = original));
+
   const setup = async () => {
     TestBed.configureTestingModule({
       providers: [

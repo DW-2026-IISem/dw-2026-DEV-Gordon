@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth-guard';
 
 export const routes: Routes = [
   {
@@ -6,10 +7,19 @@ export const routes: Routes = [
     loadComponent: () => import('./features/construir/construir').then((m) => m.Construir),
   },
   {
+    path: 'login',
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
+  },
+  {
     path: '',
+    canActivate: [authGuard],
     loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'perfil',
+        loadComponent: () => import('./features/auth/profile/profile').then((m) => m.Profile),
+      },
       {
         path: 'campanias',
         loadComponent: () => import('./features/campanias/campania-list/campania-list').then((m) => m.CampaniaList),

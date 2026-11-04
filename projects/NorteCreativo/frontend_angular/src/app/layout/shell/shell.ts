@@ -4,7 +4,6 @@ import { RouterOutlet } from '@angular/router';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DrawerModule } from 'primeng/drawer';
-import { ToastModule } from 'primeng/toast';
 import { SessionStore } from '../../core/services/session-store';
 import { Aside } from '../aside/aside';
 import { Footer } from '../footer/footer';
@@ -42,7 +41,7 @@ const NAV: NavGroup[] = [
 ];
 
 @Component({
-  imports: [Header, Aside, Footer, RouterOutlet, DrawerModule, ToastModule, ConfirmDialogModule],
+  imports: [Header, Aside, Footer, RouterOutlet, DrawerModule, ConfirmDialogModule],
   selector: 'app-shell',
   providers: [ConfirmationService],
   styleUrl: './shell.css',

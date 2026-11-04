@@ -8,4 +8,19 @@
     (onClick)="menuRequested.emit()"
   />
   <span class="text-lg font-semibold">{{ title }}</span>
+
+  @if (session.usuario(); as usuario) {
+    <button
+      type="button"
+      class="ml-auto flex items-center gap-2 rounded-full px-2 py-1 hover:bg-slate-100"
+      aria-haspopup="true"
+      aria-label="Menú de usuario"
+      (click)="userMenuPanel.toggle($event)"
+    >
+      <p-avatar [label]="inicial()" shape="circle" />
+      <span class="hidden sm:inline">{{ usuario.username }}</span>
+      <i class="pi pi-angle-down"></i>
+    </button>
+    <p-menu #userMenuPanel [model]="userItems" [popup]="true" />
+  }
 </header>

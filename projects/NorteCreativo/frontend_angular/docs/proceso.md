@@ -906,36 +906,61 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos en 
 que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (redirección): storage vacío + abrir `localhost:4200/dashboard`
 
-<!-- pegar captura -->
+![AC-1: sin sesión, /dashboard redirige a /login con returnUrl](images/iss-08-ac-1-login.png)
+
+Con el storage vacío, `localhost:4200/dashboard` terminó en `http://localhost:4200/login?returnUrl=%2Fdashboard`.
 
 3. comprobamos AC-2 (perfil): login de `admin` y de `finanzas` + `/perfil`
 
-<!-- pegar captura -->
+![AC-2: formulario de login con el usuario y la contraseña de admin](images/iss-08-ac-2-form.png)
+
+![AC-2: /perfil de admin con rol ADMIN y 85 permisos](images/iss-08-ac-2-perfil-admin.png)
+
+![AC-2: el menú de usuario del encabezado (Mi sesión, Actualizar permisos, Cerrar sesión)](images/iss-08-menu-usuario.png)
+
+![AC-2: /perfil de finanzas con rol FINANZAS y 11 permisos](images/iss-08-ac-2-perfil-finanzas.png)
+
+![AC-2: pruebas del guard de autenticación](images/iss-08-ac-2.png)
+
+El login hizo `POST /api/sesion/login` → `GET /api/sesion/perfil` → `GET /api/permisos`, los tres con 200, y redirigió al `returnUrl`.
 
 4. comprobamos AC-3 (storage): DevTools → Application → Local Storage
 
-<!-- pegar captura -->
+![AC-3: la clave nortecreativo.session.v1 con accessToken, refreshToken, usuario y permisos](images/iss-08-ac-3.png)
 
 5. comprobamos AC-4 (cabeceras): Network → `clientes` → Headers; y `login` → Headers
 
-<!-- pegar captura -->
+![AC-4: login sin Authorization; GET /api/clientes con Bearer; pruebas del interceptor](images/iss-08-ac-4.png)
 
 6. comprobamos AC-5 (refresh único): alterar `accessToken` en el storage + ir a `/clientes` + Network filtrando `clientes|refresh`
 
-<!-- pegar captura -->
+![AC-5: con el access alterado, /clientes se carga sin que el usuario note nada](images/iss-08-ac-5-clientes.png)
+
+![AC-5: GET clientes 401, un solo POST refresh 200 y el reintento 200](images/iss-08-ac-5.png)
+
+La prueba `varios 401 a la vez comparten un solo refresh` cubre además el caso de varias peticiones simultáneas.
 
 7. comprobamos AC-6 (logout y reuse): copiar el `refreshToken` antes de salir + `curl -i -X POST localhost:3012/api/sesion/refresh -H 'Content-Type: application/json' -d '{"refresh_token":"<token>"}'`
 
-<!-- pegar captura -->
+![AC-6: «Cerrar sesión» vuelve a /login](images/iss-08-ac-6-logout.png)
+
+![AC-6: el storage queda vacío y el refresh de esa sesión ya no sirve (401)](images/iss-08-ac-6.png)
+
+![AC-6: el refresh ya rotado, reusado con curl, responde 401 y revoca la familia](images/iss-08-ac-6-reuso-curl.png)
+
+![AC-6: al reusarse, el siguiente refresh del front da 401: se limpia la sesión y sale el aviso «Sesión expirada»](images/iss-08-ac-6-reuso.png)
 
 8. comprobamos AC-7 (veredicto y build): login de `aprobador` + `/aprobaciones/nueva` + `npx ng build 2>&1 | tail -15`
 
-<!-- pegar captura -->
+![AC-7: tras entrar con aprobador, el menú solo muestra lo que su rol puede leer](images/iss-08-ac-7-aprobador.png)
+
+![AC-7: el formulario de veredicto con la versión preseleccionada](images/iss-08-ac-7-form.png)
+
+![AC-7: POST /api/aprobaciones responde 201, el toast «Hito cerrado» y la fila nueva en el historial](images/iss-08-ac-7-resultado.png)
+
+![AC-7: el POST con 201 y el build sin errores](images/iss-08-ac-7.png)
 
 
 ## ISS - 09
