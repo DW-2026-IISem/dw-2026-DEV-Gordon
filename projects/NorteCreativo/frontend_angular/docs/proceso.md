@@ -547,36 +547,83 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (comandos 
 que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (listados): `/hitos` y `/tareas` + `curl -s localhost:3012/api/hitos | head -c 400`
 
-<!-- pegar captura -->
+![AC-1: /hitos con la campaña por nombre y el estado con su color (Abierto verde, Cerrado gris, Facturado azul)](images/iss-05-ac-1-hitos.png)
+
+![AC-1: /tareas con el hito por nombre](images/iss-05-ac-1-tareas.png)
+
+![AC-1: contenido real de la API de hitos y tareas, y las peticiones en paralelo](images/iss-05-ac-1.png)
+
+Las campañas de otros hitos que ya no están activas salen como `Campaña #id`, igual que `Cliente #id` en ISS-04. En `/hitos` salen `GET /api/hitos` y `GET /api/campanias` en paralelo; en `/tareas`, `GET /api/tareas`, `GET /api/hitos` y `GET /api/campanias`.
 
 3. comprobamos AC-2 (alta de hito): "Nuevo hito" + Network → respuesta con `estado: ABIERTO`
 
-<!-- pegar captura -->
+![AC-2: el select de campañas filtrado por «FRONT05» ofrece solo las campañas activas](images/iss-05-ac-2-select.png)
+
+![AC-2: formulario con campaña, nombre y descripción; sin campo de estado](images/iss-05-ac-2-form.png)
+
+![AC-2: el hito creado aparece con el toast de éxito](images/iss-05-ac-2-creado.png)
+
+![AC-2: pruebas del formulario y el 400 del backend si se envía estado](images/iss-05-ac-2.png)
+
+El `POST /api/hitos` salió con `{"campania_id":79,"nombre":"FRONT05 Hito Brief","descripcion":null}` y respondió 201 con `"estado":"ABIERTO"` y `"fecha_cierre":null`.
 
 4. comprobamos AC-3 (409 RN-08): desactivar una campaña en otra pestaña y, sin recargar, crearle un hito
 
-<!-- pegar captura -->
+![AC-3: el 409 de RN-08 en el p-message del diálogo y en el toast, con el diálogo abierto](images/iss-05-ac-3-409.png)
+
+![AC-3: el mismo POST contra el backend responde 409](images/iss-05-ac-3.png)
+
+La campaña se desactivó por la API con el diálogo ya abierto (equivale a hacerlo en otra pestaña); el mensaje es «No se crea hito para una campaña inactiva».
 
 5. comprobamos AC-4 (edición y validación): editar un hito + Payload; intentar guardar sin campaña
 
-<!-- pegar captura -->
+![AC-4: el formulario de edición abre con la campaña elegida y los datos del hito](images/iss-05-ac-4-dialogo.png)
+
+![AC-4: sin campaña el formulario bloquea el envío y no hace ningún POST](images/iss-05-ac-4-sin-campania.png)
+
+![AC-4: el hito guardado y las pruebas del formulario de tareas](images/iss-05-ac-4.png)
+
+El `PATCH /api/hitos/103` salió con `{"campania_id":79,"nombre":"FRONT05 Hito Brief v2","descripcion":null}` (`campania_id` numérico, sin estado ni status) y respondió 200 con el hito aún en ABIERTO.
 
 6. comprobamos AC-5 (conteo): comparar `abiertosCount` con el filtro de estado ABIERTO
 
-<!-- pegar captura -->
+![AC-5: con el filtro de estado ABIERTO la tabla muestra 7 filas, igual que el contador](images/iss-05-ac-5-abiertos.png)
+
+![AC-5: contador, filas, conteo de la API y Network sin peticiones nuevas al filtrar](images/iss-05-ac-5.png)
 
 7. comprobamos AC-6 (navegación): "Ver hitos" desde `/campanias` y "Ver tareas" desde `/hitos`, mostrando la URL
 
-<!-- pegar captura -->
+![AC-6: en /campanias, el botón «Ver hitos» de cada fila](images/iss-05-ac-6-campanias.png)
+
+![AC-6: /hitos?campania=79 abre ya filtrado por esa campaña](images/iss-05-ac-6-hitos.png)
+
+![AC-6: /tareas?hito=103 abre ya filtrado por ese hito](images/iss-05-ac-6-tareas.png)
+
+![AC-6: la URL con su query param y la consola sin errores](images/iss-05-ac-6.png)
+
+Los botones usan `Router.navigate` con `queryParams`; el componente recibe el parámetro como `input()` (`withComponentInputBinding`) y lo vuelve filtro.
 
 8. comprobamos AC-7 (tareas y build): crear, editar, desactivar y eliminar una tarea + `npx ng build 2>&1 | tail -15`
 
-<!-- pegar captura -->
+![AC-7: el select de hitos muestra la etiqueta «Campaña · Hito»](images/iss-05-ac-7-select.png)
+
+![AC-7: tarea creada](images/iss-05-ac-7-creada.png)
+
+![AC-7: tarea editada](images/iss-05-ac-7-editada.png)
+
+![AC-7: confirmación de la baja lógica](images/iss-05-ac-7-confirmar-baja.png)
+
+![AC-7: tras la baja lógica la tarea ya no está en la tabla](images/iss-05-ac-7-baja.png)
+
+![AC-7: confirmación de la baja física, irreversible](images/iss-05-ac-7-confirmar-fisica.png)
+
+![AC-7: tras la baja física la tarea también desaparece](images/iss-05-ac-7-eliminada.png)
+
+![AC-7: la API, el 404 de la tarea eliminada y el build sin errores ni avisos de presupuesto](images/iss-05-ac-7.png)
+
+Peticiones del CRUD: `POST /api/tareas` 201, `PATCH /api/tareas/104` 200, `PATCH /api/tareas/104/deactivate` 200 y `DELETE /api/tareas/105` 200.
 
 
 ## ISS - 06

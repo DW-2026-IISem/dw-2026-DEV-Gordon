@@ -1,6 +1,7 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { forkJoin, Observable, of } from 'rxjs';
 import { ConfirmationService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -58,6 +59,7 @@ export class CampaniaList implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly confirmation = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   protected readonly rows = signal<Campania[]>([]);
   protected readonly clientes = signal<Cliente[]>([]);
@@ -117,6 +119,11 @@ export class CampaniaList implements OnInit {
           this.loading.set(false);
         },
       });
+  }
+
+  // Abre /hitos ya filtrado por esta campaña.
+  protected verHitos(campania: Campania): void {
+    void this.router.navigate(['/hitos'], { queryParams: { campania: campania.id } });
   }
 
   protected onFilter(event: Event): void {

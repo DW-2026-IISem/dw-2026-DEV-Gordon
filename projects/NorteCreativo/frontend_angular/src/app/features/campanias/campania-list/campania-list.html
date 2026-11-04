@@ -69,6 +69,14 @@
       <td><app-status-tag [value]="campania.status" /></td>
       <td class="text-right whitespace-nowrap">
         <p-button
+          icon="pi pi-flag"
+          [rounded]="true"
+          [text]="true"
+          severity="secondary"
+          [ariaLabel]="'Ver hitos de ' + campania.nombre"
+          (onClick)="verHitos(campania)"
+        />
+        <p-button
           *appHasPermission="'PATCH /api/campanias/:id'"
           icon="pi pi-pencil"
           [rounded]="true"

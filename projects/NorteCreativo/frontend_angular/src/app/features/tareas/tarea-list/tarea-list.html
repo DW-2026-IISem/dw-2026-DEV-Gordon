@@ -1,0 +1,133 @@
+<app-page-header title="Tareas" subtitle="El trabajo concreto de cada hito.">
+  <p-button *appHasPermission="'POST /api/tareas'" label="Nueva tarea" icon="pi pi-plus" (onClick)="openNew()" />
+</app-page-header>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<div class="mb-4 flex flex-wrap gap-3">
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por tarea, descripción o hito"
+      aria-label="Buscar tareas"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
+  </p-iconfield>
+
+  <p-select
+    ariaLabel="Filtrar por hito"
+    [options]="hitoOptions()"
+    optionLabel="nombre"
+    optionValue="id"
+    [filter]="true"
+    filterBy="nombre"
+    [ngModel]="hitoFilter()"
+    (ngModelChange)="hitoFilter.set($event)"
+    styleClass="w-72 max-w-full"
+  />
+</div>
+
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '48rem' }"
+>
+  <ng-template #header>
+    <tr>
+      <th pSortableColumn="nombre">Tarea <p-sort-icon field="nombre" /></th>
+      <th>Hito</th>
+      <th>Descripción</th>
+      <th>Estado</th>
+      <th class="text-right">Acciones</th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-tarea>
+    <tr>
+      <td>{{ tarea.nombre }}</td>
+      <td>{{ hitoNombre(tarea.hito_id) }}</td>
+      <td>{{ tarea.descripcion || '—' }}</td>
+      <td><app-status-tag [value]="tarea.status" /></td>
+      <td class="text-right whitespace-nowrap">
+        <p-button
+          *appHasPermission="'PATCH /api/tareas/:id'"
+          icon="pi pi-pencil"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Editar ' + tarea.nombre"
+          (onClick)="openEdit(tarea)"
+        />
+        <p-button
+          *appHasPermission="'PATCH /api/tareas/:id/deactivate'"
+          icon="pi pi-ban"
+          severity="warn"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Desactivar ' + tarea.nombre"
+          (onClick)="confirmDeactivate(tarea)"
+        />
+        <p-button
+          *appHasPermission="'DELETE /api/tareas/:id'"
+          icon="pi pi-trash"
+          severity="danger"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Eliminar ' + tarea.nombre"
+          (onClick)="confirmRemove(tarea)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="5">
+        @if (!loading()) {
+          @if (rows().length === 0) {
+            <app-empty-state icon="pi pi-check-square" title="Aún no hay tareas" message="Crea la primera con «Nueva tarea»." />
+          } @else {
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ninguna tarea coincide con la búsqueda y el hito elegidos. Prueba con otros criterios."
+            />
+          }
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="title()"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  @if (dialogError(); as message) {
+    <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+  }
+  <app-tarea-form
+    [tarea]="editing()"
+    [hitos]="hitos()"
+    [campaniasPorId]="campaniasPorId()"
+    [resetKey]="resetKey()"
+    [saving]="saving()"
+    (saved)="save($event)"
+    (cancelled)="closeDialog()"
+  />
+</p-dialog>

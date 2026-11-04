@@ -11,9 +11,9 @@ interface TagView {
 const VIEWS: Record<string, TagView> = {
   active: { label: 'Activo', severity: 'success' },
   inactive: { label: 'Inactivo', severity: 'secondary' },
-  ABIERTO: { label: 'Abierto', severity: 'info' },
-  CERRADO: { label: 'Cerrado', severity: 'warn' },
-  FACTURADO: { label: 'Facturado', severity: 'success' },
+  ABIERTO: { label: 'Abierto', severity: 'success' },
+  CERRADO: { label: 'Cerrado', severity: 'secondary' },
+  FACTURADO: { label: 'Facturado', severity: 'info' },
   EN_PROCESO: { label: 'En proceso', severity: 'info' },
   ENTREGADO: { label: 'Entregado', severity: 'success' },
   EN_REVISION: { label: 'En revisión', severity: 'warn' },
