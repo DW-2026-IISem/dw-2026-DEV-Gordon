@@ -1,0 +1,28 @@
+<app-page-header [title]="'Entregable #' + entregableId()" subtitle="Cabecera del entregable y su historial de versiones.">
+  <p-button label="Volver" icon="pi pi-arrow-left" severity="secondary" [outlined]="true" (onClick)="volver()" />
+</app-page-header>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+} @else if (entregable(); as e) {
+  <section class="mb-6 grid gap-4 rounded-lg border border-slate-200 p-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Cabecera del entregable">
+    <div><p class="text-sm text-slate-500">Tarea</p><p class="font-medium">{{ tarea()?.nombre ?? '#' + e.tarea_id }}</p></div>
+    <div><p class="text-sm text-slate-500">Total</p><p class="font-medium">{{ total() }}</p></div>
+    <div>
+      <p class="text-sm text-slate-500">Fechas</p>
+      <p class="font-medium">
+        {{ e.fecha_inicio ? (e.fecha_inicio | date: 'dd/MM/yyyy') : '—' }} → {{ e.fecha_fin ? (e.fecha_fin | date: 'dd/MM/yyyy') : '—' }}
+      </p>
+    </div>
+    <div><p class="text-sm text-slate-500">Estado</p><app-status-tag [value]="e.estado" /></div>
+    <div class="sm:col-span-2 lg:col-span-4">
+      <p class="text-sm text-slate-500">Resumen de versiones</p>
+      <p class="font-medium" data-testid="resumen">
+        Última versión: {{ ultimaVersion() ? 'v' + ultimaVersion()!.numero_version : '—' }} · En revisión: {{ pendientes() }}
+      </p>
+    </div>
+  </section>
+
+  <h2 class="mb-3 text-xl font-semibold">Versiones</h2>
+  <app-version-list [entregableId]="entregableId()" (loaded)="versiones.set($event)" />
+}

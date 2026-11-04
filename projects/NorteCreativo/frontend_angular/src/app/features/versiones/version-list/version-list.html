@@ -1,0 +1,168 @@
+@if (entregableId() === undefined) {
+  <app-page-header title="Versiones" subtitle="Todas las versiones de entregable. Una versión aprobada ya no se puede tocar." />
+}
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por entregable u observaciones"
+      aria-label="Buscar versiones"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
+  </p-iconfield>
+
+  @if (entregableId() === undefined) {
+    <p-select
+      ariaLabel="Filtrar por entregable"
+      [options]="entregableOptions()"
+      optionLabel="nombre"
+      optionValue="id"
+      [filter]="true"
+      filterBy="nombre"
+      [ngModel]="entregableFilter()"
+      (ngModelChange)="entregableFilter.set($event)"
+      styleClass="w-72 max-w-full"
+    />
+  }
+
+  <p-select
+    ariaLabel="Filtrar por estado"
+    [options]="estadoOptions"
+    optionLabel="nombre"
+    optionValue="id"
+    [ngModel]="estadoFilter()"
+    (ngModelChange)="estadoFilter.set($event)"
+    styleClass="w-56 max-w-full"
+  />
+
+  @if (entregableId() !== undefined) {
+    <p-button
+      *appHasPermission="'POST /api/version-entregables'"
+      class="ml-auto"
+      label="Nueva versión"
+      icon="pi pi-plus"
+      (onClick)="openNew()"
+    />
+  }
+</div>
+
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '56rem' }"
+>
+  <ng-template #header>
+    <tr>
+      <th>Versión</th>
+      @if (entregableId() === undefined) {
+        <th>Entregable</th>
+      }
+      <th>Fechas</th>
+      <th>Total</th>
+      <th>Estado</th>
+      <th>Observaciones</th>
+      <th class="text-right">Acciones</th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-version>
+    <tr>
+      <td>v{{ version.numero_version }}</td>
+      @if (entregableId() === undefined) {
+        <td>{{ entregableLabel(version.entregable_id) }}</td>
+      }
+      <td>
+        {{ version.fecha_inicio ? (version.fecha_inicio | date: 'dd/MM/yyyy') : '—' }}
+        → {{ version.fecha_fin ? (version.fecha_fin | date: 'dd/MM/yyyy') : '—' }}
+      </td>
+      <td>{{ money(version.total) }}</td>
+      <td><app-status-tag [value]="version.estado" /></td>
+      <td>{{ version.observaciones || '—' }}</td>
+      <td class="text-right whitespace-nowrap">
+        <!-- RN-04: una versión APROBADA no se modifica, desactiva ni elimina. -->
+        @if (version.estado !== 'APROBADA') {
+          <p-button
+            *appHasPermission="'PATCH /api/version-entregables/:id'"
+            icon="pi pi-pencil"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Editar versión ' + version.numero_version"
+            (onClick)="openEdit(version)"
+          />
+          <p-button
+            *appHasPermission="'PATCH /api/version-entregables/:id/deactivate'"
+            icon="pi pi-ban"
+            severity="warn"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Desactivar versión ' + version.numero_version"
+            (onClick)="confirmDeactivate(version)"
+          />
+          <p-button
+            *appHasPermission="'DELETE /api/version-entregables/:id'"
+            icon="pi pi-trash"
+            severity="danger"
+            [rounded]="true"
+            [text]="true"
+            [ariaLabel]="'Eliminar versión ' + version.numero_version"
+            (onClick)="confirmRemove(version)"
+          />
+        } @else {
+          <span class="text-slate-500"><i class="pi pi-lock mr-1"></i>Aprobada</span>
+        }
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td [attr.colspan]="entregableId() === undefined ? 7 : 6">
+        @if (!loading()) {
+          @if (rows().length === 0 || entregableId() !== undefined && visibleRows().length === 0 && !filter() && estadoFilter() === null) {
+            <app-empty-state icon="pi pi-copy" title="Aún no hay versiones" message="Las versiones se crean desde el detalle de un entregable." />
+          } @else {
+            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Ninguna versión coincide con los filtros elegidos." />
+          }
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="title()"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  @if (dialogError(); as message) {
+    <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+  }
+  @if (dialogEntregableId(); as entregable) {
+    <app-version-form
+      [version]="editing()"
+      [entregableId]="entregable"
+      [resetKey]="resetKey()"
+      [saving]="saving()"
+      (saved)="save($event)"
+      (cancelled)="closeDialog()"
+    />
+  }
+</p-dialog>

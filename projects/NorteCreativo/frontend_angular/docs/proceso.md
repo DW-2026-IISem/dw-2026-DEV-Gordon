@@ -674,32 +674,61 @@ Al final entrega tres listas: archivos tocados; como verifico cada AC (pasos exa
 el 409); que quedo fuera de alcance.
 ```
 
-Salida:
-<!-- pegar captura del resumen que entrega claude code -->
-
 2. comprobamos AC-1 (listado): `/entregables`
 
-<!-- pegar captura -->
+![AC-1: /entregables con la tarea por nombre, el total en pesos y el estado con color](images/iss-06-ac-1-lista.png)
+
+![AC-1: contenido real de la API (el total llega como número y se formatea con toNumber)](images/iss-06-ac-1.png)
+
+En la lista salen `GET /api/entregables`, `GET /api/tareas` y `GET /api/hitos` en paralelo. Las tareas que ya no están activas se muestran como `Tarea #id`.
 
 3. comprobamos AC-2 (validaciones): guardar sin tarea, con fecha fin anterior a la de inicio y con total negativo
 
-<!-- pegar captura -->
+![AC-2: sin tarea el formulario bloquea el envío y muestra el error](images/iss-06-ac-2-sin-tarea.png)
+
+![AC-2: con fin anterior a inicio y total negativo, dos errores y ningún POST](images/iss-06-ac-2-invalidos.png)
+
+![AC-2: con datos válidos el formulario está listo para guardar](images/iss-06-ac-2-valido.png)
+
+![AC-2: el entregable creado aparece en la tabla con el toast de éxito](images/iss-06-ac-2-creado.png)
+
+![AC-2: pruebas del formulario (tarea requerida, solo activas con «Hito · Tarea», fechas, total, número)](images/iss-06-ac-2.png)
+
+El `POST /api/entregables` salió con `{"tarea_id":107,"fecha_inicio":"2026-10-10T05:00:00.000Z","fecha_fin":"2026-10-20T05:00:00.000Z","total":1500000,"estado":"EN_PROCESO","observaciones":null}` (total numérico) y respondió 201.
 
 4. comprobamos AC-3 (nueva versión): `/entregables/<id>` → "Nueva versión" + Network → Payload (sin `numero_version`) y respuesta (con `numero_version`)
 
-<!-- pegar captura -->
+![AC-3: el detalle de un entregable sin versiones](images/iss-06-ac-3-detalle-vacio.png)
+
+![AC-3: el formulario de «Nueva versión» solo pide fechas, total y observaciones](images/iss-06-ac-3-form.png)
+
+![AC-3: tras crear dos versiones, v2 y v1 en EN_REVISION con el resumen en la cabecera](images/iss-06-ac-3-detalle.png)
+
+![AC-3: las versiones en la API y las pruebas de VersionForm](images/iss-06-ac-3.png)
+
+Primer POST: cuerpo `{"entregable_id":107,"fecha_inicio":null,"fecha_fin":null,"total":800000,"observaciones":null}` (sin `numero_version` ni `estado`), respuesta 201 con `"numero_version":1` y `"estado":"EN_REVISION"`. Segundo POST: respuesta 201 con `"numero_version":2`.
 
 5. comprobamos AC-4 (RN-04): fila APROBADA sin acciones + `curl -i -X PATCH localhost:3012/api/version-entregables/<id> -H 'Content-Type: application/json' -d '{"observaciones":"x"}'`
 
-<!-- pegar captura -->
+![AC-4: en el entregable #1 la versión APROBADA no tiene acciones, solo el candado](images/iss-06-ac-4-aprobada.png)
+
+![AC-4: el PATCH forzado con curl a la versión 6 responde 409 (RN-04)](images/iss-06-ac-4.png)
 
 6. comprobamos AC-5 (RN-06): nueva versión sobre un entregable de un hito CERRADO + `curl -s localhost:3012/api/version-entregables | jq '.versiones | length'` antes y después
 
-<!-- pegar captura -->
+![AC-5: crear una versión para un entregable de un hito CERRADO muestra el 409 de RN-06 con el diálogo abierto](images/iss-06-ac-5-409.png)
+
+![AC-5: el conteo de versiones es 107 antes y después, y el mismo POST con curl da 409](images/iss-06-ac-5.png)
 
 7. comprobamos AC-6 (recarga y build): F5 en `/entregables/<id>` + `npx ng build 2>&1 | tail -15`
 
-<!-- pegar captura -->
+![AC-6: /entregables/107 recargado con F5 carga el detalle completo](images/iss-06-ac-6-recarga.png)
+
+![AC-6: el listado global /versiones con la columna «Tarea · total» y las APROBADAS con candado](images/iss-06-versiones.png)
+
+![AC-6: la URL tras recargar, la consola sin errores y el build completo](images/iss-06-ac-6.png)
+
+Al recargar, el detalle pide `GET /api/entregables/107`, `GET /api/tareas/107` y `GET /api/version-entregables`.
 
 
 ## ISS - 07

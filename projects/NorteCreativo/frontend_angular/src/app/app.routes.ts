@@ -19,6 +19,18 @@ export const routes: Routes = [
         loadComponent: () => import('./features/clientes/cliente-list/cliente-list').then((m) => m.ClienteList),
       },
       {
+        path: 'entregables',
+        loadComponent: () => import('./features/entregables/entregable-list/entregable-list').then((m) => m.EntregableList),
+      },
+      {
+        path: 'entregables/:id',
+        loadComponent: () => import('./features/entregables/entregable-detail/entregable-detail').then((m) => m.EntregableDetail),
+      },
+      {
+        path: 'versiones',
+        loadComponent: () => import('./features/versiones/version-list/version-list').then((m) => m.VersionList),
+      },
+      {
         path: 'hitos',
         loadComponent: () => import('./features/hitos/hito-list/hito-list').then((m) => m.HitoList),
       },

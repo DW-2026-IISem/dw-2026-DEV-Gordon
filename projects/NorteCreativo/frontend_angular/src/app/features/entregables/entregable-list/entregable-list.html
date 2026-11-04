@@ -1,0 +1,149 @@
+<app-page-header title="Entregables" subtitle="Lo que se entrega por cada tarea, con su total y sus versiones.">
+  <p-button *appHasPermission="'POST /api/entregables'" label="Nuevo entregable" icon="pi pi-plus" (onClick)="openNew()" />
+</app-page-header>
+
+@if (error(); as message) {
+  <p-message severity="error" class="mb-4 block">
+    <span>{{ message }}</span>
+    <p-button label="Reintentar" size="small" [text]="true" (onClick)="load()" />
+  </p-message>
+}
+
+<div class="mb-4 flex flex-wrap gap-3">
+  <p-iconfield class="w-full max-w-md">
+    <p-inputicon class="pi pi-search" />
+    <input
+      pInputText
+      type="search"
+      class="w-full"
+      placeholder="Buscar por tarea u observaciones"
+      aria-label="Buscar entregables"
+      [value]="filter()"
+      (input)="onFilter($event)"
+    />
+  </p-iconfield>
+
+  <p-select
+    ariaLabel="Filtrar por tarea"
+    [options]="tareaOptions()"
+    optionLabel="nombre"
+    optionValue="id"
+    [filter]="true"
+    filterBy="nombre"
+    [ngModel]="tareaFilter()"
+    (ngModelChange)="tareaFilter.set($event)"
+    styleClass="w-72 max-w-full"
+  />
+
+  <p-select
+    ariaLabel="Filtrar por estado"
+    [options]="estadoOptions"
+    optionLabel="nombre"
+    optionValue="id"
+    [ngModel]="estadoFilter()"
+    (ngModelChange)="estadoFilter.set($event)"
+    styleClass="w-56 max-w-full"
+  />
+</div>
+
+<p-table
+  [value]="visibleRows()"
+  [loading]="loading()"
+  [paginator]="true"
+  [rows]="10"
+  [rowsPerPageOptions]="[5, 10, 25]"
+  dataKey="id"
+  [tableStyle]="{ 'min-width': '60rem' }"
+>
+  <ng-template #header>
+    <tr>
+      <th>Tarea</th>
+      <th>Inicio</th>
+      <th>Fin</th>
+      <th class="text-right">Total</th>
+      <th>Estado</th>
+      <th class="text-right">Acciones</th>
+    </tr>
+  </ng-template>
+
+  <ng-template #body let-entregable>
+    <tr>
+      <td>{{ tareaNombre(entregable.tarea_id) }}</td>
+      <td>{{ entregable.fecha_inicio ? (entregable.fecha_inicio | date: 'dd/MM/yyyy') : '—' }}</td>
+      <td>{{ entregable.fecha_fin ? (entregable.fecha_fin | date: 'dd/MM/yyyy') : '—' }}</td>
+      <td class="text-right">{{ money(entregable.total) }}</td>
+      <td><app-status-tag [value]="entregable.estado" /></td>
+      <td class="text-right whitespace-nowrap">
+        <p-button
+          icon="pi pi-eye"
+          [rounded]="true"
+          [text]="true"
+          severity="secondary"
+          [ariaLabel]="'Ver detalle del entregable ' + entregable.id"
+          (onClick)="verDetalle(entregable)"
+        />
+        <p-button
+          *appHasPermission="'PATCH /api/entregables/:id'"
+          icon="pi pi-pencil"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Editar entregable ' + entregable.id"
+          (onClick)="openEdit(entregable)"
+        />
+        <p-button
+          *appHasPermission="'PATCH /api/entregables/:id/deactivate'"
+          icon="pi pi-ban"
+          severity="warn"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Desactivar entregable ' + entregable.id"
+          (onClick)="confirmDeactivate(entregable)"
+        />
+        <p-button
+          *appHasPermission="'DELETE /api/entregables/:id'"
+          icon="pi pi-trash"
+          severity="danger"
+          [rounded]="true"
+          [text]="true"
+          [ariaLabel]="'Eliminar entregable ' + entregable.id"
+          (onClick)="confirmRemove(entregable)"
+        />
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="6">
+        @if (!loading()) {
+          @if (rows().length === 0) {
+            <app-empty-state icon="pi pi-box" title="Aún no hay entregables" message="Crea el primero con «Nuevo entregable»." />
+          } @else {
+            <app-empty-state icon="pi pi-search" title="Sin coincidencias" message="Ningún entregable coincide con los filtros elegidos." />
+          }
+        }
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  [header]="title()"
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  styleClass="w-full max-w-3xl mx-4"
+>
+  @if (dialogError(); as message) {
+    <p-message severity="error" class="mb-4 block">{{ message }}</p-message>
+  }
+  <app-entregable-form
+    [entregable]="editing()"
+    [tareas]="tareas()"
+    [hitosPorId]="hitosPorId()"
+    [resetKey]="resetKey()"
+    [saving]="saving()"
+    (saved)="save($event)"
+    (cancelled)="closeDialog()"
+  />
+</p-dialog>
